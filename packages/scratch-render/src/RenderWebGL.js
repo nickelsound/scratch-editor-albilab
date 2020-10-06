@@ -11,6 +11,7 @@ const RenderConstants = require('./RenderConstants');
 const ShaderManager = require('./ShaderManager');
 const SVGSkin = require('./SVGSkin');
 const TextBubbleSkin = require('./TextBubbleSkin');
+const TextCostumeSkin = require('./TextCostumeSkin');
 const EffectTransform = require('./EffectTransform');
 const log = require('./util/log');
 
@@ -350,6 +351,14 @@ class RenderWebGL extends EventEmitter {
         return skinId;
     }
 
+    createTextCostumeSkin (text) {
+        const skinId = this._nextSkinId++;
+        const newSkin = new TextCostumeSkin(skinId, this);
+        newSkin.setText(text);
+        this._allSkins[skinId] = newSkin;
+        return skinId;
+    }
+
     /**
      * Update an existing SVG skin, or create an SVG skin if the previous skin was not SVG.
      * @param {!int} skinId the ID for the skin to change.
@@ -415,6 +424,17 @@ class RenderWebGL extends EventEmitter {
 
         const newSkin = new TextBubbleSkin(skinId, this);
         newSkin.setTextBubble(type, text, pointsLeft);
+        this._reskin(skinId, newSkin);
+    }
+
+    updateTextCostumeSkin (skinId, text) {
+        if (this._allSkins[skinId] instanceof TextCostumeSkin) {
+            this._allSkins[skinId].setText(text);
+            return;
+        }
+
+        const newSkin = new TextCostumeSkin(skinId, this);
+        newSkin.setText(text);
         this._reskin(skinId, newSkin);
     }
 
