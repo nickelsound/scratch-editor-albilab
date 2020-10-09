@@ -359,6 +359,17 @@ class RenderWebGL extends EventEmitter {
         return skinId;
     }
 
+    updateTextCostumeSkin (skinId, text) {
+        if (this._allSkins[skinId] instanceof TextCostumeSkin) {
+            this._allSkins[skinId].setText(text);
+            return;
+        }
+
+        const newSkin = new TextCostumeSkin(skinId, this);
+        newSkin.setText(text);
+        this._reskin(skinId, newSkin);
+    }
+
     /**
      * Update an existing SVG skin, or create an SVG skin if the previous skin was not SVG.
      * @param {!int} skinId the ID for the skin to change.
@@ -426,18 +437,6 @@ class RenderWebGL extends EventEmitter {
         newSkin.setTextBubble(type, text, pointsLeft);
         this._reskin(skinId, newSkin);
     }
-
-    updateTextCostumeSkin (skinId, text) {
-        if (this._allSkins[skinId] instanceof TextCostumeSkin) {
-            this._allSkins[skinId].setText(text);
-            return;
-        }
-
-        const newSkin = new TextCostumeSkin(skinId, this);
-        newSkin.setText(text);
-        this._reskin(skinId, newSkin);
-    }
-
 
     /**
      * Destroy an existing skin. Do not use the skin or its ID after calling this.
