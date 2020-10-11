@@ -363,7 +363,7 @@ class RenderWebGL extends EventEmitter {
         const newSkin = new TextCostumeSkin(skinId, this);
         this._allSkins[skinId] = newSkin;
         newSkin.setTextAndStyle(textState);
-        // this._reskin(skinId, newSkin); // this is erroring- might be necessary for clones to work right?
+        // this._reskin(skinId, newSkin); // this is erroring- might be necessary?
 
         return skinId;
     }
