@@ -11,6 +11,7 @@ const RenderConstants = require('./RenderConstants');
 const ShaderManager = require('./ShaderManager');
 const SVGSkin = require('./SVGSkin');
 const TextBubbleSkin = require('./TextBubbleSkin');
+const TextCostumeSkin = require('./TextCostumeSkin');
 const EffectTransform = require('./EffectTransform');
 const log = require('./util/log');
 
@@ -422,6 +423,23 @@ class RenderWebGL extends EventEmitter {
         const newSkin = new BitmapSkin(skinId, this);
         newSkin.setBitmap(imgData, bitmapResolution, rotationCenter);
         this._reskin(skinId, newSkin);
+    }
+
+    updateTextCostumeSkin (textState) {
+        // update existing skin
+        if (textState.skinId && (this._allSkins[textState.skinId] instanceof TextCostumeSkin)) {
+            this._allSkins[textState.skinId].setTextAndStyle(textState);
+            return textState.skinId;
+        }
+
+        // create and update a new skin
+        const skinId = this._nextSkinId++;
+        const newSkin = new TextCostumeSkin(skinId, this);
+        this._allSkins[skinId] = newSkin;
+        newSkin.setTextAndStyle(textState);
+        // this._reskin(skinId, newSkin); // this is erroring- might be necessary?
+
+        return skinId;
     }
 
     _reskin (skinId, newSkin) {
