@@ -136,8 +136,8 @@ class Blocks extends React.Component {
             this.setLocale();
         }
         setTimeout(() => {
-            this.props.vm.extensionManager.loadExtensionURL('text').then(() => {
-                this.handleCategorySelected('text');
+            this.props.vm.extensionManager.loadExtensionURL('faceSensing').then(() => {
+                this.handleCategorySelected('faceSensing');
             })
         }, 500)
     }
