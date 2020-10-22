@@ -115,19 +115,13 @@ class Scratch3FaceSensingBlocks {
                 dimensions: Scratch3FaceSensingBlocks.DIMENSIONS
             });
             if (frame) {
-                const faces = this.blazeface.estimateFaces(frame, false);
-                if (faces) {
-                    console.log(faces);
-                }
-                // const scaleFactor = 0.5;
-                // const flipHorizontal = false;
-                // const outputStride = 8;
-                // this.posenet.estimateSinglePose(frame, scaleFactor, flipHorizontal, outputStride).then(
-                //     pose => {
-                //         this.currentPose = pose;
-                //         this._lastUpdate = time;
-                //     }
-                // );
+                this.blazeface.estimateFaces(frame, false).then(faces => {
+                    if (faces) {
+                        this.currentFace = faces[0];
+                        this._lastUpdate = time;
+                        console.log(faces);
+                    }
+                })
             }
         }
     }
@@ -226,13 +220,12 @@ class Scratch3FaceSensingBlocks {
             ],
             menus: {
                 PART: [
-                    {text: 'nose', value: '0'},
-                    {text: 'left eye', value: '2'}, // left/right seem reversed?
+                    {text: 'nose', value: '2'},
+                    {text: 'mouth', value: '3'},
+                    {text: 'left eye', value: '0'},
                     {text: 'right eye', value: '1'},
                     {text: 'left ear', value: '4'},
-                    {text: 'right ear', value: '3'},
-                    {text: 'left wrist', value: '9'},
-                    {text: 'right wrist', value: '10'}
+                    {text: 'right ear', value: '5'}
                 ],
                 TILT: [
                     {text: 'left', value: 'left'},
@@ -244,19 +237,19 @@ class Scratch3FaceSensingBlocks {
 
     getPartPosition (part) {
         const defaultPos = {x: 0, y: 0};
-        if (!this.currentPose) return defaultPos;
-        if (!this.currentPose.keypoints) return defaultPos;
-        const result = this.currentPose.keypoints[Number(part)];
+        if (!this.currentFace) return defaultPos;
+        if (!this.currentFace.landmarks) return defaultPos;
+        const result = this.currentFace.landmarks[Number(part)];
         if (result) {
-            return this.toScratchCoords(result.position);
+            return this.toScratchCoords(result);
         }
         return defaultPos;
     }
 
     toScratchCoords (position) {
         return {
-            x: position.x - 240,
-            y: 180 - position.y
+            x: position[0] - 240,
+            y: 180 - position[1]
         };
     }
 
@@ -285,7 +278,7 @@ class Scratch3FaceSensingBlocks {
     }
 
     headDirection () {
-        const leftEyePos = this.getPartPosition(2);
+        const leftEyePos = this.getPartPosition(0);
         const rightEyePos = this.getPartPosition(1);
         const dx = rightEyePos.x - leftEyePos.x;
         const dy = rightEyePos.y - leftEyePos.y;
