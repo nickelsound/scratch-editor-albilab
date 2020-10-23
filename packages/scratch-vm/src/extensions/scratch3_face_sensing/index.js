@@ -75,7 +75,7 @@ class Scratch3FaceSensingBlocks {
      * @type {number}
      */
     static get INTERVAL () {
-        return 100;
+        return 33;
     }
 
     /**
