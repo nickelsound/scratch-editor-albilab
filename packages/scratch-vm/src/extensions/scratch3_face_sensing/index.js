@@ -1,5 +1,6 @@
 const ArgumentType = require('../../extension-support/argument-type');
 const BlockType = require('../../extension-support/block-type');
+const Clone = require('../../util/clone');
 const MathUtil = require('../../util/math-util');
 const formatMessage = require('format-message');
 const Video = require('../../io/video');
@@ -51,6 +52,9 @@ class Scratch3FaceSensingBlocks {
          * @type {number}
          */
         this._lastUpdate = null;
+
+        this._clearAttachments = this._clearAttachments.bind(this);
+        this.runtime.on('PROJECT_STOP_ALL', this._clearAttachments);
     }
 
     /**
@@ -103,11 +107,31 @@ class Scratch3FaceSensingBlocks {
                     if (faces) {
                         this.currentFace = faces[0];
                         this.allFaces = faces;
+                        this.updateAttachments();
                     }
                     this._lastUpdate = time;
                 });
             }
         }
+    }
+
+    _getFaceSensingState (target) {
+        let faceSensingState = target.getCustomState(Scratch3FaceSensingBlocks.STATE_KEY);
+        if (!faceSensingState) {
+            faceSensingState = Clone.simple(Scratch3FaceSensingBlocks.DEFAULT_FACE_SENSING_STATE);
+            target.setCustomState(Scratch3FaceSensingBlocks.STATE_KEY, faceSensingState);
+        }
+        return faceSensingState;
+    }
+
+    static get STATE_KEY () {
+        return 'Scratch.faceSensing';
+    }
+
+    static get DEFAULT_FACE_SENSING_STATE () {
+        return {
+            attachedToPartNumber: null
+        };
     }
 
     /**
@@ -167,6 +191,22 @@ class Scratch3FaceSensingBlocks {
                     text: formatMessage({
                         id: 'faceSensing.goToPart',
                         default: 'go to [PART]',
+                        description: ''
+                    }),
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+                        PART: {
+                            type: ArgumentType.STRING,
+                            menu: 'PART',
+                            defaultValue: '2'
+                        }
+                    }
+                },
+                {
+                    opcode: 'attachToPart',
+                    text: formatMessage({
+                        id: 'faceSensing.attachToPart',
+                        default: 'attach to [PART]',
                         description: ''
                     }),
                     blockType: BlockType.COMMAND,
@@ -330,6 +370,30 @@ class Scratch3FaceSensingBlocks {
     goToPart (args, util) {
         const pos = this.getPartPosition(args.PART);
         util.target.setXY(pos.x, pos.y);
+    }
+
+    attachToPart (args, util) {
+        const state = this._getFaceSensingState(util.target);
+        state.attachedToPartNumber = args.PART;
+    }
+
+    updateAttachments () {
+        this.runtime.targets.forEach(target => {
+            const state = this._getFaceSensingState(target);
+            if (state.attachedToPartNumber) {
+                const pos = this.getPartPosition(state.attachedToPartNumber);
+                target.setXY(pos.x, pos.y);
+                target.setDirection(this.headDirection());
+                target.setSize(this.faceSize());
+            }
+        });
+    }
+
+    _clearAttachments () {
+        this.runtime.targets.forEach(target => {
+            const state = this._getFaceSensingState(target);
+            state.attachedToPartNumber = null;
+        });
     }
 
     headDirection () {
