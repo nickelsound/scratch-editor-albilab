@@ -35,23 +35,7 @@ class Scratch3FaceSensingBlocks {
          */
         this.runtime = runtime;
 
-        // Posenet.load({
-        //     architecture: 'MobileNetV1',
-        //     outputStride: 8,
-        //     inputResolution: 257,
-        //     multiplier: 0.5
-        // }).then(net => {
-        //     this.posenet = net;
-        //     if (this.runtime.ioDevices) {
-        //         // Kick off looping the analysis logic.
-        //         this._loop();
-        //     }
-        // });
-
-        console.log('blazeface', Blazeface);
-
         Blazeface.load().then(model => {
-            console.log('loaded Blazeface');
             this.blazeface = model;
             if (this.runtime.ioDevices) {
                 // Kick off looping the analysis logic.
@@ -118,10 +102,9 @@ class Scratch3FaceSensingBlocks {
                 this.blazeface.estimateFaces(frame, false).then(faces => {
                     if (faces) {
                         this.currentFace = faces[0];
-                        this._lastUpdate = time;
-                        console.log(faces);
                     }
-                })
+                    this._lastUpdate = time;
+                });
             }
         }
     }
@@ -137,17 +120,35 @@ class Scratch3FaceSensingBlocks {
         return {
             id: 'faceSensing',
             name: formatMessage({
-                id: 'bodySensing.categoryName',
-                default: 'Body Sensing',
-                description: 'Name of body sensing extension'
+                id: 'faceSensing.categoryName',
+                default: 'Face Sensing',
+                description: 'Name of face sensing extension'
             }),
             blockIconURI: blockIconURI,
             menuIconURI: menuIconURI,
             blocks: [
                 {
+                    opcode: 'whenFaceDetected',
+                    text: formatMessage({
+                        id: 'faceSensing.whenFaceDetected',
+                        default: 'when a face is detected',
+                        description: ''
+                    }),
+                    blockType: BlockType.HAT
+                },
+                {
+                    opcode: 'faceIsDetected',
+                    text: formatMessage({
+                        id: 'faceSensing.faceDetected',
+                        default: 'face is detected?',
+                        description: ''
+                    }),
+                    blockType: BlockType.BOOLEAN
+                },
+                {
                     opcode: 'whenTilted',
                     text: formatMessage({
-                        id: 'bodySensing.whenTilted',
+                        id: 'faceSensing.whenTilted',
                         default: 'when head tilts [DIRECTION]',
                         description: ''
                     }),
@@ -163,7 +164,7 @@ class Scratch3FaceSensingBlocks {
                 {
                     opcode: 'goToPart',
                     text: formatMessage({
-                        id: 'bodySensing.goToPart',
+                        id: 'faceSensing.goToPart',
                         default: 'go to [PART]',
                         description: ''
                     }),
@@ -172,14 +173,14 @@ class Scratch3FaceSensingBlocks {
                         PART: {
                             type: ArgumentType.STRING,
                             menu: 'PART',
-                            defaultValue: '0'
+                            defaultValue: '2'
                         }
                     }
                 },
                 {
                     opcode: 'headDirection',
                     text: formatMessage({
-                        id: 'bodySensing.headDirection',
+                        id: 'faceSensing.headDirection',
                         default: 'head direction',
                         description: ''
                     }),
@@ -188,7 +189,7 @@ class Scratch3FaceSensingBlocks {
                 {
                     opcode: 'partX',
                     text: formatMessage({
-                        id: 'bodySensing.partX',
+                        id: 'faceSensing.partX',
                         default: 'x position of [PART]',
                         description: ''
                     }),
@@ -196,7 +197,7 @@ class Scratch3FaceSensingBlocks {
                         PART: {
                             type: ArgumentType.NUMBER,
                             menu: 'PART',
-                            defaultValue: '0'
+                            defaultValue: '2'
                         }
                     },
                     blockType: BlockType.REPORTER
@@ -204,7 +205,7 @@ class Scratch3FaceSensingBlocks {
                 {
                     opcode: 'partY',
                     text: formatMessage({
-                        id: 'bodySensing.partY',
+                        id: 'faceSensing.partY',
                         default: 'y position of [PART]',
                         description: ''
                     }),
@@ -212,9 +213,18 @@ class Scratch3FaceSensingBlocks {
                         PART: {
                             type: ArgumentType.NUMBER,
                             menu: 'PART',
-                            defaultValue: '0'
+                            defaultValue: '2'
                         }
                     },
+                    blockType: BlockType.REPORTER
+                },
+                {
+                    opcode: 'probability',
+                    text: formatMessage({
+                        id: 'faceSensing.probability',
+                        default: 'probability of face detection',
+                        description: ''
+                    }),
                     blockType: BlockType.REPORTER
                 }
             ],
@@ -233,6 +243,21 @@ class Scratch3FaceSensingBlocks {
                 ]
             }
         };
+    }
+
+    whenFaceDetected () {
+        return this.currentFace;
+    }
+
+    faceIsDetected () {
+        return !!this.currentFace;
+    }
+
+    probability () {
+        if (this.currentFace) {
+            return Math.round(this.currentFace.probability * 100);
+        }
+        return 0;
     }
 
     getPartPosition (part) {
