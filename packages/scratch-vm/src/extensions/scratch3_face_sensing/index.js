@@ -102,6 +102,7 @@ class Scratch3FaceSensingBlocks {
                 this.blazeface.estimateFaces(frame, false).then(faces => {
                     if (faces) {
                         this.currentFace = faces[0];
+                        this.allFaces = faces;
                     }
                     this._lastUpdate = time;
                 });
@@ -219,10 +220,28 @@ class Scratch3FaceSensingBlocks {
                     blockType: BlockType.REPORTER
                 },
                 {
+                    opcode: 'faceSize',
+                    text: formatMessage({
+                        id: 'faceSensing.faceSize',
+                        default: 'face size',
+                        description: ''
+                    }),
+                    blockType: BlockType.REPORTER
+                },
+                {
                     opcode: 'probability',
                     text: formatMessage({
                         id: 'faceSensing.probability',
                         default: 'probability of face detection',
+                        description: ''
+                    }),
+                    blockType: BlockType.REPORTER
+                },
+                {
+                    opcode: 'numberOfFaces',
+                    text: formatMessage({
+                        id: 'faceSensing.numberOfFaces',
+                        default: 'number of faces',
                         description: ''
                     }),
                     blockType: BlockType.REPORTER
@@ -253,9 +272,20 @@ class Scratch3FaceSensingBlocks {
         return !!this.currentFace;
     }
 
+    numberOfFaces () {
+        return this.allFaces.length;
+    }
+
     probability () {
         if (this.currentFace) {
             return Math.round(this.currentFace.probability * 100);
+        }
+        return 0;
+    }
+
+    faceSize () {
+        if (this.currentFace) {
+            return Math.round(this.currentFace.bottomRight[0] - this.currentFace.topLeft[0]);
         }
         return 0;
     }
