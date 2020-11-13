@@ -130,7 +130,15 @@ class Scratch3FaceSensingBlocks {
 
     static get DEFAULT_FACE_SENSING_STATE () {
         return {
-            attachedToPartNumber: null
+            attachedToPartNumber: null,
+            prevX: 0,
+            offsetX: 0,
+            prevY: 0,
+            offsetY: 0,
+            prevSize: 100,
+            offsetSize: 0,
+            prevDirection: 0,
+            offsetDirection: 0
         };
     }
 
@@ -375,16 +383,40 @@ class Scratch3FaceSensingBlocks {
     attachToPart (args, util) {
         const state = this._getFaceSensingState(util.target);
         state.attachedToPartNumber = args.PART;
+        state.offsetX = 0;
+        state.offsetY = 0;
+        state.prevX = util.target.x;
+        state.prevY = util.target.y;
+        state.offsetDirection = 0;
+        state.prevDirection = util.target.direction;
+        state.offsetSize = 0;
+        state.prevSize = util.target.size;
     }
 
     updateAttachments () {
         this.runtime.targets.forEach(target => {
             const state = this._getFaceSensingState(target);
             if (state.attachedToPartNumber) {
-                const pos = this.getPartPosition(state.attachedToPartNumber);
-                target.setXY(pos.x, pos.y);
-                target.setDirection(this.headDirection());
-                target.setSize(this.faceSize());
+                const partPos = this.getPartPosition(state.attachedToPartNumber);
+                if (target.x !== state.prevX) {
+                    state.offsetX += target.x - state.prevX;
+                }
+                if (target.y !== state.prevY) {
+                    state.offsetY += target.y - state.prevY;
+                }
+                if (target.direction !== state.prevDirection) {
+                    state.offsetDirection += target.direction - state.prevDirection;
+                }
+                if (target.size !== state.prevSize) {
+                    state.offsetSize += target.size - state.prevSize;
+                }
+                target.setXY(partPos.x + state.offsetX, partPos.y + state.offsetY);
+                target.setDirection(this.headDirection() + state.offsetDirection);
+                target.setSize(this.faceSize() + state.offsetSize);
+                state.prevX = target.x;
+                state.prevY = target.y;
+                state.prevDirection = target.direction;
+                state.prevSize = target.size;
             }
         });
     }
