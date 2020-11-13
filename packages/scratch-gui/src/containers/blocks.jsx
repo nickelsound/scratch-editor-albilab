@@ -138,8 +138,8 @@ class Blocks extends React.Component {
         setTimeout(() => {
             this.props.vm.extensionManager.loadExtensionURL('text').then(() => {
                 this.handleCategorySelected('text');
-            })
-        }, 500)
+            });
+        }, 3000);
     }
     shouldComponentUpdate (nextProps, nextState) {
         return (
