@@ -170,15 +170,6 @@ class Scratch3FaceSensingBlocks {
                     blockType: BlockType.HAT
                 },
                 {
-                    opcode: 'faceIsDetected',
-                    text: formatMessage({
-                        id: 'faceSensing.faceDetected',
-                        default: 'face is detected?',
-                        description: ''
-                    }),
-                    blockType: BlockType.BOOLEAN
-                },
-                {
                     opcode: 'whenTilted',
                     text: formatMessage({
                         id: 'faceSensing.whenTilted',
@@ -194,6 +185,7 @@ class Scratch3FaceSensingBlocks {
                         }
                     }
                 },
+                '---',
                 {
                     opcode: 'goToPart',
                     text: formatMessage({
@@ -228,6 +220,16 @@ class Scratch3FaceSensingBlocks {
                     }),
                     blockType: BlockType.COMMAND
                 },
+                '---',
+                {
+                    opcode: 'faceIsDetected',
+                    text: formatMessage({
+                        id: 'faceSensing.faceDetected',
+                        default: 'face is detected?',
+                        description: ''
+                    }),
+                    blockType: BlockType.BOOLEAN
+                },
                 // {
                 //     opcode: 'attachToPart',
                 //     text: formatMessage({
@@ -253,38 +255,38 @@ class Scratch3FaceSensingBlocks {
                     }),
                     blockType: BlockType.REPORTER
                 },
-                {
-                    opcode: 'partX',
-                    text: formatMessage({
-                        id: 'faceSensing.partX',
-                        default: 'x position of [PART]',
-                        description: ''
-                    }),
-                    arguments: {
-                        PART: {
-                            type: ArgumentType.NUMBER,
-                            menu: 'PART',
-                            defaultValue: '2'
-                        }
-                    },
-                    blockType: BlockType.REPORTER
-                },
-                {
-                    opcode: 'partY',
-                    text: formatMessage({
-                        id: 'faceSensing.partY',
-                        default: 'y position of [PART]',
-                        description: ''
-                    }),
-                    arguments: {
-                        PART: {
-                            type: ArgumentType.NUMBER,
-                            menu: 'PART',
-                            defaultValue: '2'
-                        }
-                    },
-                    blockType: BlockType.REPORTER
-                },
+                // {
+                //     opcode: 'partX',
+                //     text: formatMessage({
+                //         id: 'faceSensing.partX',
+                //         default: 'x position of [PART]',
+                //         description: ''
+                //     }),
+                //     arguments: {
+                //         PART: {
+                //             type: ArgumentType.NUMBER,
+                //             menu: 'PART',
+                //             defaultValue: '2'
+                //         }
+                //     },
+                //     blockType: BlockType.REPORTER
+                // },
+                // {
+                //     opcode: 'partY',
+                //     text: formatMessage({
+                //         id: 'faceSensing.partY',
+                //         default: 'y position of [PART]',
+                //         description: ''
+                //     }),
+                //     arguments: {
+                //         PART: {
+                //             type: ArgumentType.NUMBER,
+                //             menu: 'PART',
+                //             defaultValue: '2'
+                //         }
+                //     },
+                //     blockType: BlockType.REPORTER
+                // },
                 {
                     opcode: 'faceSize',
                     text: formatMessage({
@@ -293,25 +295,25 @@ class Scratch3FaceSensingBlocks {
                         description: ''
                     }),
                     blockType: BlockType.REPORTER
-                },
-                {
-                    opcode: 'probability',
-                    text: formatMessage({
-                        id: 'faceSensing.probability',
-                        default: 'probability of face detection',
-                        description: ''
-                    }),
-                    blockType: BlockType.REPORTER
-                },
-                {
-                    opcode: 'numberOfFaces',
-                    text: formatMessage({
-                        id: 'faceSensing.numberOfFaces',
-                        default: 'number of faces',
-                        description: ''
-                    }),
-                    blockType: BlockType.REPORTER
                 }
+                // {
+                //     opcode: 'probability',
+                //     text: formatMessage({
+                //         id: 'faceSensing.probability',
+                //         default: 'probability of face detection',
+                //         description: ''
+                //     }),
+                //     blockType: BlockType.REPORTER
+                // },
+                // {
+                //     opcode: 'numberOfFaces',
+                //     text: formatMessage({
+                //         id: 'faceSensing.numberOfFaces',
+                //         default: 'number of faces',
+                //         description: ''
+                //     }),
+                //     blockType: BlockType.REPORTER
+                // }
             ],
             menus: {
                 PART: [
