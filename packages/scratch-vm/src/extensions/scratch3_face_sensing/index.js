@@ -182,7 +182,7 @@ class Scratch3FaceSensingBlocks {
                     opcode: 'whenTilted',
                     text: formatMessage({
                         id: 'faceSensing.whenTilted',
-                        default: 'when head tilts [DIRECTION]',
+                        default: 'when face tilts [DIRECTION]',
                         description: ''
                     }),
                     blockType: BlockType.HAT,
@@ -227,10 +227,10 @@ class Scratch3FaceSensingBlocks {
                     }
                 },
                 {
-                    opcode: 'headDirection',
+                    opcode: 'faceTilt',
                     text: formatMessage({
-                        id: 'faceSensing.headDirection',
-                        default: 'head direction',
+                        id: 'faceSensing.faceTilt',
+                        default: 'face tilt',
                         description: ''
                     }),
                     blockType: BlockType.REPORTER
@@ -367,10 +367,10 @@ class Scratch3FaceSensingBlocks {
     whenTilted (args) {
         const TILT_THRESHOLD = 10;
         if (args.DIRECTION === 'left') {
-            return this.headDirection() < (90 - TILT_THRESHOLD);
+            return this.faceTilt() < (90 - TILT_THRESHOLD);
         }
         if (args.DIRECTION === 'right') {
-            return this.headDirection() > (90 + TILT_THRESHOLD);
+            return this.faceTilt() > (90 + TILT_THRESHOLD);
         }
         return false;
     }
@@ -411,7 +411,7 @@ class Scratch3FaceSensingBlocks {
                     state.offsetSize += target.size - state.prevSize;
                 }
                 target.setXY(partPos.x + state.offsetX, partPos.y + state.offsetY);
-                target.setDirection(this.headDirection() + state.offsetDirection);
+                target.setDirection(this.faceTilt() + state.offsetDirection);
                 target.setSize(this.faceSize() + state.offsetSize);
                 state.prevX = target.x;
                 state.prevY = target.y;
@@ -428,7 +428,7 @@ class Scratch3FaceSensingBlocks {
         });
     }
 
-    headDirection () {
+    faceTilt () {
         const leftEyePos = this.getPartPosition(0);
         const rightEyePos = this.getPartPosition(1);
         const dx = rightEyePos.x - leftEyePos.x;
