@@ -211,21 +211,39 @@ class Scratch3FaceSensingBlocks {
                     }
                 },
                 {
-                    opcode: 'attachToPart',
+                    opcode: 'pointInFaceTiltDirection',
                     text: formatMessage({
-                        id: 'faceSensing.attachToPart',
-                        default: 'attach to [PART]',
+                        id: 'faceSensing.pointInFaceTiltDirection',
+                        default: 'point in direction of face tilt',
                         description: ''
                     }),
-                    blockType: BlockType.COMMAND,
-                    arguments: {
-                        PART: {
-                            type: ArgumentType.STRING,
-                            menu: 'PART',
-                            defaultValue: '2'
-                        }
-                    }
+                    blockType: BlockType.COMMAND
                 },
+                {
+                    opcode: 'setSizeToFaceSize',
+                    text: formatMessage({
+                        id: 'faceSensing.setSizeToFaceSize',
+                        default: 'set size to face size',
+                        description: ''
+                    }),
+                    blockType: BlockType.COMMAND
+                },
+                // {
+                //     opcode: 'attachToPart',
+                //     text: formatMessage({
+                //         id: 'faceSensing.attachToPart',
+                //         default: 'attach to [PART]',
+                //         description: ''
+                //     }),
+                //     blockType: BlockType.COMMAND,
+                //     arguments: {
+                //         PART: {
+                //             type: ArgumentType.STRING,
+                //             menu: 'PART',
+                //             defaultValue: '2'
+                //         }
+                //     }
+                // },
                 {
                     opcode: 'faceTilt',
                     text: formatMessage({
@@ -335,7 +353,7 @@ class Scratch3FaceSensingBlocks {
         if (this.currentFace) {
             return Math.round(this.currentFace.bottomRight[0] - this.currentFace.topLeft[0]);
         }
-        return 0;
+        return 100;
     }
 
     getPartPosition (part) {
@@ -378,6 +396,14 @@ class Scratch3FaceSensingBlocks {
     goToPart (args, util) {
         const pos = this.getPartPosition(args.PART);
         util.target.setXY(pos.x, pos.y);
+    }
+
+    pointInFaceTiltDirection (args, util) {
+        util.target.setDirection(this.faceTilt());
+    }
+
+    setSizeToFaceSize (args, util) {
+        util.target.setSize(this.faceSize());
     }
 
     attachToPart (args, util) {
