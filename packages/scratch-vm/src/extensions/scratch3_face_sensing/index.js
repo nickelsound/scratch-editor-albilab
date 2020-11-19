@@ -106,8 +106,6 @@ class Scratch3FaceSensingBlocks {
                 this.blazeface.estimateFaces(frame, false).then(faces => {
                     if (faces) {
                         this.currentFace = faces[0];
-                        this.allFaces = faces;
-                        this.updateAttachments();
                     }
                     this._lastUpdate = time;
                 });
@@ -321,8 +319,10 @@ class Scratch3FaceSensingBlocks {
                     {text: 'mouth', value: '3'},
                     {text: 'left eye', value: '0'},
                     {text: 'right eye', value: '1'},
+                    {text: 'between eyes', value: '6'},
                     {text: 'left ear', value: '4'},
-                    {text: 'right ear', value: '5'}
+                    {text: 'right ear', value: '5'},
+                    {text: 'top of head', value: '7'}
                 ],
                 TILT: [
                     {text: 'left', value: 'left'},
@@ -330,6 +330,40 @@ class Scratch3FaceSensingBlocks {
                 ]
             }
         };
+    }
+
+    getBetweenEyesPosition () {
+        // center point of a line between the eyes
+        const leftEye = this.getPartPosition(0);
+        const rightEye = this.getPartPosition(1);
+        const betweenEyes = {x: 0, y: 0};
+        betweenEyes.x = leftEye.x + ((rightEye.x - leftEye.x) / 2);
+        betweenEyes.y = leftEye.y + ((rightEye.y - leftEye.y) / 2);
+        return betweenEyes;
+    }
+
+    getTopOfHeadPosition () {
+        // Estimated top of the head point:
+        // Make a line perpendicular to the line between the eyes, through
+        // its center, and move upward along it the distance from the point
+        // between the eyes to the mouth.
+        const leftEyePos = this.getPartPosition(0);
+        const rightEyePos = this.getPartPosition(1);
+        const mouthPos = this.getPartPosition(3);
+        const dx = rightEyePos.x - leftEyePos.x;
+        const dy = rightEyePos.y - leftEyePos.y;
+        const directionRads = Math.atan2(dy, dx) + (Math.PI / 2);
+        const betweenEyesPos = this.getBetweenEyesPosition();
+
+        const distX = betweenEyesPos.x - mouthPos.x;
+        const distY = betweenEyesPos.y - mouthPos.y;
+        const mouthDistance = Math.sqrt((distX * distX) + (distY * distY));
+
+        const topOfHeadPosition = {x: 0, y: 0};
+        topOfHeadPosition.x = betweenEyesPos.x + (mouthDistance * Math.cos(directionRads));
+        topOfHeadPosition.y = betweenEyesPos.y + (mouthDistance * Math.sin(directionRads));
+
+        return topOfHeadPosition;
     }
 
     whenFaceDetected () {
@@ -362,6 +396,12 @@ class Scratch3FaceSensingBlocks {
         const defaultPos = {x: 0, y: 0};
         if (!this.currentFace) return defaultPos;
         if (!this.currentFace.landmarks) return defaultPos;
+        if (Number(part) === 6) {
+            return this.getBetweenEyesPosition();
+        }
+        if (Number(part) === 7) {
+            return this.getTopOfHeadPosition();
+        }
         const result = this.currentFace.landmarks[Number(part)];
         if (result) {
             return this.toScratchCoords(result);
