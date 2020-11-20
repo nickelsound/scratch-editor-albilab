@@ -354,16 +354,19 @@ class Scratch3FaceSensingBlocks {
         const dy = rightEyePos.y - leftEyePos.y;
         const directionRads = Math.atan2(dy, dx) + (Math.PI / 2);
         const betweenEyesPos = this.getBetweenEyesPosition();
-
-        const distX = betweenEyesPos.x - mouthPos.x;
-        const distY = betweenEyesPos.y - mouthPos.y;
-        const mouthDistance = Math.sqrt((distX * distX) + (distY * distY));
+        const mouthDistance = this.distance(betweenEyesPos, mouthPos);
 
         const topOfHeadPosition = {x: 0, y: 0};
         topOfHeadPosition.x = betweenEyesPos.x + (mouthDistance * Math.cos(directionRads));
         topOfHeadPosition.y = betweenEyesPos.y + (mouthDistance * Math.sin(directionRads));
 
         return topOfHeadPosition;
+    }
+
+    distance (pointA, pointB) {
+        const dx = pointA.x - pointB.x;
+        const dy = pointA.y - pointB.y;
+        return Math.sqrt((dx * dx) + (dy * dy));
     }
 
     whenFaceDetected () {
