@@ -168,20 +168,13 @@ class Scratch3FaceSensingBlocks {
                     blockType: BlockType.HAT
                 },
                 {
-                    opcode: 'whenSpriteTouchesPart',
+                    opcode: 'whenSpriteTouchesFace',
                     text: formatMessage({
-                        id: 'faceSensing.whenSpriteTouchesPart',
-                        default: 'when this sprite touches [PART]',
+                        id: 'faceSensing.whenSpriteTouchesFace',
+                        default: 'when face touches this sprite',
                         description: ''
                     }),
-                    blockType: BlockType.HAT,
-                    arguments: {
-                        PART: {
-                            type: ArgumentType.STRING,
-                            menu: 'PART',
-                            defaultValue: '2'
-                        }
-                    }
+                    blockType: BlockType.HAT
                 },
                 {
                     opcode: 'whenTilted',
@@ -385,17 +378,12 @@ class Scratch3FaceSensingBlocks {
         return Math.sqrt((dx * dx) + (dy * dy));
     }
 
-    whenSpriteTouchesPart (args, util) {
+    whenSpriteTouchesFace (args, util) {
         if (!this.currentFace) return false;
-        if (!this.currentFace.landmarks) return false;
-        const pos = this.getPartPosition(args.PART);
-        const drawable = this.runtime.renderer._allDrawables[util.target.drawableID];
-        if (drawable) {
-            drawable.updateCPURenderAttributes();
-            return drawable.isTouching([pos.x, pos.y]);
-        }
-        return false;
-        // return util.target.isTouchingPoint(pos.x, pos.y); // nope, this takes client coords, as from mouse position
+        if (!this.currentFace.topLeft) return false;
+        const topLeft = this.toScratchCoords(this.currentFace.topLeft);
+        const bottomRight = this.toScratchCoords(this.currentFace.bottomRight);
+        return util.target.isTouchingRect(topLeft.x, topLeft.y, bottomRight.x, bottomRight.y);
     }
 
     whenFaceDetected () {
