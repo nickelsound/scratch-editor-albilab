@@ -168,6 +168,22 @@ class Scratch3FaceSensingBlocks {
                     blockType: BlockType.HAT
                 },
                 {
+                    opcode: 'whenSpriteTouchesPart',
+                    text: formatMessage({
+                        id: 'faceSensing.whenSpriteTouchesPart',
+                        default: 'when this sprite touches [PART]',
+                        description: ''
+                    }),
+                    blockType: BlockType.HAT,
+                    arguments: {
+                        PART: {
+                            type: ArgumentType.STRING,
+                            menu: 'PART',
+                            defaultValue: '2'
+                        }
+                    }
+                },
+                {
                     opcode: 'whenTilted',
                     text: formatMessage({
                         id: 'faceSensing.whenTilted',
@@ -367,6 +383,19 @@ class Scratch3FaceSensingBlocks {
         const dx = pointA.x - pointB.x;
         const dy = pointA.y - pointB.y;
         return Math.sqrt((dx * dx) + (dy * dy));
+    }
+
+    whenSpriteTouchesPart (args, util) {
+        if (!this.currentFace) return false;
+        if (!this.currentFace.landmarks) return false;
+        const pos = this.getPartPosition(args.PART);
+        const drawable = this.runtime.renderer._allDrawables[util.target.drawableID];
+        if (drawable) {
+            drawable.updateCPURenderAttributes();
+            return drawable.isTouching([pos.x, pos.y]);
+        }
+        return false;
+        // return util.target.isTouchingPoint(pos.x, pos.y); // nope, this takes client coords, as from mouse position
     }
 
     whenFaceDetected () {
