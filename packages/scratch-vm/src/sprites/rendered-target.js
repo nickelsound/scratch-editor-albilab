@@ -772,6 +772,13 @@ class RenderedTarget extends Target {
         return false;
     }
 
+    isTouchingScratchPoint (x, y) {
+        if (this.renderer) {
+            return this.renderer.drawableTouchingScratchPoint(this.drawableID, x, y);
+        }
+        return false;
+    }
+
     /**
      * Return whether touching a stage edge.
      * @return {boolean} True iff the rendered target is touching the stage edge.

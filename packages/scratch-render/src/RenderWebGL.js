@@ -1096,6 +1096,15 @@ class RenderWebGL extends EventEmitter {
         return false;
     }
 
+    drawableTouchingScratchPoint (drawableID, x, y) {
+        const drawable = this._allDrawables[drawableID];
+        if (!drawable) {
+            return false;
+        }
+        drawable.updateCPURenderAttributes();
+        return drawable.isTouching([x, y]);
+    }
+
     /**
      * Detect which sprite, if any, is at the given location.
      * This function will pick all drawables that are visible, unless specific

@@ -168,10 +168,10 @@ class Scratch3FaceSensingBlocks {
                     blockType: BlockType.HAT
                 },
                 {
-                    opcode: 'whenSpriteTouchesFace',
+                    opcode: 'whenSpriteTouchesNose',
                     text: formatMessage({
-                        id: 'faceSensing.whenSpriteTouchesFace',
-                        default: 'when face touches this sprite',
+                        id: 'faceSensing.whenSpriteTouchesNose',
+                        default: 'when this sprite touches a nose',
                         description: ''
                     }),
                     blockType: BlockType.HAT
@@ -378,12 +378,11 @@ class Scratch3FaceSensingBlocks {
         return Math.sqrt((dx * dx) + (dy * dy));
     }
 
-    whenSpriteTouchesFace (args, util) {
+    whenSpriteTouchesNose (args, util) {
         if (!this.currentFace) return false;
-        if (!this.currentFace.topLeft) return false;
-        const topLeft = this.toScratchCoords(this.currentFace.topLeft);
-        const bottomRight = this.toScratchCoords(this.currentFace.bottomRight);
-        return util.target.isTouchingRect(topLeft.x, topLeft.y, bottomRight.x, bottomRight.y);
+        if (!this.currentFace.landmarks) return false;
+        const nosePos = this.getPartPosition(2);
+        return util.target.isTouchingScratchPoint(nosePos.x, nosePos.y);
     }
 
     whenFaceDetected () {
