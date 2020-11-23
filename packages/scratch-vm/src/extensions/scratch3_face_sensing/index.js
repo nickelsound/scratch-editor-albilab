@@ -36,6 +36,8 @@ class Scratch3FaceSensingBlocks {
          */
         this.runtime = runtime;
 
+        this.runtime.emit('EXTENSION_DATA_LOADING', true);
+
         Blazeface.load().then(model => {
             this.blazeface = model;
             if (this.runtime.ioDevices) {
@@ -105,6 +107,11 @@ class Scratch3FaceSensingBlocks {
             if (frame) {
                 this.blazeface.estimateFaces(frame, false).then(faces => {
                     if (faces) {
+                        if (!this.firstTime) {
+                            console.log('first time');
+                            this.firstTime = true;
+                            this.runtime.emit('EXTENSION_DATA_LOADING', false);
+                        }
                         this.currentFace = faces[0];
                     }
                     this._lastUpdate = time;
