@@ -50,19 +50,19 @@ export default [
     {
         name: (
             <FormattedMessage
-                defaultMessage="Text"
-                description="Name for the 'Music' extension"
-                id="gui.extension.text.name"
+                defaultMessage="Face Sensing"
+                description="Name for the 'Face Sensing' extension"
+                id="gui.extension.faceSensing.name"
             />
         ),
-        extensionId: 'text',
+        extensionId: 'faceSensing',
         iconURL: makeymakeyIconURL,
         insetIconURL: makeymakeyInsetIconURL,
         description: (
             <FormattedMessage
-                defaultMessage="Play with text"
-                description="Description for the 'Music' extension"
-                id="gui.extension.text.description"
+                defaultMessage="Sense faces with the camera."
+                description="Description for the 'Face Sensing' extension"
+                id="gui.extension.faceSensing.description"
             />
         ),
         featured: true
