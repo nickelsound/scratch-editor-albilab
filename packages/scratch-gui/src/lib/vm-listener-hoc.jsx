@@ -208,9 +208,9 @@ const vmListenerHOC = function (WrappedComponent) {
         },
         onExtensionDataLoading: loading => {
             if (loading) {
-                dispatch(showStandardAlert('importingAsset'));
+                dispatch(showStandardAlert('loadingExtensionData'));
             } else {
-                dispatch(closeAlertWithId('importingAsset'));
+                dispatch(closeAlertWithId('loadingExtensionData'));
             }
         }
     });
