@@ -30,6 +30,7 @@ import DeletionRestorer from '../../containers/deletion-restorer.jsx';
 import TurboMode from '../../containers/turbo-mode.jsx';
 import MenuBarHOC from '../../containers/menu-bar-hoc.jsx';
 import questionIcon from '../../lib/assets/icon--help.svg';
+import DownloadConfirmation from './download-confirmation.jsx';
 
 import {openTipsLibrary} from '../../reducers/modals';
 import {setPlayer} from '../../reducers/mode';
@@ -176,8 +177,14 @@ class MenuBar extends React.Component {
             'handleLanguageMouseUp',
             'handleRestoreOption',
             'getSaveToComputerHandler',
-            'restoreOptionMessage'
+            'restoreOptionMessage',
+            'handleConfirmDownload',
+            'handleRejectDownload'
         ]);
+
+        this.state = {
+            downloadProjectCallback: null
+        };
     }
     componentDidMount () {
         document.addEventListener('keydown', this.handleKeyPress);
@@ -249,12 +256,22 @@ class MenuBar extends React.Component {
     getSaveToComputerHandler (downloadProjectCallback) {
         return () => {
             this.props.onRequestCloseFile();
-            downloadProjectCallback();
-            if (this.props.onProjectTelemetryEvent) {
-                const metadata = collectMetadata(this.props.vm, this.props.projectTitle, this.props.locale);
-                this.props.onProjectTelemetryEvent('projectDidSave', metadata);
-            }
+            this.setState({downloadProjectCallback});
+            // downloadProjectCallback();
+            // if (this.props.onProjectTelemetryEvent) {
+            //     const metadata = collectMetadata(this.props.vm, this.props.projectTitle, this.props.locale);
+            //     this.props.onProjectTelemetryEvent('projectDidSave', metadata);
+            // }
         };
+    }
+    handleConfirmDownload () {
+        if (this.state.downloadProjectCallback) {
+            this.state.downloadProjectCallback();
+        }
+        this.setState({downloadProjectCallback: null});
+    }
+    handleRejectDownload () {
+        this.setState({downloadProjectCallback: null});
     }
     handleLanguageMouseUp (e) {
         if (!this.props.languageMenuOpen) {
@@ -741,6 +758,12 @@ class MenuBar extends React.Component {
                     )}
                 </div>
                 {aboutButton}
+                {this.state.downloadProjectCallback && (
+                    <DownloadConfirmation 
+                        onConfirm={this.handleConfirmDownload}
+                        onReject={this.handleRejectDownload}
+                    />
+                )}
             </Box>
         );
     }
