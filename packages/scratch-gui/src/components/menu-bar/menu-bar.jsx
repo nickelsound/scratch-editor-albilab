@@ -89,6 +89,12 @@ const ariaMessages = defineMessages({
     }
 });
 
+const LastUpdated = () => (
+    <span>
+        Last updated Nov 24, 2020
+    </span>
+);
+
 const MenuBarItemTooltip = ({
     children,
     className,
@@ -604,10 +610,14 @@ class MenuBar extends React.Component {
                 {/* show the proper UI in the account menu, given whether the user is
                 logged in, and whether a session is available to log in with */}
                 <div className={styles.accountInfoGroup}>
+
                     <div className={styles.menuBarItem}>
                         {this.props.canSave && (
                             <SaveStatus />
                         )}
+                    </div>
+                    <div className={styles.menuBarItem}>
+                        <LastUpdated />
                     </div>
                     {this.props.sessionExists ? (
                         this.props.username ? (
@@ -730,7 +740,6 @@ class MenuBar extends React.Component {
                         </React.Fragment>
                     )}
                 </div>
-
                 {aboutButton}
             </Box>
         );
