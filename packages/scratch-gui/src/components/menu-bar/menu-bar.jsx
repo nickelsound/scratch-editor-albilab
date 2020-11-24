@@ -29,7 +29,6 @@ import SB3Downloader from '../../containers/sb3-downloader.jsx';
 import DeletionRestorer from '../../containers/deletion-restorer.jsx';
 import TurboMode from '../../containers/turbo-mode.jsx';
 import MenuBarHOC from '../../containers/menu-bar-hoc.jsx';
-import questionIcon from '../../lib/assets/icon--help.svg';
 import DownloadConfirmation from './download-confirmation.jsx';
 
 import {openTipsLibrary} from '../../reducers/modals';
@@ -72,6 +71,8 @@ import remixIcon from './icon--remix.svg';
 import dropdownCaret from './dropdown-caret.svg';
 import languageIcon from '../language-selector/language-icon.svg';
 import aboutIcon from './icon--about.svg';
+import feedbackIcon from './icon--feedback.svg';
+import questionIcon from '../../lib/assets/icon--help.svg';
 
 import scratchLogo from './scratch-logo.svg';
 
@@ -561,14 +562,19 @@ class MenuBar extends React.Component {
                         />
                         ) : null)}
                     <div className={classNames(styles.menuBarItem)}>
-                        <Button
-                            className={classNames(styles.menuBarItem, styles.feedbackButton)}
-                            iconClassName={styles.feedbackIcon}
-                            iconSrc={remixIcon}
-                            onClick={() => {alert('feedback button clicked')}}
+                        <a 
+                            href="https://docs.google.com/forms/d/e/1FAIpQLSfjOrhMRHnGtNnxTPpUhR0JvZ8eFExgdS4XFZ6n0nNY5hoQyA/viewform"
+                            target="blank"
+                            className={styles.menuBarItem}
                         >
-                            Give Feedback
-                        </Button>
+                            <Button
+                                className={classNames(styles.feedbackButton)}
+                                iconClassName={styles.feedbackIcon}
+                                iconSrc={feedbackIcon}
+                            >
+                                Give Feedback
+                            </Button>
+                        </a>
                     </div>
                     <div className={classNames(styles.menuBarItem)}>
                         {this.props.canShare ? (
