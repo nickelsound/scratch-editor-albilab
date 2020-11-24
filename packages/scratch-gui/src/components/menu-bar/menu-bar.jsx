@@ -29,6 +29,7 @@ import SB3Downloader from '../../containers/sb3-downloader.jsx';
 import DeletionRestorer from '../../containers/deletion-restorer.jsx';
 import TurboMode from '../../containers/turbo-mode.jsx';
 import MenuBarHOC from '../../containers/menu-bar-hoc.jsx';
+import questionIcon from '../../lib/assets/icon--help.svg';
 
 import {openTipsLibrary} from '../../reducers/modals';
 import {setPlayer} from '../../reducers/mode';
@@ -338,8 +339,8 @@ class MenuBar extends React.Component {
                     <div className={styles.fileGroup}>
                         <div className={classNames(styles.menuBarItem)}>
                             <img
-                                alt="Scratch"
-                                className={classNames(styles.scratchLogo, {
+                                alt="Scratch Lab"
+                                className={classNames(styles.scratchLabLogo, {
                                     [styles.clickable]: typeof this.props.onClickLogo !== 'undefined'
                                 })}
                                 draggable={false}
@@ -347,6 +348,20 @@ class MenuBar extends React.Component {
                                 onClick={this.props.onClickLogo}
                             />
                         </div>
+                        <Divider className={classNames(styles.divider)} />
+                        <div
+                            className={classNames(styles.menuBarItem, styles.hoverable)}
+                            onClick={this.props.onClickLogo}
+                        >
+                            Text Blocks
+                            <img
+                                alt="Help"
+                                className={styles.questionIcon}
+                                draggable={false}
+                                src={questionIcon}
+                            />
+                        </div>
+                        <Divider className={classNames(styles.divider)} />
                         {(this.props.canChangeLanguage) && (<div
                             className={classNames(styles.menuBarItem, styles.hoverable, styles.languageMenu)}
                         >
@@ -490,7 +505,7 @@ class MenuBar extends React.Component {
                         </div>
                     </div>
                     <Divider className={classNames(styles.divider)} />
-                    <div
+                    {/* <div
                         aria-label={this.props.intl.formatMessage(ariaMessages.tutorials)}
                         className={classNames(styles.menuBarItem, styles.hoverable)}
                         onClick={this.props.onOpenTipLibrary}
@@ -501,7 +516,7 @@ class MenuBar extends React.Component {
                         />
                         <FormattedMessage {...ariaMessages.tutorials} />
                     </div>
-                    <Divider className={classNames(styles.divider)} />
+                    <Divider className={classNames(styles.divider)} /> */}
                     {this.props.canEditTitle ? (
                         <div className={classNames(styles.menuBarItem, styles.growable)}>
                             <MenuBarItemTooltip
@@ -521,7 +536,17 @@ class MenuBar extends React.Component {
                             userId={this.props.authorId}
                             username={this.props.authorUsername}
                         />
-                    ) : null)}
+                        ) : null)}
+                    <div className={classNames(styles.menuBarItem)}>
+                        <Button
+                            className={classNames(styles.menuBarItem, styles.feedbackButton)}
+                            iconClassName={styles.feedbackIcon}
+                            iconSrc={remixIcon}
+                            onClick={() => {alert('feedback button clicked')}}
+                        >
+                            Give Feedback
+                        </Button>
+                    </div>
                     <div className={classNames(styles.menuBarItem)}>
                         {this.props.canShare ? (
                             (this.props.isShowingProject || this.props.isUpdating) && (
