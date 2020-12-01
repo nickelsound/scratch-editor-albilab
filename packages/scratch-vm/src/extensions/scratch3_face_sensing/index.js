@@ -453,15 +453,18 @@ class Scratch3FaceSensingBlocks {
     }
 
     goToPart (args, util) {
+        if (!this.currentFace) return;
         const pos = this.getPartPosition(args.PART);
         util.target.setXY(pos.x, pos.y);
     }
 
     pointInFaceTiltDirection (args, util) {
+        if (!this.currentFace) return;
         util.target.setDirection(this.faceTilt());
     }
 
     setSizeToFaceSize (args, util) {
+        if (!this.currentFace) return;
         util.target.setSize(this.faceSize());
     }
 
