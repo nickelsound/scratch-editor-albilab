@@ -94,28 +94,20 @@ class Scratch3FaceSensingBlocks {
     _loop () {
         setTimeout(this._loop.bind(this), Math.max(this.runtime.currentStepTime, Scratch3FaceSensingBlocks.INTERVAL));
 
-        const time = Date.now();
-        if (this._lastUpdate === null) {
-            this._lastUpdate = time;
-        }
-        const offset = time - this._lastUpdate;
-        if (offset > Scratch3FaceSensingBlocks.INTERVAL) {
-            const frame = this.runtime.ioDevices.video.getFrame({
-                format: Video.FORMAT_IMAGE_DATA,
-                dimensions: Scratch3FaceSensingBlocks.DIMENSIONS
-            });
-            if (frame) {
-                this.blazeface.estimateFaces(frame, false).then(faces => {
-                    if (faces) {
-                        if (!this.firstTime) {
-                            this.firstTime = true;
-                            this.runtime.emit('EXTENSION_DATA_LOADING', false);
-                        }
-                        this.currentFace = faces[0];
+        const frame = this.runtime.ioDevices.video.getFrame({
+            format: Video.FORMAT_IMAGE_DATA,
+            dimensions: Scratch3FaceSensingBlocks.DIMENSIONS
+        });
+        if (frame) {
+            this.blazeface.estimateFaces(frame, false).then(faces => {
+                if (faces) {
+                    if (!this.firstTime) {
+                        this.firstTime = true;
+                        this.runtime.emit('EXTENSION_DATA_LOADING', false);
                     }
-                    this._lastUpdate = time;
-                });
-            }
+                    this.currentFace = faces[0];
+                }
+            });
         }
     }
 
