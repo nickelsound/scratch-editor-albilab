@@ -46,14 +46,8 @@ class Scratch3FaceSensingBlocks {
             }
         });
 
-        this.currentPose = null;
-
-        /**
-         * The last millisecond epoch timestamp that the video stream was
-         * analyzed.
-         * @type {number}
-         */
-        this._lastUpdate = null;
+        this.cachedSize = 100;
+        this.cachedTilt = 90;
 
         this._clearAttachments = this._clearAttachments.bind(this);
         this.runtime.on('PROJECT_STOP_ALL', this._clearAttachments);
@@ -403,10 +397,10 @@ class Scratch3FaceSensingBlocks {
     }
 
     faceSize () {
-        if (this.currentFace) {
-            return Math.round(this.currentFace.bottomRight[0] - this.currentFace.topLeft[0]);
-        }
-        return 100;
+        if (!this.currentFace) return this.cachedSize;
+        const size = Math.round(this.currentFace.bottomRight[0] - this.currentFace.topLeft[0]);
+        this.cachedSize = size;
+        return size;
     }
 
     getPartPosition (part) {
@@ -517,12 +511,15 @@ class Scratch3FaceSensingBlocks {
     }
 
     faceTilt () {
+        if (!this.currentFace) return this.cachedTilt;
         const leftEyePos = this.getPartPosition(0);
         const rightEyePos = this.getPartPosition(1);
         const dx = rightEyePos.x - leftEyePos.x;
         const dy = rightEyePos.y - leftEyePos.y;
         const direction = 90 - MathUtil.radToDeg(Math.atan2(dy, dx));
-        return Math.round(direction);
+        const tilt = Math.round(direction);
+        this.cachedTilt = tilt;
+        return tilt;
     }
 }
 
