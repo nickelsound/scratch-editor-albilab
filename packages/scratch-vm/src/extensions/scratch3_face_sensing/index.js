@@ -108,7 +108,6 @@ class Scratch3FaceSensingBlocks {
                 this.blazeface.estimateFaces(frame, false).then(faces => {
                     if (faces) {
                         if (!this.firstTime) {
-                            console.log('first time');
                             this.firstTime = true;
                             this.runtime.emit('EXTENSION_DATA_LOADING', false);
                         }
