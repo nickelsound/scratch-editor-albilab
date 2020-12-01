@@ -166,10 +166,10 @@ class Scratch3FaceSensingBlocks {
                     blockType: BlockType.HAT
                 },
                 {
-                    opcode: 'whenSpriteTouchesNose',
+                    opcode: 'whenSpriteTouchesMouth',
                     text: formatMessage({
-                        id: 'faceSensing.whenSpriteTouchesNose',
-                        default: 'when this sprite touches a nose',
+                        id: 'faceSensing.whenSpriteTouchesMouth',
+                        default: 'when this sprite touches a mouth',
                         description: ''
                     }),
                     blockType: BlockType.HAT
@@ -230,7 +230,7 @@ class Scratch3FaceSensingBlocks {
                     opcode: 'faceIsDetected',
                     text: formatMessage({
                         id: 'faceSensing.faceDetected',
-                        default: 'face is detected?',
+                        default: 'a face is detected?',
                         description: ''
                     }),
                     blockType: BlockType.BOOLEAN
@@ -376,10 +376,10 @@ class Scratch3FaceSensingBlocks {
         return Math.sqrt((dx * dx) + (dy * dy));
     }
 
-    whenSpriteTouchesNose (args, util) {
+    whenSpriteTouchesMouth (args, util) {
         if (!this.currentFace) return false;
         if (!this.currentFace.landmarks) return false;
-        const nosePos = this.getPartPosition(2);
+        const nosePos = this.getPartPosition(3);
         return util.target.isTouchingScratchPoint(nosePos.x, nosePos.y);
     }
 
