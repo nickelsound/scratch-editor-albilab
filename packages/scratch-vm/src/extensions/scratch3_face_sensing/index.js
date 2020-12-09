@@ -4,6 +4,7 @@ const Clone = require('../../util/clone');
 const MathUtil = require('../../util/math-util');
 const formatMessage = require('format-message');
 const Video = require('../../io/video');
+const TargetType = require('../../extension-support/target-type');
 // const Posenet = require('@tensorflow-models/posenet');
 
 const Blazeface = require('@tensorflow-models/blazeface');
@@ -151,23 +152,43 @@ class Scratch3FaceSensingBlocks {
             menuIconURI: menuIconURI,
             blocks: [
                 {
-                    opcode: 'whenFaceDetected',
+                    opcode: 'goToPart',
                     text: formatMessage({
-                        id: 'faceSensing.whenFaceDetected',
-                        default: 'when a face is detected',
+                        id: 'faceSensing.goToPart',
+                        default: 'go to [PART]',
                         description: ''
                     }),
-                    blockType: BlockType.HAT
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+                        PART: {
+                            type: ArgumentType.STRING,
+                            menu: 'PART',
+                            defaultValue: '2'
+                        }
+                    },
+                    filter: [TargetType.SPRITE]
                 },
                 {
-                    opcode: 'whenSpriteTouchesMouth',
+                    opcode: 'pointInFaceTiltDirection',
                     text: formatMessage({
-                        id: 'faceSensing.whenSpriteTouchesMouth',
-                        default: 'when this sprite touches a mouth',
+                        id: 'faceSensing.pointInFaceTiltDirection',
+                        default: 'point in direction of face tilt',
                         description: ''
                     }),
-                    blockType: BlockType.HAT
+                    blockType: BlockType.COMMAND,
+                    filter: [TargetType.SPRITE]
                 },
+                {
+                    opcode: 'setSizeToFaceSize',
+                    text: formatMessage({
+                        id: 'faceSensing.setSizeToFaceSize',
+                        default: 'set size to face size',
+                        description: ''
+                    }),
+                    blockType: BlockType.COMMAND,
+                    filter: [TargetType.SPRITE]
+                },
+                '---',
                 {
                     opcode: 'whenTilted',
                     text: formatMessage({
@@ -184,40 +205,31 @@ class Scratch3FaceSensingBlocks {
                         }
                     }
                 },
-                '---',
                 {
-                    opcode: 'goToPart',
+                    opcode: 'whenSpriteTouchesPart',
                     text: formatMessage({
-                        id: 'faceSensing.goToPart',
-                        default: 'go to [PART]',
+                        id: 'faceSensing.whenSpriteTouchesPart',
+                        default: 'when this sprite touches a[PART]',
                         description: ''
                     }),
-                    blockType: BlockType.COMMAND,
                     arguments: {
                         PART: {
                             type: ArgumentType.STRING,
                             menu: 'PART',
                             defaultValue: '2'
                         }
-                    }
+                    },
+                    blockType: BlockType.HAT,
+                    filter: [TargetType.SPRITE]
                 },
                 {
-                    opcode: 'pointInFaceTiltDirection',
+                    opcode: 'whenFaceDetected',
                     text: formatMessage({
-                        id: 'faceSensing.pointInFaceTiltDirection',
-                        default: 'point in direction of face tilt',
+                        id: 'faceSensing.whenFaceDetected',
+                        default: 'when a face is detected',
                         description: ''
                     }),
-                    blockType: BlockType.COMMAND
-                },
-                {
-                    opcode: 'setSizeToFaceSize',
-                    text: formatMessage({
-                        id: 'faceSensing.setSizeToFaceSize',
-                        default: 'set size to face size',
-                        description: ''
-                    }),
-                    blockType: BlockType.COMMAND
+                    blockType: BlockType.HAT
                 },
                 '---',
                 {
@@ -370,11 +382,11 @@ class Scratch3FaceSensingBlocks {
         return Math.sqrt((dx * dx) + (dy * dy));
     }
 
-    whenSpriteTouchesMouth (args, util) {
+    whenSpriteTouchesPart (args, util) {
         if (!this.currentFace) return false;
         if (!this.currentFace.landmarks) return false;
-        const nosePos = this.getPartPosition(3);
-        return util.target.isTouchingScratchPoint(nosePos.x, nosePos.y);
+        const pos = this.getPartPosition(args.PART);
+        return util.target.isTouchingScratchPoint(pos.x, pos.y);
     }
 
     whenFaceDetected () {
