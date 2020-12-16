@@ -556,7 +556,7 @@ class MenuBar extends React.Component {
                         />
                         ) : null)}
                     <div className={classNames(styles.menuBarItem)}>
-                        <a 
+                        <a
                             href="https://docs.google.com/forms/d/e/1FAIpQLSfjOrhMRHnGtNnxTPpUhR0JvZ8eFExgdS4XFZ6n0nNY5hoQyA/viewform"
                             target="blank"
                             className={styles.menuBarItem}
@@ -756,7 +756,7 @@ class MenuBar extends React.Component {
 
                 {aboutButton}
                 {this.state.downloadProjectCallback && (
-                    <DownloadConfirmation 
+                    <DownloadConfirmation
                         onConfirm={this.handleConfirmDownload}
                         onReject={this.handleRejectDownload}
                     />
