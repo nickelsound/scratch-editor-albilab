@@ -50,6 +50,13 @@ class Scratch3FaceSensingBlocks {
         this.cachedSize = 100;
         this.cachedTilt = 90;
 
+        // Array of recent boolean values for whether or not a face was detected
+        this.isDetectedArrayLength = 5;
+        this.isDetectedArray = new Array(this.isDetectedArrayLength);
+        this.isDetectedArray.fill(false, 0, this.isDetectedArrayLength);
+        // Smoothed value for whether or not a face was detected
+        this.smoothedIsDetected = false;
+
         this._clearAttachments = this._clearAttachments.bind(this);
         this.runtime.on('PROJECT_STOP_ALL', this._clearAttachments);
     }
@@ -101,9 +108,27 @@ class Scratch3FaceSensingBlocks {
                         this.runtime.emit('EXTENSION_DATA_LOADING', false);
                     }
                     this.currentFace = faces[0];
+                    this.updateIsDetected();
                 }
             });
         }
+    }
+
+    updateIsDetected () {
+        this.isDetectedArray.push(!!this.currentFace);
+        if (this.isDetectedArray.length > this.isDetectedArrayLength) {
+            this.isDetectedArray.shift();
+        }
+        // if every recent detection is false, set to false
+        if (this.isDetectedArray.every(item => item === false)) {
+            this.smoothedIsDetected = false;
+        }
+        // if every recent detection is true, set to true
+        if (this.isDetectedArray.every(item => item === true)) {
+            this.smoothedIsDetected = true;
+        }
+
+        // if there's a mix of true and false values, do not change the result
     }
 
     _getFaceSensingState (target) {
@@ -390,11 +415,11 @@ class Scratch3FaceSensingBlocks {
     }
 
     whenFaceDetected () {
-        return this.currentFace;
+        return this.smoothedIsDetected;
     }
 
     faceIsDetected () {
-        return !!this.currentFace;
+        return this.smoothedIsDetected;
     }
 
     numberOfFaces () {
