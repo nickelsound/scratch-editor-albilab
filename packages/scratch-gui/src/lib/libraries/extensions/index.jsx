@@ -7,9 +7,6 @@ import musicInsetIconURL from './music/music-small.svg';
 import penIconURL from './pen/pen.png';
 import penInsetIconURL from './pen/pen-small.svg';
 
-import textIconURL from './text/text.png';
-import textInsetIconURL from './text/text-small.svg';
-
 import videoSensingIconURL from './videoSensing/video-sensing.png';
 import videoSensingInsetIconURL from './videoSensing/video-sensing-small.svg';
 
@@ -86,26 +83,6 @@ export default [
                 defaultMessage="Draw with your sprites."
                 description="Description for the 'Pen' extension"
                 id="gui.extension.pen.description"
-            />
-        ),
-        featured: true
-    },
-    {
-        name: (
-            <FormattedMessage
-                defaultMessage="Text"
-                description="Name for the 'Text' extension"
-                id="gui.extension.text.name"
-            />
-        ),
-        extensionId: 'text',
-        iconURL: textIconURL,
-        insetIconURL: textInsetIconURL,
-        description: (
-            <FormattedMessage
-                defaultMessage="Create text that moves and changes"
-                description="Description for the 'Text' extension"
-                id="gui.extension.text.description"
             />
         ),
         featured: true
