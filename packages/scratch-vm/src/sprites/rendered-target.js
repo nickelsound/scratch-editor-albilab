@@ -374,16 +374,10 @@ class RenderedTarget extends Target {
             const origW = costumeSize[0];
             const origH = costumeSize[1];
             const minScale = Math.min(1, Math.max(5 / origW, 5 / origH));
-            let maxScale = Math.min(
+            const maxScale = Math.min(
                 (1.5 * this.runtime.constructor.STAGE_WIDTH) / origW,
                 (1.5 * this.runtime.constructor.STAGE_HEIGHT) / origH
             );
-            // Allow special skins to override max scale, like the textCostumeSkin which
-            // reflows text on its own so clamping is not needed.
-            let overrideScale = this.renderer.getCurrentSkinMaxScale(this.drawableID);
-            if (overrideScale !== null) {
-                maxScale = overrideScale;
-            }
             this.size = MathUtil.clamp(size / 100, minScale, maxScale) * 100;
             const {direction, scale} = this._getRenderedDirectionAndScale();
             this.renderer.updateDrawableDirectionScale(this.drawableID, direction, scale);
