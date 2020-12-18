@@ -11,7 +11,6 @@ const RenderConstants = require('./RenderConstants');
 const ShaderManager = require('./ShaderManager');
 const SVGSkin = require('./SVGSkin');
 const TextBubbleSkin = require('./TextBubbleSkin');
-const TextCostumeSkin = require('./TextCostumeSkin');
 const EffectTransform = require('./EffectTransform');
 const log = require('./util/log');
 
@@ -425,23 +424,6 @@ class RenderWebGL extends EventEmitter {
         this._reskin(skinId, newSkin);
     }
 
-    updateTextCostumeSkin (textState) {
-        // update existing skin
-        if (textState.skinId && (this._allSkins[textState.skinId] instanceof TextCostumeSkin)) {
-            this._allSkins[textState.skinId].setTextAndStyle(textState);
-            return textState.skinId;
-        }
-
-        // create and update a new skin
-        const skinId = this._nextSkinId++;
-        const newSkin = new TextCostumeSkin(skinId, this);
-        this._allSkins[skinId] = newSkin;
-        newSkin.setTextAndStyle(textState);
-        // this._reskin(skinId, newSkin); // this is erroring- might be necessary?
-
-        return skinId;
-    }
-
     _reskin (skinId, newSkin) {
         const oldSkin = this._allSkins[skinId];
         this._allSkins[skinId] = newSkin;
@@ -752,17 +734,6 @@ class RenderWebGL extends EventEmitter {
     getCurrentSkinSize (drawableID) {
         const drawable = this._allDrawables[drawableID];
         return this.getSkinSize(drawable.skin.id);
-    }
-
-    /**
-     * Get the max scale the skin prefers. Only relevant for 
-     * skins that have do not scale up normally, like reflowing text.
-     * @param {int} drawableID The ID of the Drawable to measure.
-     * @return {number} Max scale preferred by the skin, or null.
-     */
-    getCurrentSkinMaxScale(drawableID) {
-        const drawable = this._allDrawables[drawableID];
-        return this._allSkins[drawable.skin.id].maxScale;
     }
 
     /**
