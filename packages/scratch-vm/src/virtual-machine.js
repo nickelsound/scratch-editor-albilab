@@ -127,6 +127,9 @@ class VirtualMachine extends EventEmitter {
         this.runtime.on(Runtime.PERIPHERAL_LIST_UPDATE, info => {
             this.emit(Runtime.PERIPHERAL_LIST_UPDATE, info);
         });
+        this.runtime.on(Runtime.USER_PICKED_PERIPHERAL, info => {
+            this.emit(Runtime.USER_PICKED_PERIPHERAL, info);
+        });
         this.runtime.on(Runtime.PERIPHERAL_CONNECTED, () =>
             this.emit(Runtime.PERIPHERAL_CONNECTED)
         );
@@ -144,9 +147,6 @@ class VirtualMachine extends EventEmitter {
         );
         this.runtime.on(Runtime.MIC_LISTENING, listening => {
             this.emit(Runtime.MIC_LISTENING, listening);
-        });
-        this.runtime.on(Runtime.EXTENSION_DATA_LOADING, loading => {
-            this.emit(Runtime.EXTENSION_DATA_LOADING, loading);
         });
         this.runtime.on(Runtime.RUNTIME_STARTED, () => {
             this.emit(Runtime.RUNTIME_STARTED);
