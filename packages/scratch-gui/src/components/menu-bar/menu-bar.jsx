@@ -371,7 +371,7 @@ class MenuBar extends React.Component {
                             className={classNames(styles.menuBarItem, styles.hoverable)}
                             onClick={this.props.onClickLogo}
                         >
-                            Text Blocks
+                            Face Sensing Blocks
                             <img
                                 alt="Help"
                                 className={styles.questionIcon}
