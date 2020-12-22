@@ -664,6 +664,10 @@ class Runtime extends EventEmitter {
         return 'MIC_LISTENING';
     }
 
+    static get EXTENSION_DATA_LOADING () {
+        return 'EXTENSION_DATA_LOADING';
+    }
+
     /**
      * Event name for reporting that blocksInfo was updated.
      * @const {string}
@@ -1518,6 +1522,10 @@ class Runtime extends EventEmitter {
      */
     emitMicListening (listening) {
         this.emit(Runtime.MIC_LISTENING, listening);
+    }
+
+    emitExtensionLoading (loading) {
+        this.emit(Runtime.EXTENSION_DATA_LOADING, loading);
     }
 
     /**
