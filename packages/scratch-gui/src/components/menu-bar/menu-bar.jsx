@@ -557,7 +557,7 @@ class MenuBar extends React.Component {
                         ) : null)}
                     <div className={classNames(styles.menuBarItem)}>
                         <a 
-                            href="https://docs.google.com/forms/d/e/1FAIpQLSfjOrhMRHnGtNnxTPpUhR0JvZ8eFExgdS4XFZ6n0nNY5hoQyA/viewform"
+                            href="https://docs.google.com/forms/d/e/1FAIpQLSdjiqseH--ZVI_wkBfO2iU2MplmM6UviGOWZsQirjo9Q3DZdA/viewform"
                             target="blank"
                             className={styles.menuBarItem}
                         >
