@@ -98,7 +98,8 @@ class Scratch3FaceSensingBlocks {
 
         const frame = this.runtime.ioDevices.video.getFrame({
             format: Video.FORMAT_IMAGE_DATA,
-            dimensions: Scratch3FaceSensingBlocks.DIMENSIONS
+            dimensions: Scratch3FaceSensingBlocks.DIMENSIONS,
+            cacheTimeout: this.runtime.currentStepTime
         });
         if (frame) {
             this.blazeface.estimateFaces(frame, false).then(faces => {
