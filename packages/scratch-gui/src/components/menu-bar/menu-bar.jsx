@@ -356,15 +356,16 @@ class MenuBar extends React.Component {
                 <div className={styles.mainMenu}>
                     <div className={styles.fileGroup}>
                         <div className={classNames(styles.menuBarItem)}>
-                            <img
-                                alt="Scratch Lab"
-                                className={classNames(styles.scratchLabLogo, {
-                                    [styles.clickable]: typeof this.props.onClickLogo !== 'undefined'
-                                })}
-                                draggable={false}
-                                src={this.props.logo}
-                                onClick={this.props.onClickLogo}
-                            />
+                            <a href="https://lab.scratch.mit.edu/">
+                                <img
+                                    alt="Scratch Lab"
+                                    className={classNames(styles.scratchLabLogo, {
+                                        [styles.clickable]: typeof this.props.onClickLogo !== 'undefined'
+                                    })}
+                                    draggable={false}
+                                    src={this.props.logo}
+                                />
+                            </a>
                         </div>
                         <Divider className={classNames(styles.divider)} />
                         <div
