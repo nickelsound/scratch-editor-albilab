@@ -142,6 +142,13 @@ class Blocks extends React.Component {
         if (this.props.isVisible) {
             this.setLocale();
         }
+
+        // load starter extension on load
+        setTimeout(() => {
+            this.props.vm.extensionManager.loadExtensionURL('starter').then(() => {
+                this.handleCategorySelected('starter');
+            });
+        }, 1000);
     }
     shouldComponentUpdate (nextProps, nextState) {
         return (

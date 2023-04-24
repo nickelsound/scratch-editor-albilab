@@ -9,6 +9,7 @@ import React from 'react';
 
 import VM from 'scratch-vm';
 
+import DownloadConfirmation from './download-confirmation.jsx';
 import Box from '../box/box.jsx';
 import Button from '../button/button.jsx';
 import CommunityButton from './community-button.jsx';
@@ -76,6 +77,8 @@ import collectMetadata from '../../lib/collect-metadata';
 
 import styles from './menu-bar.css';
 
+import feedbackIcon from './icon--feedback.svg';
+import questionIcon from '../../lib/assets/icon--help.svg';
 import helpIcon from '../../lib/assets/icon--tutorials.svg';
 import mystuffIcon from './icon--mystuff.png';
 import profileIcon from './icon--profile.png';
@@ -186,9 +189,15 @@ class MenuBar extends React.Component {
             'handleKeyPress',
             'handleLanguageMouseUp',
             'handleRestoreOption',
+            'handleConfirmDownload',
+            'handleRejectDownload',
             'getSaveToComputerHandler',
             'restoreOptionMessage'
         ]);
+
+        this.state = {
+            downloadProjectCallback: null
+        };
     }
     componentDidMount () {
         document.addEventListener('keydown', this.handleKeyPress);
@@ -290,12 +299,24 @@ class MenuBar extends React.Component {
     getSaveToComputerHandler (downloadProjectCallback) {
         return () => {
             this.props.onRequestCloseFile();
+            this.setState({downloadProjectCallback});
+            /*
             downloadProjectCallback();
             if (this.props.onProjectTelemetryEvent) {
                 const metadata = collectMetadata(this.props.vm, this.props.projectTitle, this.props.locale);
                 this.props.onProjectTelemetryEvent('projectDidSave', metadata);
             }
+            */
         };
+    }
+    handleConfirmDownload () {
+        if (this.state.downloadProjectCallback) {
+            this.state.downloadProjectCallback();
+        }
+        this.setState({downloadProjectCallback: null});
+    }
+    handleRejectDownload () {
+        this.setState({downloadProjectCallback: null});
     }
     handleLanguageMouseUp (e) {
         if (!this.props.languageMenuOpen) {
@@ -437,15 +458,29 @@ class MenuBar extends React.Component {
                         <div className={classNames(styles.menuBarItem)}>
                             <img
                                 id="logo_img"
-                                alt="Scratch"
-                                className={classNames(styles.scratchLogo, {
+                                alt="Scratch Lab"
+                                className={classNames(styles.scratchLabLogo, {
                                     [styles.clickable]: typeof this.props.onClickLogo !== 'undefined'
                                 })}
                                 draggable={false}
                                 src={this.props.logo}
-                                onClick={this.props.onClickLogo}
+                                // onClick={this.props.onClickLogo}
                             />
                         </div>
+                        <Divider className={classNames(styles.divider)} />
+                        <div
+                            className={classNames(styles.menuBarItem, styles.hoverable)}
+                            // onClick={this.props.onClickLogo}
+                        >
+                            Starter Blocks
+                            <img
+                                alt="Help"
+                                className={styles.questionIcon}
+                                draggable={false}
+                                src={questionIcon}
+                            />
+                        </div>
+                        <Divider className={classNames(styles.divider)} />
                         {(this.props.canChangeLanguage) && (<div
                             className={classNames(styles.menuBarItem, styles.hoverable, styles.languageMenu)}
                         >
@@ -626,6 +661,7 @@ class MenuBar extends React.Component {
                         )}
                     </div>
                     <Divider className={classNames(styles.divider)} />
+                    {/*
                     <div
                         aria-label={this.props.intl.formatMessage(ariaMessages.tutorials)}
                         className={classNames(styles.menuBarItem, styles.hoverable)}
@@ -638,6 +674,7 @@ class MenuBar extends React.Component {
                         <FormattedMessage {...ariaMessages.tutorials} />
                     </div>
                     <Divider className={classNames(styles.divider)} />
+                    */}
                     {this.props.canEditTitle ? (
                         <div className={classNames(styles.menuBarItem, styles.growable)}>
                             <MenuBarItemTooltip
@@ -658,6 +695,23 @@ class MenuBar extends React.Component {
                             username={this.props.authorUsername}
                         />
                     ) : null)}
+                    {/* // remove feedback button
+                    <div className={classNames(styles.menuBarItem)}>
+                        <a
+                            href="https://docs.google.com/forms/d/e/1FAIpQLSdjiqseH--ZVI_wkBfO2iU2MplmM6UviGOWZsQirjo9Q3DZdA/viewform"
+                            target="blank"
+                            className={styles.menuBarItem}
+                        >
+                            <Button
+                                className={classNames(styles.feedbackButton)}
+                                iconClassName={styles.feedbackIcon}
+                                iconSrc={feedbackIcon}
+                            >
+                                Give Feedback
+                            </Button>
+                        </a>
+                    </div>
+                    */}
                     <div className={classNames(styles.menuBarItem)}>
                         {this.props.canShare ? (
                             (this.props.isShowingProject || this.props.isUpdating) && (
@@ -843,6 +897,12 @@ class MenuBar extends React.Component {
                 </div>
 
                 {aboutButton}
+                {this.state.downloadProjectCallback && (
+                    <DownloadConfirmation
+                        onConfirm={this.handleConfirmDownload}
+                        onReject={this.handleRejectDownload}
+                    />
+                )}
             </Box>
         );
     }

@@ -1,6 +1,9 @@
 import React from 'react';
 import {FormattedMessage} from 'react-intl';
 
+import starterIconURL from './starter/starter.png';
+import starterInsetIconURL from './starter/starter-small.svg';
+
 import musicIconURL from './music/music.png';
 import musicInsetIconURL from './music/music-small.svg';
 
@@ -47,6 +50,26 @@ import gdxforConnectionIconURL from './gdxfor/gdxfor-illustration.svg';
 import gdxforConnectionSmallIconURL from './gdxfor/gdxfor-small.svg';
 
 export default [
+    {
+        name: (
+            <FormattedMessage
+                defaultMessage="Starter Blocks"
+                description="Name for the 'Starter Blocks' extension"
+                id="gui.extension.starter.name"
+            />
+        ),
+        extensionId: 'starter',
+        iconURL: starterIconURL,
+        insetIconURL: starterInsetIconURL,
+        description: (
+            <FormattedMessage
+                defaultMessage="Starter Blocks extension description here."
+                description="Description for the 'Starter Blocks' extension"
+                id="gui.extension.starter.description"
+            />
+        ),
+        featured: true
+    },
     {
         name: (
             <FormattedMessage
