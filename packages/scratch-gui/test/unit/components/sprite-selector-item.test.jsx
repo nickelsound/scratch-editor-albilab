@@ -77,7 +77,13 @@ describe('SpriteSelectorItemComponent', () => {
         const contextMenu = wrapper.find('ContextMenu');
         expect(contextMenu.exists()).toBe(true);
 
-        contextMenu.find('[children="delete"]').simulate('click');
+        console.log(contextMenu.find({children: "delete"}).debug());
+
+            contextMenu.findWhere(node => {
+                return (
+                  node.type() &&
+                  node.text() === "delete"
+                )})[4].simulate('click');
         expect(onDeleteButtonClick).toHaveBeenCalled();
     });
 });

@@ -4,7 +4,6 @@ Nearly identical code appears in scratch-www, and the two should
 eventually be consolidated.
 */
 
-import {injectIntl} from 'react-intl';
 import PropTypes from 'prop-types';
 import React from 'react';
 import {connect} from 'react-redux';
@@ -47,7 +46,4 @@ const mapStateToProps = state => ({
 
 const mapDispatchToProps = () => ({});
 
-export default injectIntl(connect(
-    mapStateToProps,
-    mapDispatchToProps
-)(AccountNav));
+export default connect(mapStateToProps, mapDispatchToProps)(AccountNav);
