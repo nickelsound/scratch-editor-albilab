@@ -85,22 +85,59 @@ describe('Sound Editor Component', () => {
             <SoundEditor {...props} />
         );
 
-        wrapper.find('[children="Reverse"]').simulate('click');
+            // First find all IconButtons, then filter to the one containing our text
+        wrapper
+        .findWhere(node => 
+        node.type() === 'div' && 
+        node.prop('role') === 'button' && 
+        node.text() === 'Reverse'
+        )
+        .simulate('click');
         expect(props.onReverse).toHaveBeenCalled();
 
-        wrapper.find('[children="Robot"]').simulate('click');
+        wrapper
+        .findWhere(node => 
+        node.type() === 'div' && 
+        node.prop('role') === 'button' && 
+        node.text() === 'Robot'
+        )
+        .simulate('click');
         expect(props.onRobot).toHaveBeenCalled();
 
-        wrapper.find('[children="Faster"]').simulate('click');
+        wrapper
+        .findWhere(node => 
+        node.type() === 'div' && 
+        node.prop('role') === 'button' && 
+        node.text() === 'Faster'
+        )
+        .simulate('click');
         expect(props.onFaster).toHaveBeenCalled();
 
-        wrapper.find('[children="Slower"]').simulate('click');
+        wrapper
+        .findWhere(node => 
+        node.type() === 'div' && 
+        node.prop('role') === 'button' && 
+        node.text() === 'Slower'
+        )
+        .simulate('click');
         expect(props.onSlower).toHaveBeenCalled();
 
-        wrapper.find('[children="Louder"]').simulate('click');
+        wrapper
+        .findWhere(node => 
+        node.type() === 'div' && 
+        node.prop('role') === 'button' && 
+        node.text() === 'Louder'
+        )
+        .simulate('click');
         expect(props.onLouder).toHaveBeenCalled();
 
-        wrapper.find('[children="Softer"]').simulate('click');
+        wrapper
+        .findWhere(node => 
+        node.type() === 'div' && 
+        node.prop('role') === 'button' && 
+        node.text() === 'Softer'
+        )
+        .simulate('click');
         expect(props.onSofter).toHaveBeenCalled();
     });
 
