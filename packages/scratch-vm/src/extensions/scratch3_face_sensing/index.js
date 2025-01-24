@@ -7,8 +7,7 @@ const Video = require('../../io/video');
 const TargetType = require('../../extension-support/target-type');
 // const Posenet = require('@tensorflow-models/posenet');
 
-const Blazeface = require('@tensorflow-models/blazeface');
-// import * as Blazeface from '@tensorflow-models/blazeface';
+const FaceDetection = require('@tensorflow-models/face-detection');
 
 /**
  * Icon svg to be displayed in the blocks category menu, encoded as a data URI.
@@ -39,10 +38,16 @@ class Scratch3FaceSensingBlocks {
 
         this.runtime.emit('EXTENSION_DATA_LOADING', true);
 
-        Blazeface.load().then(model => {
-            this.blazeface = model;
+        const model = FaceDetection.SupportedModels.MediaPipeFaceDetector;
+        const detectorConfig = {
+            runtime: 'mediapipe',
+            solutionPath: 'https://cdn.jsdelivr.net/npm/@mediapipe/face_detection',
+            maxFaces: 1
+        };
+    
+        FaceDetection.createDetector(model, detectorConfig).then(detector => {
+            this.faceDetector = detector;
             if (this.runtime.ioDevices) {
-                // Kick off looping the analysis logic.
                 this._loop();
             }
         });
@@ -102,15 +107,17 @@ class Scratch3FaceSensingBlocks {
             cacheTimeout: this.runtime.currentStepTime
         });
         if (frame) {
-            this.blazeface.estimateFaces(frame, false).then(faces => {
-                if (faces) {
+            this.faceDetector.estimateFaces(frame).then(faces => {
+                if (faces && faces.length > 0) {
                     if (!this.firstTime) {
                         this.firstTime = true;
                         this.runtime.emit('EXTENSION_DATA_LOADING', false);
                     }
                     this.currentFace = faces[0];
-                    this.updateIsDetected();
+                } else {
+                    this.currentFace = null;
                 }
+                this.updateIsDetected();
             });
         }
     }
@@ -354,7 +361,7 @@ class Scratch3FaceSensingBlocks {
             ],
             menus: {
                 PART: [
-                    {text: 'nose', value: '2'},
+                    {text: 'noseTip', value: '2'},
                     {text: 'mouth', value: '3'},
                     {text: 'left eye', value: '0'},
                     {text: 'right eye', value: '1'},
@@ -436,7 +443,7 @@ class Scratch3FaceSensingBlocks {
 
     faceSize () {
         if (!this.currentFace) return this.cachedSize;
-        const size = Math.round(this.currentFace.bottomRight[0] - this.currentFace.topLeft[0]);
+        const size = Math.round(this.currentFace.box.height);
         this.cachedSize = size;
         return size;
     }
@@ -444,24 +451,25 @@ class Scratch3FaceSensingBlocks {
     getPartPosition (part) {
         const defaultPos = {x: 0, y: 0};
         if (!this.currentFace) return defaultPos;
-        if (!this.currentFace.landmarks) return defaultPos;
+        if (!this.currentFace.keypoints) return defaultPos;
         if (Number(part) === 6) {
             return this.getBetweenEyesPosition();
         }
         if (Number(part) === 7) {
             return this.getTopOfHeadPosition();
         }
-        const result = this.currentFace.landmarks[Number(part)];
+        const result = this.currentFace.keypoints[Number(part)];
         if (result) {
-            return this.toScratchCoords(result);
+            const res = this.toScratchCoords(result);
+            return res;
         }
         return defaultPos;
     }
 
     toScratchCoords (position) {
         return {
-            x: position[0] - 240,
-            y: 180 - position[1]
+            x: position.x - 240,
+            y: 180 - position.y
         };
     }
 
