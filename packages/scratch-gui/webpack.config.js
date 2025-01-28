@@ -105,12 +105,6 @@ const buildConfig = baseConfig.clone()
         },
         output: {
             path: path.resolve(__dirname, 'build')
-        },
-        resolve: {
-            alias: {
-                'react': require.resolve(path.join(__dirname, '../../node_modules/react')),
-                'react-dom': require.resolve(path.join(__dirname, '../../node_modules/react-dom'))
-            }
         }
     })
     .addPlugin(new HtmlWebpackPlugin({
