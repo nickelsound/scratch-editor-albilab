@@ -1,35 +1,39 @@
 import React from 'react';
-import {ContextMenu, MenuItem} from 'react-contextmenu';
+// import {ContextMenu, MenuItem} from 'react-contextmenu';
 import classNames from 'classnames';
 
 import styles from './context-menu.css';
 
 const StyledContextMenu = props => (
-    <ContextMenu
-        {...props}
-        className={styles.contextMenu}
-    />
+    <p></p>
+    // <ContextMenu
+    //     {...props}
+    //     className={styles.contextMenu}
+    // />
 );
 
 const StyledMenuItem = props => (
-    <MenuItem
-        {...props}
-        attributes={{className: styles.menuItem}}
-    />
+    <p></p>
+    // <MenuItem
+    //     {...props}
+    //     attributes={{className: styles.menuItem}}
+    // />
 );
 
 const BorderedMenuItem = props => (
-    <MenuItem
-        {...props}
-        attributes={{className: classNames(styles.menuItem, styles.menuItemBordered)}}
-    />
+    <p></p>
+    // <MenuItem
+    //     {...props}
+    //     attributes={{className: classNames(styles.menuItem, styles.menuItemBordered)}}
+    // />
 );
 
 const DangerousMenuItem = props => (
-    <MenuItem
-        {...props}
-        attributes={{className: classNames(styles.menuItem, styles.menuItemBordered, styles.menuItemDanger)}}
-    />
+    <p></p>
+    // <MenuItem
+    //     {...props}
+    //     attributes={{className: classNames(styles.menuItem, styles.menuItemBordered, styles.menuItemDanger)}}
+    // />
 );
 
 
