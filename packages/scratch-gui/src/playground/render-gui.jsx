@@ -1,5 +1,5 @@
 import React from 'react';
-import ReactDOM from 'react-dom/client';
+import ReactDOM from 'react-dom';
 import {compose} from 'redux';
 
 import AppStateHOC from '../lib/app-state-hoc.jsx';

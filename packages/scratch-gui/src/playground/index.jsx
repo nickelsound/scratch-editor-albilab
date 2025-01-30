@@ -5,7 +5,7 @@ import 'core-js/fn/promise/finally';
 import 'intl'; // For Safari 9
 
 import React from 'react';
-import ReactDOM from 'react-dom/client';
+import ReactDOM from 'react-dom';
 
 import AppStateHOC from '../lib/app-state-hoc.jsx';
 import BrowserModalComponent from '../components/browser-modal/browser-modal.jsx';
