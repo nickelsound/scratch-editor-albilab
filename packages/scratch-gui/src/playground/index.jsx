@@ -5,7 +5,7 @@ import 'core-js/fn/promise/finally';
 import 'intl'; // For Safari 9
 
 import React from 'react';
-import ReactDOM from 'react-dom';
+import ReactDOM from 'react-dom/client';
 
 import AppStateHOC from '../lib/app-state-hoc.jsx';
 import BrowserModalComponent from '../components/browser-modal/browser-modal.jsx';
@@ -27,5 +27,6 @@ if (supportedBrowser()) {
     const WrappedBrowserModalComponent = AppStateHOC(BrowserModalComponent, true /* localesOnly */);
     const handleBack = () => {};
     // eslint-disable-next-line react/jsx-no-bind
-    ReactDOM.render(<WrappedBrowserModalComponent onBack={handleBack} />, appTarget);
+    const root = ReactDOM.createRoot(appTarget)
+    root.render(<WrappedBrowserModalComponent onBack={handleBack} />);
 }

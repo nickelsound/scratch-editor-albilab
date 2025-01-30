@@ -1,5 +1,5 @@
 import React from 'react';
-import ReactDOM from 'react-dom';
+import ReactDOM from 'react-dom/client';
 import {compose} from 'redux';
 
 import AppStateHOC from '../lib/app-state-hoc.jsx';
@@ -61,7 +61,9 @@ export default appTarget => {
         window.onbeforeunload = () => true;
     }
 
-    ReactDOM.render(
+    const root = ReactDOM.createRoot(appTarget)
+
+    root.render(
         // important: this is checking whether `simulateScratchDesktop` is truthy, not just defined!
         simulateScratchDesktop ?
             <WrappedGui
@@ -80,6 +82,6 @@ export default appTarget => {
                 backpackHost={backpackHost}
                 canSave={false}
                 onClickLogo={onClickLogo}
-            />,
-        appTarget);
+            />
+    );
 };

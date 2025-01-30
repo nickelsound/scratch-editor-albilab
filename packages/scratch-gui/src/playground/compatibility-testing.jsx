@@ -1,9 +1,10 @@
 import React from 'react';
-import ReactDOM from 'react-dom';
+import ReactDOM from 'react-dom/client';
 
 import GUI from '../containers/gui.jsx';
 import HashParserHOC from '../lib/hash-parser-hoc.jsx';
 import AppStateHOC from '../lib/app-state-hoc.jsx';
+import { a } from 'bowser';
 const WrappedGui = AppStateHOC(HashParserHOC(GUI));
 
 
@@ -53,4 +54,5 @@ class Player extends React.Component {
 const appTarget = document.createElement('div');
 document.body.appendChild(appTarget);
 
-ReactDOM.render(<Player />, appTarget);
+const root = ReactDOM.createRoot(appTarget)
+root.render(<Player />);
