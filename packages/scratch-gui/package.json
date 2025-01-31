@@ -28,6 +28,7 @@
   },
   "dependencies": {
     "@microbit/microbit-universal-hex": "^0.2.2",
+    "@radix-ui/react-context-menu": "^2.2.5",
     "@scratch/scratch-render": "1.0.317",
     "@scratch/scratch-svg-renderer": "2.3.126",
     "@scratch/scratch-vm": "4.5.457",
