@@ -1,8 +1,7 @@
 import React from 'react';
-import * as ContextMenu from '@radix-ui/react-context-menu';
+// import * as ContextMenu from '@radix-ui/react-context-menu';
 import classNames from 'classnames';
 import styles from './context-menu.css';
-import jsx from 'react/jsx-dev-runtime'
 
 const StyledContextMenu = ({ children, ...props }) => (
     <p></p>

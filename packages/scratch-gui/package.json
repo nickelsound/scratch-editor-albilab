@@ -28,7 +28,6 @@
   },
   "dependencies": {
     "@microbit/microbit-universal-hex": "^0.2.2",
-    "@radix-ui/react-context-menu": "^2.2.5",
     "@scratch/scratch-render": "1.0.317",
     "@scratch/scratch-svg-renderer": "2.3.126",
     "@scratch/scratch-vm": "4.5.457",
@@ -73,7 +72,7 @@
     "react-intl": "6.8.9",
     "react-modal": "^3.16.3",
     "react-popover": "0.5.10",
-    "react-redux": "8.0.0",
+    "react-redux": "^8.0.0",
     "react-responsive": "9.0.0",
     "react-style-proptype": "3.2.2",
     "react-tabs": "^5.2.0",
@@ -84,7 +83,7 @@
     "scratch-audio": "^1.0.0",
     "scratch-blocks": "^1.1.6",
     "scratch-l10n": "^3.18.3",
-    "scratch-paint": "github:Bogomil-Stoyanov/scratch-paint#dd0d34e95ce55efb7dc5bd1b6fab29f8f05f5df6",
+    "scratch-paint": "github:Bogomil-Stoyanov/scratch-paint#origin/feature/uepr63-react-18",
     "scratch-render-fonts": "^1.0.2",
     "scratch-storage": "^2.3.1",
     "startaudiocontext": "^1.2.1",
@@ -96,7 +95,8 @@
   },
   "peerDependencies": {
     "react": "^18.0.0",
-    "react-dom": "^18.0.0"
+    "react-dom": "^18.0.0",
+    "react-redux": "^8.0.0"
   },
   "devDependencies": {
     "@babel/cli": "7.24.8",
