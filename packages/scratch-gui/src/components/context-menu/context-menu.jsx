@@ -4,7 +4,7 @@ import classNames from 'classnames';
 import styles from './context-menu.css';
 
 const StyledMenuItem = ({ children, ...props }) => (
-    <ContextMenuItem {...props}>
+    <ContextMenuItem className={styles.menuItem} {...props}>
         {children}
     </ContextMenuItem>
 );

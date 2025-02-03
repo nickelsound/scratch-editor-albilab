@@ -2,135 +2,37 @@
 @import "../../css/units.css";
 @import "../../css/z-index.css";
 
-.context-menu {
-    min-width: 130px;
-    padding: 5px 0; /* The white strip at the top and bottom of the menu */
-    margin: 2px 0 0; /* To keep the menu below the cursor comfortably */
-    font-size: 0.85rem;
-    text-align: left;
-    background-color: white;
-    border: 1px solid $ui-black-transparent;
-    border-radius: calc($space / 2);
-    box-shadow: 0px 0px 5px 1px $ui-black-transparent;
-    transition: opacity 0.2s ease;
-    z-index: $z-index-context-menu;
-}
-
-.menu-item {
-    padding: 8px 12px;
-    white-space: nowrap;
-    cursor: pointer;
-    transition: 0.1s ease;
-    user-select: none;
-}
-
-.menu-item:hover {
-    background: $motion-primary;
-    color: white;
-}
-
-.menu-item-danger:hover {
-    background: $error-primary;
-}
-
 .menu-item-bordered {
     border-top: 1px solid $ui-black-transparent;
 }
 
-.context-menu:focus {
-    outline: none;
-}
 
-.ContextMenuTrigger {
-	display: block;
-	border: 2px white dashed;
-	color: white;
-	border-radius: 4px;
-	font-size: 15px;
-	user-select: none;
-	padding: 45px 0;
-	width: 300px;
-	text-align: center;
-}
-
-.ContextMenuContent,
-.ContextMenuSubContent {
-	min-width: 220px;
+.ContextMenuContent {
 	background-color: white;
 	border-radius: 6px;
 	overflow: hidden;
-	padding: 5px;
-	box-shadow:
-		0px 10px 38px -10px rgba(22, 23, 24, 0.35),
-		0px 10px 20px -15px rgba(22, 23, 24, 0.2);
+	padding: 5px 0px;
+	box-shadow: 0px 10px 38px -10px gray;
 }
 
-.ContextMenuItem,
-.ContextMenuCheckboxItem,
-.ContextMenuRadioItem,
-.ContextMenuSubTrigger {
-	font-size: 13px;
+.menu-item{
+    font-size: 13px;
 	line-height: 1;
-	color: rgb(154, 92, 60);
-	border-radius: 3px;
 	display: flex;
 	align-items: center;
 	height: 25px;
-	padding: 0 5px;
+	padding: 0px 12px;
 	position: relative;
-	padding-left: 25px;
 	user-select: none;
 	outline: none;
-}
-.ContextMenuSubTrigger[data-state="open"] {
-	background-color: green;
-	color: green;
-}
-.ContextMenuItem[data-disabled],
-.ContextMenuCheckboxItem[data-disabled],
-.ContextMenuRadioItem[data-disabled],
-.ContextMenuSubTrigger[data-disabled] {
-	color: green;
-	pointer-events: "none";
-}
-.ContextMenuItem[data-highlighted],
-.ContextMenuCheckboxItem[data-highlighted],
-.ContextMenuRadioItem[data-highlighted],
-.ContextMenuSubTrigger[data-highlighted] {
-	background-color: green;
-	color: green;
+    cursor: pointer;
 }
 
-.ContextMenuLabel {
-	padding-left: 25px;
-	font-size: 12px;
-	line-height: 25px;
-	color: green;
+.menu-item[data-highlighted]{
+    background: $motion-primary;
+    color: white;
 }
 
-.ContextMenuSeparator {
-	height: 1px;
-	background-color: green;
-	margin: 5px;
-}
-
-.ContextMenuItemIndicator {
-	position: absolute;
-	left: 0;
-	width: 25px;
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-}
-
-.RightSlot {
-	margin-left: auto;
-	padding-left: 20px;
-	color: green;
-}
-[data-highlighted] > .RightSlot {
-	color: white;
-}
-[data-disabled] .RightSlot {
-	color: green;
+.menu-item-danger[data-highlighted] {
+    background: $error-primary;
 }

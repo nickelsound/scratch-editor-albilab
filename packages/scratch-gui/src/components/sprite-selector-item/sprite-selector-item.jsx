@@ -73,31 +73,31 @@ const SpriteSelectorItem = props => {
                         sticky="always"
                     >
                         {props.onDuplicateButtonClick && (
-                            <RadixContextMenu.Item className={contextMenuStyles.ContextMenuItem} onClick={props.onDuplicateButtonClick}>
+                            <MenuItem onClick={props.onDuplicateButtonClick}>
                                 <FormattedMessage
                                     defaultMessage="duplicate"
                                     description="Menu item to duplicate in the right click menu"
                                     id="gui.spriteSelectorItem.contextMenuDuplicate"
                                 />
-                            </RadixContextMenu.Item>
+                            </MenuItem>
                         )}
                         {props.onExportButtonClick && (
-                            <RadixContextMenu.Item className={contextMenuStyles.ContextMenuItem} onClick={props.onExportButtonClick}>
+                            <MenuItem onClick={props.onExportButtonClick}>
                                 <FormattedMessage
                                     defaultMessage="export"
                                     description="Menu item to export the selected item"
                                     id="gui.spriteSelectorItem.contextMenuExport"
                                 />
-                            </RadixContextMenu.Item>
+                            </MenuItem>
                         )}
                         {props.onDeleteButtonClick && (
-                            <RadixContextMenu.Item className={contextMenuStyles.ContextMenuItem} onClick={props.onDeleteButtonClick}>
+                            <DangerousMenuItem onClick={props.onDeleteButtonClick}>
                                 <FormattedMessage
                                     defaultMessage="delete"
                                     description="Menu item to delete in the right click menu"
                                     id="gui.spriteSelectorItem.contextMenuDelete"
                                 />
-                            </RadixContextMenu.Item>
+                            </DangerousMenuItem>
                         )}
                     </RadixContextMenu.Content>
                 </RadixContextMenu.Portal>
