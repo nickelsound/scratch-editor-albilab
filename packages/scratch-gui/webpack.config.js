@@ -108,7 +108,6 @@ const buildConfig = baseConfig.clone()
         },
         resolve: {
             alias: {
-                'react': require.resolve(path.join(__dirname, '../../node_modules/react')),
                 'react-dom': require.resolve(path.join(__dirname, '../../node_modules/react-dom'))
             }
         }
