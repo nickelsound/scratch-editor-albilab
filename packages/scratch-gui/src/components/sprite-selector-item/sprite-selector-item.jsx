@@ -67,7 +67,7 @@ const SpriteSelectorItem = props => {
             {(props.onDuplicateButtonClick || props.onDeleteButtonClick || props.onExportButtonClick) && (
                 <RadixContextMenu.Portal>
                     <RadixContextMenu.Content
-                        className={contextMenuStyles.ContextMenuContent}
+                        className={contextMenuStyles.contextMenuContent}
                         avoidCollisions={true}
                         collisionPadding={10}
                         sticky="always"
