@@ -4,9 +4,9 @@ import React, { useState, useCallback, useEffect } from 'react';
 import DeleteButton from '../delete-button/delete-button.jsx';
 import styles from './sprite-selector-item.css';
 import contextMenuStyles from '../context-menu/context-menu.css';
-import { DangerousMenuItem, ContextMenu, MenuItem } from '../context-menu/context-menu.jsx';
+import { DangerousMenuItem, MenuItem } from '../context-menu/context-menu.jsx';
 import { FormattedMessage } from 'react-intl';
-import * as RadixContextMenu from '@radix-ui/react-context-menu';
+import * as ContextMenu from '@radix-ui/react-context-menu';
 
 const SpriteSelectorItem = props => {
     useEffect(() => {
@@ -23,8 +23,8 @@ const SpriteSelectorItem = props => {
     
 
     return (
-        <RadixContextMenu.Root>
-            <RadixContextMenu.Trigger asChild>
+        <ContextMenu.Root>
+            <ContextMenu.Trigger asChild>
                 <div
                     className={classNames(props.className, styles.spriteSelectorItem, {
                         [styles.isSelected]: props.selected
@@ -63,10 +63,10 @@ const SpriteSelectorItem = props => {
                         />
                     ) : null}
                 </div>
-            </RadixContextMenu.Trigger>
+            </ContextMenu.Trigger>
             {(props.onDuplicateButtonClick || props.onDeleteButtonClick || props.onExportButtonClick) && (
-                <RadixContextMenu.Portal>
-                    <RadixContextMenu.Content
+                <ContextMenu.Portal>
+                    <ContextMenu.Content
                         className={contextMenuStyles.contextMenuContent}
                         avoidCollisions={true}
                         collisionPadding={10}
@@ -99,10 +99,10 @@ const SpriteSelectorItem = props => {
                                 />
                             </DangerousMenuItem>
                         )}
-                    </RadixContextMenu.Content>
-                </RadixContextMenu.Portal>
+                    </ContextMenu.Content>
+                </ContextMenu.Portal>
             )}
-        </RadixContextMenu.Root>
+        </ContextMenu.Root>
     );
 };
 

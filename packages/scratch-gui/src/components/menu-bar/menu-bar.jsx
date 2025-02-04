@@ -520,7 +520,10 @@ class MenuBar extends React.Component {
                             className={classNames(styles.menuBarItem, styles.hoverable, {
                                 [styles.active]: this.props.editMenuOpen
                             })}
-                            onMouseUp={this.props.onClickEdit}
+                            onMouseUp={()=>{
+                                console.log("EDIT CLICK")
+                                this.props.onClickEdit()
+                            }}
                         >
                             <img src={editIcon} />
                             <span className={styles.collapsibleLabel}>
