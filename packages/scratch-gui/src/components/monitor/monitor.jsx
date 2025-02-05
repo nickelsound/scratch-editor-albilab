@@ -72,7 +72,6 @@ const MonitorComponent = (props) => (
         </Draggable>
         <ContextMenu.Content
             className={contextMenuStyles.contextMenuContent}
-            style={{zIndex: 1000}}
             avoidCollisions={true}
             collisionPadding={10}
             sticky="always"
