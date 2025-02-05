@@ -61,7 +61,7 @@ export default appTarget => {
         window.onbeforeunload = () => true;
     }
 
-    const root = ReactDOM.createRoot(appTarget)
+    const root = ReactDOM.createRoot(appTarget);
 
     root.render(
         // important: this is checking whether `simulateScratchDesktop` is truthy, not just defined!

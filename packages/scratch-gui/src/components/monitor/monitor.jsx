@@ -10,7 +10,7 @@ import SliderMonitor from '../../containers/slider-monitor.jsx';
 import ListMonitor from '../../containers/list-monitor.jsx';
 import {getColorsForTheme} from '../../lib/themes/index.js';
 import contextMenuStyles from '../context-menu/context-menu.css';
-import { MenuItem, BorderedMenuItem } from '../context-menu/context-menu.jsx';
+import {MenuItem, BorderedMenuItem} from '../context-menu/context-menu.jsx';
 
 import styles from './monitor.css';
 
@@ -41,8 +41,8 @@ const getCategoryColor = (theme, category) => {
     };
 };
 
-const MonitorComponent = (props) => (
-    <ContextMenu.Root>
+const MonitorComponent = props => (
+    <ContextMenu.Root id={`monitor-${props.label}`}>
         <Draggable
             bounds=".monitor-overlay"
             cancel=".no-drag"
@@ -54,9 +54,9 @@ const MonitorComponent = (props) => (
                 className={styles.monitorContainer}
                 componentRef={props.componentRef}
                 onDoubleClick={
-                    props.mode === "list" || !props.draggable
-                        ? null
-                        : props.onNextMode
+                    props.mode === 'list' || !props.draggable ?
+                        null :
+                        props.onNextMode
                 }
             >
                 <ContextMenu.Trigger className="ContextMenuTrigger">
@@ -65,14 +65,13 @@ const MonitorComponent = (props) => (
                             props.theme,
                             props.category
                         ),
-                        ...props,
+                        ...props
                     })}
                 </ContextMenu.Trigger>
             </Box>
         </Draggable>
         <ContextMenu.Content
             className={contextMenuStyles.contextMenuContent}
-            avoidCollisions={true}
             collisionPadding={10}
             sticky="always"
         >
@@ -103,7 +102,7 @@ const MonitorComponent = (props) => (
                     />
                 </MenuItem>
             )}
-            {props.onSliderPromptOpen && props.mode === "slider" && (
+            {props.onSliderPromptOpen && props.mode === 'slider' && (
                 <BorderedMenuItem onSelect={props.onSliderPromptOpen}>
                     <FormattedMessage
                         defaultMessage="change slider range"

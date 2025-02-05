@@ -1,11 +1,11 @@
 import classNames from 'classnames';
 import PropTypes from 'prop-types';
-import React, { useState, useCallback, useEffect } from 'react';
+import React, {useEffect} from 'react';
 import DeleteButton from '../delete-button/delete-button.jsx';
 import styles from './sprite-selector-item.css';
 import contextMenuStyles from '../context-menu/context-menu.css';
-import { DangerousMenuItem, MenuItem } from '../context-menu/context-menu.jsx';
-import { FormattedMessage } from 'react-intl';
+import {DangerousMenuItem, MenuItem} from '../context-menu/context-menu.jsx';
+import {FormattedMessage} from 'react-intl';
 import * as ContextMenu from '@radix-ui/react-context-menu';
 
 const SpriteSelectorItem = props => {
@@ -13,7 +13,7 @@ const SpriteSelectorItem = props => {
         const handleResize = () => {
             const contextMenu = document.querySelector('[data-radix-popper-content-wrapper]');
             if (contextMenu) {
-                contextMenu.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+                contextMenu.dispatchEvent(new KeyboardEvent('keydown', {key: 'Escape'}));
             }
         };
     
@@ -24,7 +24,10 @@ const SpriteSelectorItem = props => {
 
     return (
         <ContextMenu.Root>
-            <ContextMenu.Trigger asChild>
+            <ContextMenu.Trigger
+                disabled={props.preventContextMenu}
+                asChild
+            >
                 <div
                     className={classNames(props.className, styles.spriteSelectorItem, {
                         [styles.isSelected]: props.selected
@@ -68,7 +71,6 @@ const SpriteSelectorItem = props => {
                 <ContextMenu.Portal>
                     <ContextMenu.Content
                         className={contextMenuStyles.contextMenuContent}
-                        avoidCollisions={true}
                         collisionPadding={10}
                         sticky="always"
                     >
