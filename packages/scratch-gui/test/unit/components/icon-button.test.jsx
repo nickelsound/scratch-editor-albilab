@@ -1,7 +1,7 @@
 import React from 'react';
-import {shallow} from 'enzyme';
+import { render, screen, fireEvent } from '@testing-library/react';
+import '@testing-library/jest-dom';
 import IconButton from '../../../src/components/icon-button/icon-button';
-import renderer from 'react-test-renderer';
 
 describe('IconButtonComponent', () => {
     test('matches snapshot', () => {
@@ -9,7 +9,8 @@ describe('IconButtonComponent', () => {
         const title = <div>Text</div>;
         const imgSrc = 'imgSrc';
         const className = 'custom-class-name';
-        const component = renderer.create(
+        
+        const { asFragment } = render(
             <IconButton
                 className={className}
                 img={imgSrc}
@@ -17,21 +18,24 @@ describe('IconButtonComponent', () => {
                 onClick={onClick}
             />
         );
-        expect(component.toJSON()).toMatchSnapshot();
+        expect(asFragment()).toMatchSnapshot();
     });
 
     test('triggers callback when clicked', () => {
         const onClick = jest.fn();
         const title = <div>Text</div>;
         const imgSrc = 'imgSrc';
-        const componentShallowWrapper = shallow(
+        
+        render(
             <IconButton
                 img={imgSrc}
                 title={title}
                 onClick={onClick}
             />
         );
-        componentShallowWrapper.simulate('click');
+        
+        const button = screen.getByRole('button');
+        fireEvent.click(button);
         expect(onClick).toHaveBeenCalled();
     });
 });
