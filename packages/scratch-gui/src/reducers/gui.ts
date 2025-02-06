@@ -1,4 +1,4 @@
-import {applyMiddleware, compose, combineReducers} from 'redux';
+import {applyMiddleware, compose, combineReducers } from 'redux';
 import alertsReducer, {alertsInitialState} from './alerts';
 import assetDragReducer, {assetDragInitialState} from './asset-drag';
 import cardsReducer, {cardsInitialState} from './cards';
@@ -137,7 +137,7 @@ const initTelemetryModal = function (currentState) {
     );
 };
 
-const configReducer = function (state: GUIConfig) {
+const configReducer = function (state?: GUIConfig | null) {
     if (typeof state === 'undefined') return null;
 
     return state;
