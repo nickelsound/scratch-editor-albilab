@@ -2,18 +2,14 @@
 
 exports[`IconButtonComponent matches snapshot 1`] = `
 <div
-  className="custom-class-name"
-  onClick={[Function]}
+  class="custom-class-name"
   role="button"
 >
   <img
-    className={undefined}
-    draggable={false}
+    draggable="false"
     src="imgSrc"
   />
-  <div
-    className={undefined}
-  >
+  <div>
     <div>
       Text
     </div>
