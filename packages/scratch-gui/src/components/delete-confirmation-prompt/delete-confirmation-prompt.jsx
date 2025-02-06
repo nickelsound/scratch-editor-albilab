@@ -176,7 +176,7 @@ DeleteConfirmationPrompt.propTypes = {
     onCancel: PropTypes.func.isRequired,
     relativeElemRef: PropTypes.object,
     entityType: PropTypes.string,
-    modalPosition: PropTypes.string,
+    modalPosition: PropTypes.string
 };
 
 export default DeleteConfirmationPrompt;

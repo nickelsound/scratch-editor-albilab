@@ -1,4 +1,4 @@
-import {applyMiddleware, compose, combineReducers } from 'redux';
+import {applyMiddleware, compose, combineReducers} from 'redux';
 import alertsReducer, {alertsInitialState} from './alerts';
 import assetDragReducer, {assetDragInitialState} from './asset-drag';
 import cardsReducer, {cardsInitialState} from './cards';

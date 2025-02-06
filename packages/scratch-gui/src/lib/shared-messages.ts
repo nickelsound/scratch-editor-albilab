@@ -31,6 +31,6 @@ const reactIntlMessages = defineMessages({
         defaultMessage: 'Load from your computer',
         description: 'Title for uploading a project from your computer'
     }
-})
+});
 
 export default reactIntlMessages;
