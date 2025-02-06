@@ -1,6 +1,6 @@
 import {defineMessages} from 'react-intl';
 
-export default defineMessages({
+const reactIntlMessages = defineMessages({
     backdrop: {
         defaultMessage: 'backdrop{index}',
         description: 'Default name for a new backdrop, scratch will automatically adjust the number if necessary',
@@ -31,4 +31,6 @@ export default defineMessages({
         defaultMessage: 'Load from your computer',
         description: 'Title for uploading a project from your computer'
     }
-});
+})
+
+export default reactIntlMessages;

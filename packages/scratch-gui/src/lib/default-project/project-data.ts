@@ -2,7 +2,7 @@ import {defineMessages} from 'react-intl';
 import sharedMessages from '../shared-messages';
 import {MessageObject, TranslatorFunction} from '../../gui-config';
 
-let messages = defineMessages({
+const localMessages = defineMessages({
     meow: {
         defaultMessage: 'Meow',
         description: 'Name for the meow sound',
@@ -15,7 +15,7 @@ let messages = defineMessages({
     }
 });
 
-messages = {...messages, ...sharedMessages};
+const messages = {...localMessages, ...sharedMessages};
 
 // use the default message if a translation function is not passed
 const defaultTranslator = (msgObj: MessageObject) => msgObj.defaultMessage;
