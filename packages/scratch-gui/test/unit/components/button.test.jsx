@@ -6,7 +6,7 @@ import ButtonComponent from '../../../src/components/button/button';
 describe('ButtonComponent', () => {
     test('matches snapshot', () => {
         const { container } = render(
-            <ButtonComponent onClick={jest.fn()} />
+            <ButtonComponent onClick={()=>{}} />
         );
         
         expect(container.firstChild).toMatchSnapshot();
@@ -23,5 +23,14 @@ describe('ButtonComponent', () => {
         fireEvent.click(button);
         
         expect(onClick).toHaveBeenCalledTimes(1);
+    });
+
+    test('does not trigger callback when not clicked', () => {
+        const onClick = jest.fn();
+        render(
+            <ButtonComponent onClick={onClick} />
+        );
+        
+        expect(onClick).toHaveBeenCalledTimes(0);
     });
 });

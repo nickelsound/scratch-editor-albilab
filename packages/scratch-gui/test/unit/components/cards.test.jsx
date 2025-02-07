@@ -56,11 +56,9 @@ describe('Cards component', () => {
 
         const divWithText = [...container.querySelectorAll('div')].find(el => el.textContent.includes('id1 - name'));
         expect(divWithText).toBeTruthy();
-        expect(divWithText).toHaveTextContent('id1 - name');
 
         const image = container.querySelector('img[src="id1 - img"]');
         expect(image).toBeTruthy();
-        expect(image).toHaveAttribute('src', 'id1 - img');
     });
     
     
