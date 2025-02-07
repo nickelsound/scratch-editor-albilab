@@ -168,7 +168,7 @@ const AboutButton = props => (
         iconClassName={styles.aboutIcon}
         iconSrc={aboutIcon}
         onClick={props.onClick}
-    >HELLO</Button>
+    />
 );
 
 AboutButton.propTypes = {

@@ -2,7 +2,7 @@ import React from 'react';
 import {OrderedMap} from 'immutable';
 import configureStore from 'redux-mock-store';
 import {Provider} from 'react-redux';
-import {mountWithIntl} from '../../helpers/intl-helpers.jsx';
+import {renderWithIntl} from '../../helpers/intl-helpers.jsx';
 import MonitorList from '../../../src/components/monitor-list/monitor-list.jsx';
 import {DEFAULT_THEME} from '../../../src/lib/themes';
 
@@ -58,9 +58,11 @@ describe('MonitorListComponent', () => {
                 isDiscrete: true
             }
         });
-        const wrapper = mountWithIntl(getComponent());
-        const input = wrapper.find('input');
-        expect(input.props().step).toBe(1);
+        const {container} = renderWithIntl(getComponent());
+        const input = container.querySelector('input.no-drag');
+        expect(input).toBeTruthy();
+        const stepValue = Number(input.getAttribute('step'));
+        expect(stepValue).toBe(1);        
     });
 
     test('it renders the correct step size for non-discrete sliders', () => {
@@ -71,8 +73,10 @@ describe('MonitorListComponent', () => {
                 isDiscrete: false
             }
         });
-        const wrapper = mountWithIntl(getComponent());
-        const input = wrapper.find('input');
-        expect(input.props().step).toBe(0.01);
+        const {container} = renderWithIntl(getComponent());
+        const input = container.querySelector('input.no-drag');
+        expect(input).toBeTruthy();
+        const stepValue = Number(input.getAttribute('step'));
+        expect(stepValue).toBe(0.01);     
     });
 });
