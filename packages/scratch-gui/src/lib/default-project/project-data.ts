@@ -1,7 +1,8 @@
 import {defineMessages} from 'react-intl';
 import sharedMessages from '../shared-messages';
+import {MessageObject, TranslatorFunction} from '../../gui-config';
 
-let messages = defineMessages({
+const localMessages = defineMessages({
     meow: {
         defaultMessage: 'Meow',
         description: 'Name for the meow sound',
@@ -14,17 +15,17 @@ let messages = defineMessages({
     }
 });
 
-messages = {...messages, ...sharedMessages};
+const messages = {...localMessages, ...sharedMessages};
 
 // use the default message if a translation function is not passed
-const defaultTranslator = msgObj => msgObj.defaultMessage;
+const defaultTranslator = (msgObj: MessageObject) => msgObj.defaultMessage;
 
 /**
  * Generate a localized version of the default project
  * @param {function} translateFunction a function to use for translating the default names
  * @return {object} the project data json for the default project
  */
-const projectData = translateFunction => {
+const projectData = (translateFunction?: TranslatorFunction): object => {
     const translator = translateFunction || defaultTranslator;
     return ({
         targets: [

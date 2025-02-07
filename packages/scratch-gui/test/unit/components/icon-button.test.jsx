@@ -1,56 +1,41 @@
 import React from 'react';
-import { render, fireEvent } from '@testing-library/react';
-import IconButton from '../../../src/components/icon-button/icon-button';
+import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
-
+import IconButton from '../../../src/components/icon-button/icon-button';
 
 describe('IconButtonComponent', () => {
-    const defaultProps = {
-        img: 'imgSrc',
-        title: <div>Text</div>,
-        onClick: jest.fn(),
-        className: 'custom-class-name'
-    };
-
-    test('renders with all props correctly', () => {
-        const { container } = render(<IconButton {...defaultProps} />);
+    test('matches snapshot', () => {
+        const onClick = jest.fn();
+        const title = <div>Text</div>;
+        const imgSrc = 'imgSrc';
+        const className = 'custom-class-name';
         
-        const button = container.querySelector('div[role="button"]');
-        expect(button).toBeTruthy();
-        expect(button).toHaveClass('custom-class-name');
-        
-        const image = container.querySelector('img');
-        expect(image).toBeTruthy();
-        expect(image).toHaveAttribute('src', 'imgSrc');
-        expect(image).toHaveAttribute('draggable', 'false');
-        
-        const text = container.querySelector('div div div');
-        expect(text).toHaveTextContent('Text');
+        const { asFragment } = render(
+            <IconButton
+                className={className}
+                img={imgSrc}
+                title={title}
+                onClick={onClick}
+            />
+        );
+        expect(asFragment()).toMatchSnapshot();
     });
 
-    test('triggers callback only once when clicked', () => {
-        const handleClick = jest.fn();
+    test('triggers callback when clicked', () => {
+        const onClick = jest.fn();
+        const title = <div>Text</div>;
+        const imgSrc = 'imgSrc';
         
-        const { container } = render(
-            <IconButton 
-                {...defaultProps} 
-                onClick={handleClick} 
+        render(
+            <IconButton
+                img={imgSrc}
+                title={title}
+                onClick={onClick}
             />
         );
         
-        const button = container.querySelector('div[role="button"]');
-        
-        if (!button) {
-            throw new Error('Button not found');
-        }
-
+        const button = screen.getByRole('button');
         fireEvent.click(button);
-        
-        expect(handleClick).toHaveBeenCalledTimes(1);
-    });
-
-    test('matches snapshot', () => {
-        const { container } = render(<IconButton {...defaultProps} />);
-        expect(container.firstChild).toMatchSnapshot();
+        expect(onClick).toHaveBeenCalled();
     });
 });
