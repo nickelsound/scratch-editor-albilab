@@ -1,7 +1,7 @@
 import React from 'react';
 import {renderWithIntl} from '../../helpers/intl-helpers.jsx';
 import SoundEditor from '../../../src/components/sound-editor/sound-editor';
-import { fireEvent } from '@testing-library/react';
+import { fireEvent, waitFor } from '@testing-library/react';
 
 describe('Sound Editor Component', () => {
     let props;
@@ -76,21 +76,23 @@ describe('Sound Editor Component', () => {
         expect(props.onStop).toHaveBeenCalled();
     });
 
-    //TODO THIS TEST IS FAILING
-    // test('submitting name calls the callback', async () => {
-    //     const onChangeName = jest.fn();
-    //     const {container} = renderWithIntl(<SoundEditor {...props} onChangeName={()=>{
-    //         onChangeName();
-    //         console.log('onChangeName');
-    //     }} />);
+    test('submitting name calls the callback', async () => {
+        if (typeof MutationObserver === 'undefined') {
+            global.MutationObserver = class {
+                observe() {}
+                disconnect() {}
+            };
+        }
+        const onChangeName = jest.fn();
+        const { container } = renderWithIntl(<SoundEditor {...props} onChangeName={onChangeName} />);
     
-    //     const input = container.querySelector('input');
-    //     console.log(input.outerHTML);
-    //     fireEvent.change(input, { target: { value: 'hello' } });
-    //     fireEvent.enter(input);
-    
-    //     await waitFor(() => expect(onChangeName).toHaveBeenCalled());
-    // });
+        const input = container.querySelector('input');
+        console.log(input.outerHTML);
+        
+        fireEvent.change(input, { target: { value: 'hello' } });
+        fireEvent.keyPress(input, { key: 'Enter', code: 'Enter', charCode: 13 });
+        await waitFor(() => expect(onChangeName).toHaveBeenCalled());
+    });
 
     test('effect buttons call the correct callbacks', () => {
         const {container} = renderWithIntl(

@@ -1,7 +1,20 @@
 import React from 'react';
 import {renderWithIntl} from '../../helpers/intl-helpers.jsx';
 import SpriteSelectorItemComponent from '../../../src/components/sprite-selector-item/sprite-selector-item';
-import { fireEvent } from '@testing-library/react';
+import { fireEvent, waitFor } from '@testing-library/react';
+
+// Neccessary for RadixUI Context Menu
+global.MutationObserver = class {
+    constructor(callback) {}
+    disconnect() {}
+    observe() {}
+};
+document.body.insertAdjacentElement = jest.fn();
+global.DOMRect = {
+    fromRect: ({ x = 0, y = 0, width = 0, height = 0 } = {}) =>
+        ({ x, y, width, height, top: y, left: x, right: x + width, bottom: y + height })
+};
+
 
 describe('SpriteSelectorItemComponent', () => {
     let className;
@@ -41,50 +54,52 @@ describe('SpriteSelectorItemComponent', () => {
         details = undefined; // eslint-disable-line no-undefined
     });
 
-    // test('matches snapshot when selected', () => {
-    //     const {container} = renderWithIntl(getComponent());
-    //     expect(container.firstChild).toMatchSnapshot();
-    // });
+    test('matches snapshot when selected', () => {
+        const {container} = renderWithIntl(getComponent());
+        expect(container.firstChild).toMatchSnapshot();
+    });
 
-    // test('matches snapshot when given a number and details to show', () => {
-    //     number = 5;
-    //     details = '480 x 360';
-    //     const {container} = renderWithIntl(getComponent());
-    //     expect(container.firstChild).toMatchSnapshot();
-    // });
+    test('matches snapshot when given a number and details to show', () => {
+        number = 5;
+        details = '480 x 360';
+        const {container} = renderWithIntl(getComponent());
+        expect(container.firstChild).toMatchSnapshot();
+    });
 
-    // test('does not have a close box when not selected', () => {
-    //     const {container} = renderWithIntl(getComponent());
-    //     console.log(container.innerHTML);
-    //     expect(wrapper.find(DeleteButton).exists()).toBe(false);
-    // });
-
-    // test('triggers callback when Box component is clicked', () => {
-    //     const wrapper = renderWithIntl(getComponent());
-    //     wrapper.simulate('click');
-    //     expect(onClick).toHaveBeenCalled();
-    // });
-
-    // test('triggers callback when CloseButton component is clicked', () => {
-    //     const {container} = renderWithIntl(getComponent());
-    //     console.log(container.innerHTML);
-    //     const deleteButton = container.querySelector('div[role="button"][aria-label="Delete"]');
-    //     fireEvent.click(deleteButton);
-    //     expect(onDeleteButtonClick).toHaveBeenCalled();
-    // });
-
-    test('it has a context menu with delete menu item and callback', () => {
+    test('does not have a close box when not selected', () => {
+        selected = false;
         const {container} = renderWithIntl(getComponent());
         console.log(container.innerHTML);
-        const image = container.querySelector('.ponies img');
-        fireEvent.contextMenu(image);
+        const deleteButton = container.querySelector('div[role="button"][aria-label="Delete"]');
+        expect(deleteButton).toBeFalsy();
+    });
 
+    test('triggers callback when Box component is clicked', () => {
+        const {container} = renderWithIntl(getComponent());
+        fireEvent.click(container.firstChild);
+        expect(onClick).toHaveBeenCalled();
+    });
+
+    test('triggers callback when CloseButton component is clicked', () => {
+        const {container} = renderWithIntl(getComponent());
         console.log(container.innerHTML);
-        // const contextMenu = wrapper.find('ContextMenu');
-        // expect(contextMenu.exists()).toBe(true);
+        const deleteButton = container.querySelector('div[role="button"][aria-label="Delete"]');
+        fireEvent.click(deleteButton);
+        expect(onDeleteButtonClick).toHaveBeenCalled();
+    });
 
-        // const deleteMenuItem = contextMenu.find('.react-contextmenu-item').findWhere(node => node.text().includes('delete')).at(0);
-        // deleteMenuItem.simulate('click');
-        // expect(onDeleteButtonClick).toHaveBeenCalled();
+    test('it has a context menu with delete menu item and callback', async () => {
+        const {container} = renderWithIntl(getComponent());
+        fireEvent.contextMenu(container.firstChild);
+
+        await waitFor(() => {
+            const menu = document.querySelector('[data-state="open"]');
+            expect(menu).toBeTruthy();
+        });
+
+        const deleteMenuItem = document.querySelector('[role="menuitem"]');
+        expect(deleteMenuItem.textContent).toBe('delete');
+        fireEvent.click(deleteMenuItem);
+        expect(onDeleteButtonClick).toHaveBeenCalled();
     });
 });

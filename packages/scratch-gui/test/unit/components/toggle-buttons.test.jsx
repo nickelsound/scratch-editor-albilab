@@ -1,10 +1,11 @@
 import React from 'react';
-import {shallow} from 'enzyme';
 import ToggleButtons from '../../../src/components/toggle-buttons/toggle-buttons';
+import { fireEvent, render } from '@testing-library/react';
+
 
 describe('ToggleButtons', () => {
     test('renders multiple buttons', () => {
-        const component = shallow(<ToggleButtons
+        const {container} = render(<ToggleButtons
             buttons={[
                 {
                     title: 'Button 1',
@@ -19,17 +20,19 @@ describe('ToggleButtons', () => {
             ]}
         />);
 
-        const buttons = component.find('button');
+        console.log(container.innerHTML);
+
+        const buttons = container.querySelectorAll('button');
 
         expect(buttons).toHaveLength(2);
-        expect(buttons.get(0).props.title).toBe('Button 1');
-        expect(buttons.get(1).props.title).toBe('Button 2');
+        expect(buttons[0].getAttribute('title')).toBe('Button 1');
+        expect(buttons[1].getAttribute('title')).toBe('Button 2');
     });
 
     test('calls correct click handler', () => {
         const onClick1 = jest.fn();
         const onClick2 = jest.fn();
-        const component = shallow(<ToggleButtons
+        const {container} = render(<ToggleButtons
             buttons={[
                 {
                     title: 'Button 1',
@@ -43,9 +46,9 @@ describe('ToggleButtons', () => {
                 }
             ]}
         />);
-        const button2 = component.find('button[title="Button 2"]');
-        button2.simulate('click');
-
+        const button2 = container.querySelector('button[title="Button 2"]');
+        fireEvent.click(button2);
+        
         expect(onClick2).toHaveBeenCalled();
         expect(onClick1).not.toHaveBeenCalled();
     });

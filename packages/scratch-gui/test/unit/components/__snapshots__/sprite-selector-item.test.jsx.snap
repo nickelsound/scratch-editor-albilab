@@ -1,0 +1,77 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`SpriteSelectorItemComponent matches snapshot when given a number and details to show 1`] = `
+<div
+  class="ponies undefined"
+  data-state="closed"
+>
+  <div>
+    5
+  </div>
+  <div>
+    <div>
+      <img
+        draggable="false"
+        src="https://scratch.mit.edu/foo/bar/pony"
+      />
+    </div>
+  </div>
+  <div>
+    <div>
+      Pony sprite
+    </div>
+    <div>
+      480 x 360
+    </div>
+  </div>
+  <div
+    aria-label="Delete"
+    class=""
+    role="button"
+    tabindex="0"
+  >
+    <div
+      class=""
+    >
+      <img
+        src="test-file-stub"
+      />
+    </div>
+  </div>
+</div>
+`;
+
+exports[`SpriteSelectorItemComponent matches snapshot when selected 1`] = `
+<div
+  class="ponies undefined"
+  data-state="closed"
+>
+  <div>
+    <div>
+      <img
+        draggable="false"
+        src="https://scratch.mit.edu/foo/bar/pony"
+      />
+    </div>
+  </div>
+  <div>
+    <div>
+      Pony sprite
+    </div>
+  </div>
+  <div
+    aria-label="Delete"
+    class=""
+    role="button"
+    tabindex="0"
+  >
+    <div
+      class=""
+    >
+      <img
+        src="test-file-stub"
+      />
+    </div>
+  </div>
+</div>
+`;
