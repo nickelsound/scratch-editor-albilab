@@ -3,6 +3,8 @@ import configureStore from 'redux-mock-store';
 import MenuBarHOC from '../../../src/containers/menu-bar-hoc.jsx';
 import {render} from '@testing-library/react'
 
+// TODO rewrite this test to use react-testing-library
+
 describe('Menu Bar HOC', () => {
     const mockStore = configureStore();
     let store;
@@ -18,7 +20,7 @@ describe('Menu Bar HOC', () => {
     test('Logged in user who IS owner and HAS changed project will NOT be prompted to save', () => {
         const Component = () => (<div />);
         const WrappedComponent = MenuBarHOC(Component);
-        const {container} = render(
+        const {container, debug} = render(
             <WrappedComponent
                 canCreateNew
                 canSave
@@ -28,10 +30,12 @@ describe('Menu Bar HOC', () => {
                 store={store}
             />
         );
-``
-        console.log(container.innerHTML);
+        debug();
+        console.log("===")
+        console.log(document.body.innerHTML)
+        // console.log(container.innerHTML);
         const child = container.firstChild;
-        console.log(child);
+        // console.log(child);
         // expect(child.props().projectChanged).toBeUndefined();
         // expect(child.props().confirmReadyToReplaceProject('message')).toBe(true);
     });
@@ -70,22 +74,26 @@ describe('Menu Bar HOC', () => {
     //     expect(child.props().confirmReadyToReplaceProject('message')).toBe(true);
     // });
 
-    // test('Logged OUT user who HAS changed project WILL be prompted to save', () => {
-    //     const Component = () => (<div />);
-    //     const WrappedComponent = MenuBarHOC(Component);
-    //     const wrapper = mount(
-    //         <WrappedComponent
-    //             projectChanged
-    //             canCreateNew={false}
-    //             canSave={false}
-    //             confirmWithMessage={() => (false)} // eslint-disable-line react/jsx-no-bind
-    //             store={store}
-    //         />
-    //     );
-    //     const child = wrapper.find(Component);
-    //     expect(child.props().projectChanged).toBeUndefined();
-    //     expect(child.props().confirmReadyToReplaceProject('message')).toBe(false);
-    // });
+    test('Logged OUT user who HAS changed project WILL be prompted to save', () => {
+        const Component = () => (<div />);
+        const WrappedComponent = MenuBarHOC(Component);
+        const {container, debug} = render(
+            <WrappedComponent
+                projectChanged
+                canCreateNew={false}
+                canSave={false}
+                confirmWithMessage={() => (false)} // eslint-disable-line react/jsx-no-bind
+                store={store}
+            />
+        );
+        console.log("===")
+        debug();
+        console.log("===")
+        console.log(document.body.innerHTML)
+        // const child = wrapper.find(Component);
+        // expect(child.props().projectChanged).toBeUndefined();
+        // expect(child.props().confirmReadyToReplaceProject('message')).toBe(false);
+    });
 
     // test('Logged OUT user who has NOT changed project WILL NOT be prompted to save', () => {
     //     const Component = () => (<div />);

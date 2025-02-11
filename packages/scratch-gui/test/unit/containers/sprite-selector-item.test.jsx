@@ -1,13 +1,19 @@
 import React from 'react';
-import {mountWithIntl} from '../../helpers/intl-helpers.jsx';
+import {renderWithIntl} from '../../helpers/intl-helpers.jsx';
 import configureStore from 'redux-mock-store';
 import {Provider} from 'react-redux';
 import VM from '@scratch/scratch-vm';
 
 import SpriteSelectorItemContainer from '../../../src/containers/sprite-selector-item';
-import DeleteButton from '../../../src/components/delete-button/delete-button';
 import {legacyConfig} from '../../../src/legacy-config';
 import DeleteConfirmationPrompt from '../../../src/components/delete-confirmation-prompt/delete-confirmation-prompt.jsx';
+import {screen, fireEvent, waitFor} from '@testing-library/react';
+
+global.MutationObserver = class {
+    constructor() {}
+    disconnect() {}
+    observe() {}
+};
 
 jest.mock('../../../src/components/delete-confirmation-prompt/delete-confirmation-prompt.jsx', () => jest.fn(() => null));
 describe('SpriteSelectorItem Container', () => {
@@ -60,21 +66,26 @@ describe('SpriteSelectorItem Container', () => {
         }});
     });
 
-    test('should delete the sprite, when called without `withDeleteConfirmation`', () => {
-        const wrapper = mountWithIntl(getContainer());
-
-        wrapper.find(DeleteButton).simulate('click');
-        expect(DeleteConfirmationPrompt).not.toHaveBeenCalled();
+    test('should delete the sprite, when called without `withDeleteConfirmation`', async () => {
+        onDeleteButtonClick = jest.fn();
+      
+        renderWithIntl(getContainer());
+      
+        const deleteButton = screen.getByRole('button', { name: /delete/i });
+        fireEvent.click(deleteButton);
         expect(onDeleteButtonClick).toHaveBeenCalledWith(1337);
-    });
-
-    test('should initiate sprite deletion, when called `withDeleteConfirmation`', () => {
-        const wrapper = mountWithIntl(getContainer(true));
-
         expect(DeleteConfirmationPrompt).not.toHaveBeenCalled();
 
-        wrapper.find(DeleteButton).simulate('click');
-
-        expect(DeleteConfirmationPrompt).toHaveBeenCalled();
-    });
+      });
+      
+      test('should initiate sprite deletion, when called `withDeleteConfirmation`', async () => {
+        onDeleteButtonClick = jest.fn();
+      
+        renderWithIntl(getContainer(true));
+      
+        expect(DeleteConfirmationPrompt).not.toHaveBeenCalled();
+        const deleteButton = screen.getByRole('button', { name: /delete/i });
+        fireEvent.click(deleteButton);
+        await waitFor(() => expect(DeleteConfirmationPrompt).toHaveBeenCalled());
+      });
 });

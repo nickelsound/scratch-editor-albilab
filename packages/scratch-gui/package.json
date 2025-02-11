@@ -38,11 +38,12 @@
     "watch": "webpack --watch"
   },
   "dependencies": {
-    "@radix-ui/react-context-menu": "^2.2.5",
     "@microbit/microbit-universal-hex": "^0.2.2",
+    "@radix-ui/react-context-menu": "^2.2.5",
     "@scratch/scratch-render": "11.0.0-beta.1",
     "@scratch/scratch-svg-renderer": "11.0.0-beta.1",
     "@scratch/scratch-vm": "11.0.0-beta.1",
+    "@testing-library/user-event": "^14.6.1",
     "arraybuffer-loader": "^1.0.6",
     "autoprefixer": "^9.0.1",
     "balance-text": "^3.3.1",
@@ -103,10 +104,10 @@
     "xhr": "^2.5.0"
   },
   "peerDependencies": {
-    "redux": "^4.0.0",
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
-    "react-redux": "^8.0.0"
+    "react-redux": "^8.0.0",
+    "redux": "^4.0.0"
   },
   "devDependencies": {
     "@babel/cli": "7.24.8",
@@ -179,7 +180,6 @@
     "testPathIgnorePatterns": [
       "src/test.js"
     ],
-    "testEnvironment": "jsdom",
     "moduleNameMapper": {
       "\\.(jpg|jpeg|png|gif|eot|otf|webp|svg|ttf|woff|woff2|mp4|webm|wav|mp3|m4a|aac|oga)\\??$": "<rootDir>/test/__mocks__/fileMock.js",
       "\\.(css|less)$": "<rootDir>/test/__mocks__/styleMock.js",
