@@ -1,8 +1,7 @@
 import React from 'react';
 import SliderPrompt from '../../../src/containers/slider-prompt.jsx';
-import SliderPromptComponent from '../../../src/components/slider-prompt/slider-prompt.jsx';
-import {render, screen,  fireEvent} from '@testing-library/react'
-import {renderWithIntl} from '../../helpers/intl-helpers.jsx';
+import { screen, fireEvent } from '@testing-library/react'
+import { renderWithIntl } from '../../helpers/intl-helpers.jsx';
 import { Provider } from 'react-redux';
 import configureStore from 'redux-mock-store';
 

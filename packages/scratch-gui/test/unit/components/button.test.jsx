@@ -6,9 +6,9 @@ import ButtonComponent from '../../../src/components/button/button';
 describe('ButtonComponent', () => {
     test('matches snapshot', () => {
         const { container } = render(
-            <ButtonComponent onClick={()=>{}} />
+            <ButtonComponent onClick={jest.fn()} />
         );
-        
+
         expect(container.firstChild).toMatchSnapshot();
     });
 
@@ -17,11 +17,11 @@ describe('ButtonComponent', () => {
         const { container } = render(
             <ButtonComponent onClick={onClick} />
         );
-        
+
         const button = container.firstChild;
-        
+
         fireEvent.click(button);
-        
+
         expect(onClick).toHaveBeenCalledTimes(1);
     });
 

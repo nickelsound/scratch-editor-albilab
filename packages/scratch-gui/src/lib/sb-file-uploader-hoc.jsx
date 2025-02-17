@@ -22,6 +22,7 @@ import {
 import {
     closeFileMenu
 } from '../reducers/menus';
+import {getProjectTitleFromFilename} from './sb-file-uploader-utils';
 
 const messages = defineMessages({
     loadError: {
@@ -46,7 +47,6 @@ const SBFileUploaderHOC = function (WrappedComponent) {
             super(props);
             bindAll(this, [
                 'createFileObjects',
-                'getProjectTitleFromFilename',
                 'handleFinishedLoadingUpload',
                 'handleStartSelectingFileUpload',
                 'handleChange',
@@ -134,15 +134,6 @@ const SBFileUploaderHOC = function (WrappedComponent) {
                 this.removeFileObjects();
             }
         }
-        // used in step 6 below
-        getProjectTitleFromFilename (fileInputFilename) {
-            if (!fileInputFilename) return '';
-            // only parse title with valid scratch project extensions
-            // (.sb, .sb2, and .sb3)
-            const matches = fileInputFilename.match(/^(.*)\.sb[23]?$/);
-            if (!matches) return '';
-            return matches[1].substring(0, 100); // truncate project title to max 100 chars
-        }
         // step 6: attached as a handler on our FileReader object; called when
         // file upload raw data is available in the reader
         onload () {
@@ -153,7 +144,7 @@ const SBFileUploaderHOC = function (WrappedComponent) {
                 this.props.vm.loadProject(this.fileReader.result)
                     .then(() => {
                         if (filename) {
-                            const uploadedProjectTitle = this.getProjectTitleFromFilename(filename);
+                            const uploadedProjectTitle = getProjectTitleFromFilename(filename);
                             this.props.onSetProjectTitle(uploadedProjectTitle);
                         }
                         loadingSuccess = true;

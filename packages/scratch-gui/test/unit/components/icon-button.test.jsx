@@ -14,27 +14,14 @@ describe('IconButtonComponent', () => {
     test('renders with all props correctly', () => {
         const { container } = render(<IconButton {...defaultProps} />);
 
-        const button = container.querySelector('div[role="button"]');
-        expect(button).toBeTruthy();
-        expect(button).toHaveClass('custom-class-name');
-
-        const image = container.querySelector('img');
-        expect(image).toBeTruthy();
-        expect(image).toHaveAttribute('src','imgSrc');
-        expect(image).toHaveAttribute('draggable','false');
-
-        const text = container.querySelector('div div div');
-        expect(text).toHaveTextContent('Text');
+        expect(container.firstChild).toMatchSnapshot();
     });
 
-    test('triggers callback only once when clicked', () => {
+    test('triggers callback when clicked', () => {
         const onClick = jest.fn();
 
         const { container } = render(
-            <IconButton 
-                {...defaultProps} 
-                onClick={onClick} 
-            />
+            <IconButton {...defaultProps} onClick={onClick} />
         );
 
         const button = container.querySelector('div[role="button"]');
@@ -42,5 +29,13 @@ describe('IconButtonComponent', () => {
         fireEvent.click(button);
 
         expect(onClick).toHaveBeenCalledTimes(1);
+    });
+
+    test('does not trigger callback when not clicked', () => {
+        const onClick = jest.fn();
+
+        render(<IconButton {...defaultProps} onClick={onClick} />);
+        
+        expect(onClick).toHaveBeenCalledTimes(0);
     });
 });

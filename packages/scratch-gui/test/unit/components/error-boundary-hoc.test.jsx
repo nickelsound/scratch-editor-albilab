@@ -5,7 +5,6 @@ import configureStore from 'redux-mock-store';
 import ErrorBoundary from '../../../src/containers/error-boundary.jsx';
 import { renderWithIntl } from '../../helpers/intl-helpers.jsx';
 
-
 const ChildComponent = () => <div>hello</div>;
 
 describe('ErrorBoundary', () => {
@@ -33,11 +32,11 @@ describe('ErrorBoundary', () => {
         expect(helloTextNoError).toBeTruthy();
         expect(container.querySelector('h2')).toBeFalsy();
 
-        const consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+        const consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => { });
         const ThrowError = () => {
             throw new Error('Test error');
         };
-        const {container: containerError} = renderWithIntl(
+        const { container: containerError } = renderWithIntl(
             <Provider store={store}>
                 <ErrorBoundary action="test"> <ThrowError /></ErrorBoundary>
             </Provider>

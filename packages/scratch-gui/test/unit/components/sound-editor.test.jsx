@@ -1,5 +1,5 @@
 import React from 'react';
-import {renderWithIntl} from '../../helpers/intl-helpers.jsx';
+import { renderWithIntl } from '../../helpers/intl-helpers.jsx';
 import SoundEditor from '../../../src/components/sound-editor/sound-editor';
 import { fireEvent, waitFor } from '@testing-library/react';
 
@@ -8,7 +8,7 @@ describe('Sound Editor Component', () => {
     beforeEach(() => {
         props = {
             canUndo: true,
-            canRedo: false,
+            canRedo: true,
             chunkLevels: [1, 2, 3],
             name: 'sound name',
             playhead: 0.5,
@@ -33,12 +33,13 @@ describe('Sound Editor Component', () => {
     });
 
     test('matches snapshot', () => {
-        const {container} = renderWithIntl(<SoundEditor {...props} />);
+        const { container } = renderWithIntl(<SoundEditor {...props} />);
+
         expect(container.firstChild).toMatchSnapshot();
     });
 
     test('delete button appears when selection is not null', () => {
-        const {container} = renderWithIntl(
+        const { container } = renderWithIntl(
             <SoundEditor
                 {...props}
                 trimEnd={0.75}
@@ -46,14 +47,14 @@ describe('Sound Editor Component', () => {
             />
         );
         const deleteButton = [...container.querySelectorAll('div[role="button"]')]
-         .find(el => el.textContent.trim() === 'Delete');
+            .find(el => el.textContent.trim() === 'Delete');
 
         fireEvent.click(deleteButton);
         expect(props.onDelete).toHaveBeenCalled();
     });
 
     test('play button appears when playhead is null', () => {
-        const {container} = renderWithIntl(
+        const { container } = renderWithIntl(
             <SoundEditor
                 {...props}
                 playhead={null}
@@ -65,7 +66,7 @@ describe('Sound Editor Component', () => {
     });
 
     test('stop button appears when playhead is not null', () => {
-        const {container} = renderWithIntl(
+        const { container } = renderWithIntl(
             <SoundEditor
                 {...props}
                 playhead={0.5}
@@ -79,87 +80,108 @@ describe('Sound Editor Component', () => {
     test('submitting name calls the callback', async () => {
         if (typeof MutationObserver === 'undefined') {
             global.MutationObserver = class {
-                observe() {}
-                disconnect() {}
+                observe() { }
+                disconnect() { }
             };
         }
         const onChangeName = jest.fn();
         const { container } = renderWithIntl(<SoundEditor {...props} onChangeName={onChangeName} />);
-    
+
         const input = container.querySelector('input');
-        console.log(input.outerHTML);
-        
+
         fireEvent.change(input, { target: { value: 'hello' } });
         fireEvent.keyPress(input, { key: 'Enter', code: 'Enter', charCode: 13 });
         await waitFor(() => expect(onChangeName).toHaveBeenCalled());
     });
 
-    test('effect buttons call the correct callbacks', () => {
-        const {container} = renderWithIntl(
-            <SoundEditor {...props} />
-        );
+    describe('effect buttons call the correct callbacks', () => {
+        let getButtonByText;
 
-        const buttons =  [...container.querySelectorAll('div[role="button"]')]
-        const getButtonByText = (text) => buttons.find(div => div.textContent.trim() === text);
-        
-        const reverseButton = getButtonByText('Reverse');
-        fireEvent.click(reverseButton);
-        expect(props.onReverse).toHaveBeenCalled();
-        
-        const robotButton = getButtonByText('Robot');
-        fireEvent.click(robotButton);
-        expect(props.onRobot).toHaveBeenCalled();
-        
-        const fasterButton = getButtonByText('Faster');
-        fireEvent.click(fasterButton);
-        expect(props.onFaster).toHaveBeenCalled();
-        
-        const slowerButton = getButtonByText('Slower');
-        fireEvent.click(slowerButton);
-        expect(props.onSlower).toHaveBeenCalled();
-        
-        const louderButton = getButtonByText('Louder');
-        fireEvent.click(louderButton);
-        expect(props.onLouder).toHaveBeenCalled();
-        
-        const softerButton = getButtonByText('Softer');
-        fireEvent.click(softerButton);
-        expect(props.onSofter).toHaveBeenCalled();
+        beforeEach(() => {
+            const { container } = renderWithIntl(
+                <SoundEditor {...props} />
+            );
+
+            const buttons = [...container.querySelectorAll('div[role="button"]')]
+            getButtonByText = (text) => buttons.find(div => div.textContent.trim() === text);
+        })
+
+        test('clicking reverse button calls correct callback', () => {
+            const reverseButton = getButtonByText('Reverse');
+            fireEvent.click(reverseButton);
+            expect(props.onReverse).toHaveBeenCalled();
+        });
+
+        test('clicking robot button calls correct callback', () => {
+            const robotButton = getButtonByText('Robot');
+            fireEvent.click(robotButton);
+            expect(props.onRobot).toHaveBeenCalled();
+        });
+
+        test('clicking faster button calls correct callback', () => {
+            const fasterButton = getButtonByText('Faster');
+            fireEvent.click(fasterButton);
+            expect(props.onFaster).toHaveBeenCalled();
+        });
+
+        test('clicking slower button calls correct callback', () => {
+            const slowerButton = getButtonByText('Slower');
+            fireEvent.click(slowerButton);
+            expect(props.onSlower).toHaveBeenCalled();
+        });
+
+        test('clicking louder button calls correct callback', () => {
+            const louderButton = getButtonByText('Louder');
+            fireEvent.click(louderButton);
+            expect(props.onLouder).toHaveBeenCalled();
+        });
+
+        test('clicking softer button calls correct callback', () => {
+            const softerButton = getButtonByText('Softer');
+            fireEvent.click(softerButton);
+            expect(props.onSofter).toHaveBeenCalled();
+        });
     });
 
-    test('undo and redo buttons can be disabled by canUndo/canRedo', () => {
-        const { container: container1 } = renderWithIntl(
-            <SoundEditor {...props} canUndo={true} canRedo={false} />
-        );
-    
-        const undoButtonEnabled = container1.querySelector('button[title="Undo"]');
-        const redoButtonDisabled = container1.querySelector('button[title="Redo"]');
-        expect(undoButtonEnabled.disabled).toBe(false);
-        expect(redoButtonDisabled.disabled).toBe(true);
-    
-        const { container: container2 } = renderWithIntl(<SoundEditor {...props} canUndo={false} canRedo={true} />);
-    
-        const undoButtonDisabled = container2.querySelector('button[title="Undo"]');
-        const redoButtonEnabled = container2.querySelector('button[title="Redo"]');
-        expect(undoButtonDisabled.disabled).toBe(true);
-        expect(redoButtonEnabled.disabled).toBe(false);
+    describe('disbaling undo/redo button', () => {
+        test('undo button can be disabled when canUndo equals false', () => {
+            const { container } = renderWithIntl(
+                <SoundEditor {...props} canUndo={false} />
+            );
+
+            const undoButtonEnabled = container.querySelector('button[title="Undo"]');
+            expect(undoButtonEnabled.disabled).toBe(true);
+        });
+
+        test('redo button can be disabled when canRedo equals false', () => {
+            const { container } = renderWithIntl(
+                <SoundEditor {...props} canRedo={false} />
+            );
+
+            const redoButtonEnabled = container.querySelector('button[title="Redo"]');
+            expect(redoButtonEnabled.disabled).toBe(true);
+        });
     });
-    
 
-    test('undo/redo buttons call the correct callback', () => {
-        const {container} = renderWithIntl(
-            <SoundEditor
-                {...props}
-                canRedo
-                canUndo
-            />
-        );
-        const undoButton = container.querySelector('button[title="Undo"]');
-        fireEvent.click(undoButton);
-        expect(props.onUndo).toHaveBeenCalled();
+    describe('undo/redo buttons call the correct callbacks', () => {
+        test('when undo button is clicked it calls the correct callback', () => {
+            const { container } = renderWithIntl(
+                <SoundEditor {...props} />
+            );
 
-        const redoButton = container.querySelector('button[title="Redo"]');
-        fireEvent.click(redoButton);
-        expect(props.onRedo).toHaveBeenCalled();
+            const undoButton = container.querySelector('button[title="Undo"]');
+            fireEvent.click(undoButton);
+            expect(props.onUndo).toHaveBeenCalled();
+        });
+
+        test('when redo button is clicked it calls the correct callback', () => {
+            const { container } = renderWithIntl(
+                <SoundEditor {...props} />
+            );
+
+            const redoButton = container.querySelector('button[title="Redo"]');
+            fireEvent.click(redoButton);
+            expect(props.onRedo).toHaveBeenCalled();
+        });
     });
 });

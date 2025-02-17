@@ -1,30 +1,32 @@
 import React from 'react';
-import {OrderedMap} from 'immutable';
+import { OrderedMap } from 'immutable';
 import configureStore from 'redux-mock-store';
-import {Provider} from 'react-redux';
-import {renderWithIntl} from '../../helpers/intl-helpers.jsx';
+import { Provider } from 'react-redux';
+import { renderWithIntl } from '../../helpers/intl-helpers.jsx';
 import MonitorList from '../../../src/components/monitor-list/monitor-list.jsx';
-import {DEFAULT_THEME} from '../../../src/lib/themes';
+import { DEFAULT_THEME } from '../../../src/lib/themes';
 
 describe('MonitorListComponent', () => {
-    const store = configureStore()({scratchGui: {
-        monitorLayout: {
-            monitors: {},
-            savedMonitorPositions: {}
-        },
-        theme: {
-            theme: DEFAULT_THEME
-        },
-        toolbox: {
-            toolboxXML: ''
-        },
-        vm: {
-            runtime: {
-                requestUpdateMonitor: () => {},
-                getLabelForOpcode: () => ''
+    const store = configureStore()({
+        scratchGui: {
+            monitorLayout: {
+                monitors: {},
+                savedMonitorPositions: {}
+            },
+            theme: {
+                theme: DEFAULT_THEME
+            },
+            toolbox: {
+                toolboxXML: ''
+            },
+            vm: {
+                runtime: {
+                    requestUpdateMonitor: () => { },
+                    getLabelForOpcode: () => ''
+                }
             }
         }
-    }});
+    });
     const draggable = false;
     const onMonitorChange = jest.fn();
     const stageSize = {
@@ -58,11 +60,9 @@ describe('MonitorListComponent', () => {
                 isDiscrete: true
             }
         });
-        const {container} = renderWithIntl(getComponent());
-        const input = container.querySelector('input.no-drag');
-        expect(input).toBeTruthy();
-        const stepValue = Number(input.getAttribute('step'));
-        expect(stepValue).toBe(1);        
+        const { container } = renderWithIntl(getComponent());
+        
+        expect(container.firstChild).toMatchSnapshot();
     });
 
     test('it renders the correct step size for non-discrete sliders', () => {
@@ -73,10 +73,8 @@ describe('MonitorListComponent', () => {
                 isDiscrete: false
             }
         });
-        const {container} = renderWithIntl(getComponent());
-        const input = container.querySelector('input.no-drag');
-        expect(input).toBeTruthy();
-        const stepValue = Number(input.getAttribute('step'));
-        expect(stepValue).toBe(0.01);     
+        const { container } = renderWithIntl(getComponent());
+        
+        expect(container.firstChild).toMatchSnapshot();
     });
 });

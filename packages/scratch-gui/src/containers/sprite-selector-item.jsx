@@ -128,7 +128,7 @@ class SpriteSelectorItem extends React.PureComponent {
     }
     setRef (component) {
         // Access the DOM node using .elem because it is going through ContextMenuTrigger
-        this.ref = component && component.elem;
+        this.ref = component;
     }
     render () {
         const {
