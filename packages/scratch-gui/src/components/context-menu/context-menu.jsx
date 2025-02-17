@@ -1,5 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+// eslint-disable-next-line import/no-unresolved
 import {ContextMenuItem} from '@radix-ui/react-context-menu';
 import classNames from 'classnames';
 import styles from './context-menu.css';
