@@ -11,7 +11,6 @@
     border-radius: calc($space / 2);
     box-shadow: 0px 0px 5px 1px $ui-black-transparent;
     transition: opacity 0.2s ease;
-    z-index: $z-index-context-menu;
 }
 
 .menu-item{
