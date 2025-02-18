@@ -24,7 +24,7 @@ const SpriteSelectorItem = props => {
     
 
     return (
-        <ContextMenu.Root>
+        <ContextMenu.Root modal={false}>
             <ContextMenu.Trigger
                 disabled={props.preventContextMenu}
                 asChild
