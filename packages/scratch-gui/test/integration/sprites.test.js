@@ -63,7 +63,7 @@ describe('Working with sprites', () => {
         await expect(logs).toEqual([]);
     });
 
-    test('Deleting only sprite does not crash', async () => {
+    test('Deleting only sprite does not crash with changed name', async () => {
         await loadUri(uri);
         await new Promise(resolve => setTimeout(resolve, 1000)); // Wait for scroll animation
         await rightClickText('Sprite1', scope.spriteTile);
