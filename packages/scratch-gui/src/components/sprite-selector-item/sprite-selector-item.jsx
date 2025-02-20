@@ -6,8 +6,7 @@ import styles from './sprite-selector-item.css';
 import contextMenuStyles from '../context-menu/context-menu.css';
 import {DangerousMenuItem, MenuItem} from '../context-menu/context-menu.jsx';
 import {FormattedMessage} from 'react-intl';
-// eslint-disable-next-line import/no-unresolved
-import * as ContextMenu from '@radix-ui/react-context-menu';
+import ContextMenu from '../../lib/radix-ui-context-menu.js';
 
 const SpriteSelectorItem = props => {
     useEffect(() => {
