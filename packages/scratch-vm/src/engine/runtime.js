@@ -621,15 +621,6 @@ class Runtime extends EventEmitter {
     }
 
     /**
-     * Event name for when the user picks a bluetooth device to connect to
-     * via Companion Device Manager (CDM)
-     * @const {string}
-     */
-    static get USER_PICKED_PERIPHERAL () {
-        return 'USER_PICKED_PERIPHERAL';
-    }
-
-    /**
      * Event name for reporting that a peripheral has connected.
      * This causes the status button in the blocks menu to indicate 'connected'.
      * @const {string}
