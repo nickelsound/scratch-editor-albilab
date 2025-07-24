@@ -19,6 +19,7 @@ import {
     closeLoadingProject,
     openTelemetryModal
 } from './reducers/modals.js';
+import {setStageSize} from './reducers/stage-size';
 
 export const guiReducers = {
     locales: LocalesReducer,
@@ -36,6 +37,7 @@ export {
     requestNewProject,
     requestProjectUpload,
     setProjectId,
+    setStageSize,
 
     openLoadingProject,
     closeLoadingProject,
