@@ -10,6 +10,7 @@ const test = require('tap').test;
 const AdmZip = require('adm-zip');
 const ScratchStorage = require('scratch-storage').ScratchStorage;
 const VirtualMachine = require('../../src/index');
+const {sanitizeByteStream} = require('../../../scratch-svg-renderer/src/sanitize-svg');
 
 const projectUri = path.resolve(__dirname, '../fixtures/offline-custom-assets.sb2');
 const projectZip = AdmZip(projectUri);
@@ -54,7 +55,7 @@ test('offline-custom-assets', t => {
 
             const storedCostume = customCostume.asset;
             t.type(storedCostume, 'object');
-            t.deepEquals(storedCostume.data, costumeData);
+            t.same(storedCostume.data, sanitizeByteStream(costumeData));
 
             const sounds = vm.runtime.targets[1].sprite.sounds;
             t.equals(sounds.length, 1);

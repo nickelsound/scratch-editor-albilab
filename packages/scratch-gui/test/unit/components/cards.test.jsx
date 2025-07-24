@@ -1,6 +1,7 @@
 import React from 'react';
 import { renderWithIntl } from '../../helpers/intl-helpers.jsx';
 import '@testing-library/jest-dom';
+import {PLATFORM} from '../../../src/lib/platform.js';
 
 // Mock this utility because it uses dynamic imports that do not work with jest
 jest.mock('../../../src/lib/libraries/decks/translate-image.js', () => { });
@@ -37,7 +38,7 @@ describe('Cards component', () => {
     });
 
     test('showVideos=true shows the video step', () => {
-        const { container } = renderWithIntl(<Cards {...defaultProps()} showVideos />);
+        const { container } = renderWithIntl(<Cards {...defaultProps()} platform={PLATFORM.WEB} showVideos />);
 
         expect(container.firstChild).toMatchSnapshot();
     });

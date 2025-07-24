@@ -1,6 +1,6 @@
 {
   "name": "@scratch/scratch-render",
-  "version": "11.0.0-beta.1",
+  "version": "11.4.0",
   "description": "WebGL Renderer for Scratch 3.0",
   "author": "Massachusetts Institute of Technology",
   "license": "AGPL-3.0-only",
@@ -9,21 +9,27 @@
     "type": "git",
     "url": "https://github.com/scratchfoundation/scratch-editor.git"
   },
+  "main": "./dist/node/scratch-render.js",
   "exports": {
     "webpack": "./src/index.js",
     "browser": "./dist/web/scratch-render.js",
     "node": "./dist/node/scratch-render.js",
     "default": "./src/index.js"
   },
+  "files": [
+    "dist",
+    "src"
+  ],
   "scripts": {
-    "build": "webpack --progress",
+    "build": "webpack --progress && npm run docs",
+    "clean": "rimraf dist playground",
     "docs": "jsdoc -c .jsdoc.json",
     "lint": "eslint .",
     "prepublish": "npm run build",
     "prepublish-watch": "npm run watch",
     "start": "webpack-dev-server",
     "tap": "tap test/unit test/integration",
-    "test": "npm run lint && npm run docs && npm run build && npm run tap",
+    "test": "npm run lint && npm run tap",
     "watch": "webpack --progress --watch --watch-poll"
   },
   "tap": {
@@ -41,44 +47,43 @@
     "iOS >= 8"
   ],
   "dependencies": {
-    "@scratch/scratch-svg-renderer": "11.0.0-beta.1",
-    "grapheme-breaker": "^0.3.2",
+    "@scratch/scratch-svg-renderer": "11.4.0",
+    "grapheme-breaker": "0.3.2",
     "hull.js": "0.2.10",
-    "ify-loader": "^1.0.4",
-    "linebreak": "^0.3.0",
-    "minilog": "^3.1.0",
-    "raw-loader": "^0.5.1",
-    "twgl.js": "^4.4.0"
+    "ify-loader": "1.1.0",
+    "linebreak": "0.3.0",
+    "minilog": "3.1.0",
+    "raw-loader": "0.5.1",
+    "twgl.js": "4.24.0"
   },
   "peerDependencies": {
     "scratch-render-fonts": "^1.0.0"
   },
   "devDependencies": {
-    "@babel/core": "7.25.2",
-    "@babel/eslint-parser": "7.25.1",
+    "@babel/core": "7.28.0",
+    "@babel/eslint-parser": "7.28.0",
     "@babel/polyfill": "7.12.1",
-    "@babel/preset-env": "7.25.4",
-    "@scratch/scratch-vm": "11.0.0-beta.1",
-    "babel-loader": "9.1.3",
-    "copy-webpack-plugin": "4.6.0",
+    "@babel/preset-env": "7.28.0",
+    "@scratch/scratch-vm": "11.4.0",
+    "babel-loader": "9.2.1",
+    "copy-webpack-plugin": "6.4.1",
     "docdash": "0.4.0",
-    "eslint": "8.57.0",
-    "eslint-config-scratch": "9.0.8",
+    "eslint": "8.57.1",
+    "eslint-config-scratch": "9.0.9",
     "gh-pages": "1.2.0",
-    "html-webpack-plugin": "5.6.0",
+    "html-webpack-plugin": "5.6.3",
     "jsdoc": "3.6.11",
     "json": "9.0.6",
-    "playwright-chromium": "1.46.1",
-    "scratch-render-fonts": "1.0.93",
-    "scratch-semantic-release-config": "1.0.14",
-    "scratch-storage": "^4.0.24",
-    "scratch-webpack-configuration": "1.6.0",
+    "playwright-chromium": "1.54.1",
+    "scratch-render-fonts": "1.0.217",
+    "scratch-semantic-release-config": "3.0.0",
+    "scratch-storage": "4.0.194",
+    "scratch-webpack-configuration": "3.0.0",
     "semantic-release": "19.0.5",
     "tap": "16.3.10",
-    "terser-webpack-plugin": "5.3.10",
-    "travis-after-all": "1.4.5",
-    "webpack": "5.94.0",
+    "terser-webpack-plugin": "5.3.14",
+    "webpack": "5.100.2",
     "webpack-cli": "5.1.4",
-    "webpack-dev-server": "5.0.4"
+    "webpack-dev-server": "5.2.2"
   }
 }

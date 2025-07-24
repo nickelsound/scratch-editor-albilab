@@ -3,6 +3,21 @@ import LocalesReducer, {localesInitialState, initLocale} from './reducers/locale
 import GuiReducer, {buildInitialState, guiMiddleware, initEmbedded, initFullScreen, initPlayer} from './reducers/gui';
 import {setFullScreen, setPlayer} from './reducers/mode.js';
 import {activateDeck} from './reducers/cards.js';
+import {
+    LoadingStates,
+    onFetchedProjectData,
+    onLoadedProject,
+    defaultProjectId,
+    remixProject,
+    requestNewProject,
+    requestProjectUpload,
+    setProjectId
+} from './reducers/project-state.js';
+import {
+    openLoadingProject,
+    closeLoadingProject,
+    openTelemetryModal
+} from './reducers/modals.js';
 
 export const guiReducers = {
     locales: LocalesReducer,
@@ -11,6 +26,19 @@ export const guiReducers = {
 };
 
 export {
+    LoadingStates,
+    onFetchedProjectData,
+    onLoadedProject,
+    defaultProjectId,
+    remixProject,
+    requestNewProject,
+    requestProjectUpload,
+    setProjectId,
+
+    openLoadingProject,
+    closeLoadingProject,
+    openTelemetryModal,
+    
     buildInitialState,
     guiMiddleware,
     initEmbedded,

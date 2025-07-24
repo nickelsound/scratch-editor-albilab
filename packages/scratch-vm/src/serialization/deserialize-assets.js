@@ -1,5 +1,6 @@
 const JSZip = require('jszip');
 const log = require('../util/log');
+const {sanitizeSvg} = require('@scratch/scratch-svg-renderer');
 
 /**
  * Deserializes sound from file into storage cache so that it can
@@ -156,6 +157,11 @@ const deserializeCostume = function (costume, runtime, zip, assetFileName, textL
 
     return Promise.all([textLayerFilePromise,
         costumeFile.async('uint8array')
+            .then(data =>
+                (costumeFormat === 'svg' ?
+                    sanitizeSvg.sanitizeByteStream(data) :
+                    data)
+            )
             .then(data => storage.createAsset(
                 assetType,
                 // TODO eventually we want to map non-png's to their actual file types?

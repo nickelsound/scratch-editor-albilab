@@ -8,7 +8,7 @@ import decksLibraryContent from '../lib/libraries/decks/index.jsx';
 import tutorialTags from '../lib/libraries/tutorial-tags';
 
 import analytics from '../lib/analytics';
-import {notScratchDesktop} from '../lib/isScratchDesktop';
+import {PLATFORM} from '../lib/platform.js';
 
 import LibraryComponent from '../components/library/library.jsx';
 
@@ -59,18 +59,37 @@ class TipsLibrary extends React.PureComponent {
             return window.open(window.location.origin + urlParams, '_blank');
         }
 
+        if (this.props.onTutorialSelect) {
+            this.props.onTutorialSelect();
+        }
         this.props.onActivateDeck(item.id);
     }
     render () {
         const decksLibraryThumbnailData = Object.keys(decksLibraryContent)
             .filter(id => {
-                if (notScratchDesktop()) return true; // Do not filter anything in online editor
+                /**
+                 * Scratch desktop can't support project and video-only tutorials.
+                 * NGP can't support project tutorials.
+                 * The online editor, conversely, should show all tutorials.
+                 */
+                
                 const deck = decksLibraryContent[id];
-                // Scratch Desktop doesn't want tutorials with `requiredProjectId`
-                if (Object.prototype.hasOwnProperty.call(deck, 'requiredProjectId')) return false;
-                // Scratch Desktop should not load tutorials that are _only_ videos
-                if (deck.steps.filter(s => s.title).length === 0) return false;
-                // Allow any other tutorials
+                const isProjectTutorial = Object.prototype.hasOwnProperty.call(deck, 'requiredProjectId');
+                const isVideoOnlyTutorial = decksLibraryContent[id].steps.filter(s => s.title).length === 0;
+
+                if (isProjectTutorial &&
+                    (this.props.hideTutorialProjects ||
+                        this.props.platform === PLATFORM.DESKTOP ||
+                        this.props.platform === PLATFORM.ANDROID)
+                ) {
+                    return false;
+                }
+
+                if (isVideoOnlyTutorial &&
+                    (this.props.platform === PLATFORM.DESKTOP || this.props.platform === PLATFORM.ANDROID)) {
+                    return false;
+                }
+
                 return true;
             })
             .map(id => ({
@@ -103,16 +122,20 @@ class TipsLibrary extends React.PureComponent {
 }
 
 TipsLibrary.propTypes = {
+    onTutorialSelect: PropTypes.func,
     intl: intlShape.isRequired,
     onActivateDeck: PropTypes.func.isRequired,
     onRequestClose: PropTypes.func,
     projectId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-    visible: PropTypes.bool
+    platform: PropTypes.oneOf(Object.keys(PLATFORM)),
+    visible: PropTypes.bool,
+    hideTutorialProjects: PropTypes.bool
 };
 
 const mapStateToProps = state => ({
     visible: state.scratchGui.modals.tipsLibrary,
-    projectId: state.scratchGui.projectState.projectId
+    projectId: state.scratchGui.projectState.projectId,
+    platform: state.scratchGui.platform.platform
 });
 
 const mapDispatchToProps = dispatch => ({
