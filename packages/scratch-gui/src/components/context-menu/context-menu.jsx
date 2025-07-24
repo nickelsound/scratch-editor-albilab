@@ -1,17 +1,16 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-// eslint-disable-next-line import/no-unresolved
-import {ContextMenuItem} from '@radix-ui/react-context-menu';
+import ContextMenu from '../../lib/radix-ui-context-menu.js';
 import classNames from 'classnames';
 import styles from './context-menu.css';
 
 const StyledMenuItem = ({children, ...props}) => (
-    <ContextMenuItem
+    <ContextMenu.ContextMenuItem
         className={styles.menuItem}
         {...props}
     >
         {children}
-    </ContextMenuItem>
+    </ContextMenu.ContextMenuItem>
 );
 
 StyledMenuItem.propTypes = {
@@ -19,12 +18,12 @@ StyledMenuItem.propTypes = {
 };
 
 const BorderedMenuItem = ({children, ...props}) => (
-    <ContextMenuItem
+    <ContextMenu.ContextMenuItem
         className={classNames(styles.menuItem, styles.menuItemBordered)}
         {...props}
     >
         {children}
-    </ContextMenuItem>
+    </ContextMenu.ContextMenuItem>
 );
 
 BorderedMenuItem.propTypes = {
@@ -32,12 +31,12 @@ BorderedMenuItem.propTypes = {
 };
 
 const DangerousMenuItem = ({children, ...props}) => (
-    <ContextMenuItem
+    <ContextMenu.ContextMenuItem
         className={classNames(styles.menuItem, styles.menuItemBordered, styles.menuItemDanger)}
         {...props}
     >
         {children}
-    </ContextMenuItem>
+    </ContextMenu.ContextMenuItem>
 );
 
 DangerousMenuItem.propTypes = {
