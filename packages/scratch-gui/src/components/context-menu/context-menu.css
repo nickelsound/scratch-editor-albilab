@@ -14,7 +14,7 @@
     z-index: $z-index-context-menu;
 }
 
-.menu-item{
+.menu-item {
     font-size: 13px;
 	line-height: 1;
 	display: flex;
@@ -29,7 +29,7 @@
     color: $text-primary;
 }
 
-.menu-item[data-highlighted]{
+.menu-item[data-highlighted] {
     background: $looks-secondary;
     color: white;
 }

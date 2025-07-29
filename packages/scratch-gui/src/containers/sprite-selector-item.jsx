@@ -127,10 +127,7 @@ class SpriteSelectorItem extends React.PureComponent {
         this.setState({isDeletePromptOpen: false});
     }
     setRef (component) {
-        // The ref is on the element inside ContextMenu.Trigger
-        if (component) {
-            this.ref = component;
-        }
+        this.ref = component;
     }
     render () {
         const {

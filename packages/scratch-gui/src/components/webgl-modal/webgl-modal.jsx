@@ -81,7 +81,7 @@ const WebGlModal = props => {
                                     <FormattedMessage
                                         defaultMessage="FAQ"
                                         description="link to Scratch 3.0 FAQ page"
-                                        id="gui.unsupportedBrowser.previewfaqlinktext"
+                                        id="gui.webglModal.previewfaqlinktext"
                                     />
                                 ),
                                 a: previewFaqLink => (

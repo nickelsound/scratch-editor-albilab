@@ -25,7 +25,7 @@ describe('Controls component', () => {
     });
 
     describe('triggers the right callbacks when clicked', () => {
-        test('when green flag button clicked tirggers the right callback', () => {
+        test('when green flag button clicked triggers the right callback', () => {
             const props = defaultProps();
             const { container } = renderWithIntl(<Controls {...props} />);
 
@@ -35,7 +35,7 @@ describe('Controls component', () => {
             expect(props.onGreenFlagClick).toHaveBeenCalled();
         });
 
-        test('when stop all button clicked tirggers the right callback', () => {
+        test('when stop all button clicked triggers the right callback', () => {
             const props = defaultProps();
             const { container } = renderWithIntl(<Controls {...props} />);
 
