@@ -417,7 +417,7 @@ class Scratch3FaceSensingBlocks {
 
     whenSpriteTouchesPart (args, util) {
         if (!this.currentFace) return false;
-        if (!this.currentFace.landmarks) return false;
+        if (!this.currentFace.keypoints) return false;
         const pos = this.getPartPosition(args.PART);
         return util.target.isTouchingScratchPoint(pos.x, pos.y);
     }
