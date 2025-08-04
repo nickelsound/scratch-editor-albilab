@@ -63,7 +63,6 @@ jobs:
       - name: Release
         if: ${{ env.SCRATCH_SHOULD_DEPLOY == 'true' }}
         env:
-            NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-            npx --no -- semantic-release
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npx --no -- semantic-release

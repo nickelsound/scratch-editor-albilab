@@ -20,6 +20,7 @@ export interface EditorStateParams {
     isFullScreen?: boolean;
     isPlayerOnly?: boolean;
     showTelemetryModal?: boolean;
+    isEmbedded?: boolean;
 }
 
 /**
@@ -59,7 +60,8 @@ export class EditorState {
                 guiMiddleware,
                 initFullScreen,
                 initPlayer,
-                initTelemetryModal
+                initTelemetryModal,
+                initEmbedded
             } = guiRedux;
             const {ScratchPaintReducer} = require('scratch-paint');
 
@@ -68,12 +70,15 @@ export class EditorState {
                 require('../legacy-config').legacyConfig;
 
             let initializedGui = buildInitialState(configOrLegacy);
-            if (params.isFullScreen || params.isPlayerOnly) {
+            if (params.isFullScreen || params.isPlayerOnly || params.isEmbedded) {
                 if (params.isFullScreen) {
                     initializedGui = initFullScreen(initializedGui);
                 }
                 if (params.isPlayerOnly) {
                     initializedGui = initPlayer(initializedGui);
+                }
+                if (params.isEmbedded) {
+                    initializedGui = initEmbedded(initializedGui);
                 }
             } else if (params.showTelemetryModal) {
                 initializedGui = initTelemetryModal(initializedGui);

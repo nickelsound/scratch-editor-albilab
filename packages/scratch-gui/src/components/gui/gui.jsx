@@ -101,6 +101,7 @@ const GUIComponent = props => {
         isTotallyNormal,
         loading,
         logo,
+        manuallySaveThumbnails,
         renderLogin,
         onClickAbout,
         onClickAccountNav,
@@ -128,6 +129,7 @@ const GUIComponent = props => {
         onTelemetryModalCancel,
         onTelemetryModalOptIn,
         onTelemetryModalOptOut,
+        onUpdateProjectThumbnail,
         showComingSoon,
         soundsTabVisible,
         stageSizeMode,
@@ -181,6 +183,11 @@ const GUIComponent = props => {
                 isRendererSupported={isRendererSupported}
                 isRtl={isRtl}
                 loading={loading}
+                manuallySaveThumbnails={
+                    manuallySaveThumbnails &&
+                    userOwnsProject
+                }
+                onUpdateProjectThumbnail={onUpdateProjectThumbnail}
                 stageSize={STAGE_SIZE_MODES.large}
                 vm={vm}
             >
@@ -457,6 +464,7 @@ GUIComponent.propTypes = {
     isTotallyNormal: PropTypes.bool,
     loading: PropTypes.bool,
     logo: PropTypes.string,
+    manuallySaveThumbnails: PropTypes.bool,
     onActivateCostumesTab: PropTypes.func,
     onActivateSoundsTab: PropTypes.func,
     onActivateTab: PropTypes.func,
@@ -481,6 +489,7 @@ GUIComponent.propTypes = {
     onTelemetryModalOptIn: PropTypes.func,
     onTelemetryModalOptOut: PropTypes.func,
     onToggleLoginOpen: PropTypes.func,
+    onUpdateProjectThumbnail: PropTypes.func,
     platform: PropTypes.oneOf(Object.keys(PLATFORM)),
     renderLogin: PropTypes.func,
     showComingSoon: PropTypes.bool,

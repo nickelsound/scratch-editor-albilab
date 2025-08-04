@@ -27,7 +27,8 @@ const AppStateHOC = function (WrappedComponent, localesOnly, configFactory) {
                 localesOnly,
                 isFullScreen: props.isFullScreen,
                 isPlayerOnly: props.isPlayerOnly,
-                showTelemetryModal: props.showTelemetryModal
+                showTelemetryModal: props.showTelemetryModal,
+                isEmbedded: props.isEmbedded
             }, configFactory);
         }
 
@@ -45,7 +46,8 @@ const AppStateHOC = function (WrappedComponent, localesOnly, configFactory) {
         isFullScreen: PropTypes.bool,
         isPlayerOnly: PropTypes.bool,
         isTelemetryEnabled: PropTypes.bool,
-        showTelemetryModal: PropTypes.bool
+        showTelemetryModal: PropTypes.bool,
+        isEmbedded: PropTypes.bool
     };
     return AppStateWrapper;
 };
