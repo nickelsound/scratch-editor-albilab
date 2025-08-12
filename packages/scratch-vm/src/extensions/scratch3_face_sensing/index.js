@@ -8,6 +8,7 @@ const TargetType = require('../../extension-support/target-type');
 // const Posenet = require('@tensorflow-models/posenet');
 
 const FaceDetection = require('@tensorflow-models/face-detection');
+const mediapipePackage = require('@mediapipe/face_detection/package.json');
 
 /**
  * Icon svg to be displayed in the blocks category menu, encoded as a data URI.
@@ -49,7 +50,7 @@ class Scratch3FaceSensingBlocks {
             .catch(() => {
                 const fallbackConfig = {
                     runtime: 'mediapipe',
-                    solutionPath: 'https://cdn.jsdelivr.net/npm/@mediapipe/face_detection@0.4.1646425229',
+                    solutionPath: `https://cdn.jsdelivr.net/npm/@mediapipe/face_detection@${mediapipePackage.version}`,
                     maxFaces: 1
                 };
 
