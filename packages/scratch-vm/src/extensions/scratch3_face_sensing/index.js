@@ -361,7 +361,7 @@ class Scratch3FaceSensingBlocks {
             ],
             menus: {
                 PART: [
-                    {text: 'noseTip', value: '2'},
+                    {text: 'nose', value: '2'},
                     {text: 'mouth', value: '3'},
                     {text: 'left eye', value: '0'},
                     {text: 'right eye', value: '1'},
