@@ -1,5 +1,5 @@
 import React from 'react';
-import ReactDOM from 'react-dom';
+import ReactDomClient from 'react-dom/client';
 import {compose} from 'redux';
 
 import AppStateHOC from '../lib/app-state-hoc.jsx';
@@ -62,7 +62,7 @@ export default appTarget => {
         window.onbeforeunload = () => true;
     }
 
-    const root = ReactDOM.createRoot(appTarget);
+    const root = ReactDomClient.createRoot(appTarget);
 
     root.render(
         // important: this is checking whether `simulateScratchDesktop` is truthy, not just defined!
