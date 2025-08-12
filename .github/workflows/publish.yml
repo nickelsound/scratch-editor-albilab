@@ -73,29 +73,54 @@ jobs:
           git add package* && git commit -m "chore(release): $NEW_VERSION [skip ci]"
 
       # Install dependencies after the version update so that
-      # the build outputs refer to the newest version of inner packages 
+      # the build outputs refer to the newest version of inner packages
       - uses: ./.github/actions/install-dependencies
 
-      - name: Build packages
-        run: npm run build
-
       - name: Publish scratch-svg-renderer
-        run: npm publish --access=public --tag="${{steps.npm_tag.outputs.npm_tag}}" --workspace=@scratch/scratch-svg-renderer
+        run: |
+          npm run build --workspace @scratch/scratch-svg-renderer
+          npm publish --access=public --tag="${{steps.npm_tag.outputs.npm_tag}}" --workspace=@scratch/scratch-svg-renderer
         env:
           NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
 
       - name: Publish scratch-render
-        run: npm publish --access=public --tag="${{steps.npm_tag.outputs.npm_tag}}" --workspace=@scratch/scratch-render
+        run: |
+          npm run build --workspace @scratch/scratch-render
+          npm publish --access=public --tag="${{steps.npm_tag.outputs.npm_tag}}" --workspace=@scratch/scratch-render
         env:
           NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
 
       - name: Publish scratch-vm
-        run: npm publish --access=public --tag="${{steps.npm_tag.outputs.npm_tag}}" --workspace=@scratch/scratch-vm
+        run: |
+          npm run build --workspace @scratch/scratch-vm
+          npm publish --access=public --tag="${{steps.npm_tag.outputs.npm_tag}}" --workspace=@scratch/scratch-vm
         env:
           NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
 
       - name: Publish scratch-gui
-        run: npm publish --access=public --tag="${{steps.npm_tag.outputs.npm_tag}}" --workspace=@scratch/scratch-gui
+        run: |
+          cp ./packages/scratch-gui/package.json ./packages/scratch-gui/package-copy.json
+
+          jq 'del(.exports["./standalone"])' ./packages/scratch-gui/package.json | npx sponge ./packages/scratch-gui/package.json
+
+          npm run build:dist --workspace @scratch/scratch-gui
+          npm publish --access=public --tag="${{steps.npm_tag.outputs.npm_tag}}" --workspace=@scratch/scratch-gui
+
+          mv ./packages/scratch-gui/package-copy.json ./packages/scratch-gui/package.json
+        env:
+          NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
+
+      - name: Publish scratch-gui-standalone
+        run: |
+          jq '
+            .name = "@scratch/scratch-gui-standalone" |
+            del(.peerDependencies) |
+            .exports."." = .exports."./standalone" |
+            del(.exports."./standalone")
+          ' ./packages/scratch-gui/package.json | npx sponge ./packages/scratch-gui/package.json
+
+          npm --workspace=@scratch/scratch-gui-standalone run clean && npm --workspace=@scratch/scratch-gui-standalone run build:dist-standalone
+          npm publish --access=public --tag="${{steps.npm_tag.outputs.npm_tag}}" --workspace=@scratch/scratch-gui-standalone
         env:
           NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
 

@@ -1,6 +1,6 @@
 {
   "name": "scratch-editor",
-  "version": "11.4.0",
+  "version": "11.6.0-gui-standalone",
   "private": "true",
   "description": "Scratch editor mono-repository",
   "author": "Scratch Foundation",
