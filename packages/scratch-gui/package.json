@@ -57,6 +57,7 @@
     "watch": "webpack --watch"
   },
   "dependencies": {
+    "@mediapipe/face_detection": "0.4.1646425229",
     "@microbit/microbit-universal-hex": "0.2.2",
     "@tensorflow-models/face-detection": "^1.0.3",
     "@tensorflow/tfjs": "^4.22.0",

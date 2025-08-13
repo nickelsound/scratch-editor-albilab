@@ -8,6 +8,7 @@ const TargetType = require('../../extension-support/target-type');
 // const Posenet = require('@tensorflow-models/posenet');
 
 const FaceDetection = require('@tensorflow-models/face-detection');
+const mediapipePackage = require('@mediapipe/face_detection/package.json');
 
 /**
  * Icon svg to be displayed in the blocks category menu, encoded as a data URI.
@@ -41,16 +42,26 @@ class Scratch3FaceSensingBlocks {
         const model = FaceDetection.SupportedModels.MediaPipeFaceDetector;
         const detectorConfig = {
             runtime: 'mediapipe',
-            solutionPath: 'https://cdn.jsdelivr.net/npm/@mediapipe/face_detection',
+            solutionPath: '/chunks/mediapipe/face_detection',
             maxFaces: 1
         };
     
-        FaceDetection.createDetector(model, detectorConfig).then(detector => {
-            this.faceDetector = detector;
-            if (this.runtime.ioDevices) {
-                this._loop();
-            }
-        });
+        FaceDetection.createDetector(model, detectorConfig)
+            .catch(() => {
+                const fallbackConfig = {
+                    runtime: 'mediapipe',
+                    solutionPath: `https://cdn.jsdelivr.net/npm/@mediapipe/face_detection@${mediapipePackage.version}`,
+                    maxFaces: 1
+                };
+
+                return FaceDetection.createDetector(model, fallbackConfig);
+            })
+            .then(detector => {
+                this.faceDetector = detector;
+                if (this.runtime.ioDevices) {
+                    this._loop();
+                }
+            });
 
         this.cachedSize = 100;
         this.cachedTilt = 90;
