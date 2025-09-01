@@ -1069,6 +1069,16 @@ class RenderWebGL extends EventEmitter {
         return false;
     }
 
+    /**
+     * Determine if the drawable is touching a rectangle.
+     *
+     * @param {int} drawableID The ID of the drawable to check.
+     * @param {int} left - The left X coordinate of the rectangle.
+     * @param {int} top - The top Y coordinate of the rectangle.
+     * @param {int} right - The right X coordinate of the rectangle.
+     * @param {int} bottom - The bottom Y coordinate of the rectangle.
+     * @returns {boolean} If the drawable has any pixels that would draw in the rectangle area
+     */
     drawableTouchingScratchRect (drawableID, left, top, right, bottom) {
         const drawable = this._allDrawables[drawableID];
         if (!drawable) {
@@ -1090,6 +1100,14 @@ class RenderWebGL extends EventEmitter {
         return false;
     }
 
+    /**
+     * Determine if the drawable is touching a point in the Scratch coordinate system
+     *
+     * @param {int} drawableID The ID of the drawable to check.
+     * @param {int} x The x coordinate of the point.
+     * @param {int} y The y coordinate of the point.
+     * @returns {boolean} If the drawable is touching the point
+     */
     drawableTouchingScratchPoint (drawableID, x, y) {
         const drawable = this._allDrawables[drawableID];
         if (!drawable) {

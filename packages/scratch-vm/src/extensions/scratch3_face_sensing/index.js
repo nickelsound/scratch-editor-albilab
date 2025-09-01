@@ -5,7 +5,7 @@ const MathUtil = require('../../util/math-util');
 const formatMessage = require('format-message');
 const Video = require('../../io/video');
 const TargetType = require('../../extension-support/target-type');
-// const Posenet = require('@tensorflow-models/posenet');
+const {distance, toScratchCoords} = require('./utils');
 
 const FaceDetection = require('@tensorflow-models/face-detection');
 const mediapipePackage = require('@mediapipe/face_detection/package.json');
@@ -37,6 +37,33 @@ class Scratch3FaceSensingBlocks {
          */
         this.runtime = runtime;
 
+        /**
+         * Cached value for detected face size
+         * @type {number}
+         */
+        this._cachedSize = 100;
+
+        /**
+         * Cached value for detected tilt angle
+         * @type {number}
+         */
+        this._cachedTilt = 90;
+
+        /**
+         * Smoothed value for whether or not a face was detected
+         * @type {boolean}
+         */
+        this._smoothedIsDetected = false;
+
+        /**
+         * History of recent face-detection results
+         * @type {Array.<boolean>}
+         */
+        this._isDetectedArray = Array.from(
+            {length: Scratch3FaceSensingBlocks.IS_DETECTED_ARRAY_LENGTH},
+            () => false
+        );
+
         this.runtime.emit('EXTENSION_DATA_LOADING', true);
 
         const model = FaceDetection.SupportedModels.MediaPipeFaceDetector;
@@ -57,21 +84,11 @@ class Scratch3FaceSensingBlocks {
                 return FaceDetection.createDetector(model, fallbackConfig);
             })
             .then(detector => {
-                this.faceDetector = detector;
+                this._faceDetector = detector;
                 if (this.runtime.ioDevices) {
                     this._loop();
                 }
             });
-
-        this.cachedSize = 100;
-        this.cachedTilt = 90;
-
-        // Array of recent boolean values for whether or not a face was detected
-        this.isDetectedArrayLength = 5;
-        this.isDetectedArray = new Array(this.isDetectedArrayLength);
-        this.isDetectedArray.fill(false, 0, this.isDetectedArrayLength);
-        // Smoothed value for whether or not a face was detected
-        this.smoothedIsDetected = false;
 
         this._clearAttachments = this._clearAttachments.bind(this);
         this.runtime.on('PROJECT_STOP_ALL', this._clearAttachments);
@@ -87,7 +104,7 @@ class Scratch3FaceSensingBlocks {
     }
 
     /**
-     * Dimensions the video stream is analyzed at after its rendered to the
+     * Dimensions the video stream is analyzed at after it's rendered to the
      * sample canvas.
      * @type {Array.<number>}
      */
@@ -96,12 +113,29 @@ class Scratch3FaceSensingBlocks {
     }
 
     /**
-     * Reset the extension's data motion detection data. This will clear out
-     * for example old frames, so the first analyzed frame will not be compared
-     * against a frame from before reset was called.
+     * The key to load & store a target's face sensing state.
+     * @type {string}
      */
-    reset () {
+    static get STATE_KEY () {
+        return 'Scratch.faceSensing';
+    }
 
+    /**
+     * The default face sensing state, to be used when a target has no existing state.
+     * @type {FaceSensingState}
+     */
+    static get DEFAULT_FACE_SENSING_STATE () {
+        return {
+            attachedToPartNumber: null
+        };
+    }
+
+    /**
+     * Maximum length of face detection history
+     * @type {number}
+     */
+    static get IS_DETECTED_ARRAY_LENGTH () {
+        return 5;
     }
 
     /**
@@ -118,63 +152,62 @@ class Scratch3FaceSensingBlocks {
             cacheTimeout: this.runtime.currentStepTime
         });
         if (frame) {
-            this.faceDetector.estimateFaces(frame).then(faces => {
+            this._faceDetector.estimateFaces(frame).then(faces => {
                 if (faces && faces.length > 0) {
-                    if (!this.firstTime) {
-                        this.firstTime = true;
+                    if (!this._firstTime) {
+                        this._firstTime = true;
                         this.runtime.emit('EXTENSION_DATA_LOADING', false);
                     }
-                    this.currentFace = faces[0];
+                    this._currentFace = faces[0];
                 } else {
-                    this.currentFace = null;
+                    this._currentFace = null;
                 }
-                this.updateIsDetected();
+                this._updateIsDetected();
             });
         }
     }
 
-    updateIsDetected () {
-        this.isDetectedArray.push(!!this.currentFace);
-        if (this.isDetectedArray.length > this.isDetectedArrayLength) {
-            this.isDetectedArray.shift();
+    /**
+     * Update the smoothed face-detection state based on the most recent result.
+     * @private
+     */
+    _updateIsDetected () {
+        this._isDetectedArray.push(!!this._currentFace);
+
+        if (this._isDetectedArray.length > Scratch3FaceSensingBlocks.IS_DETECTED_ARRAY_LENGTH) {
+            this._isDetectedArray.shift();
         }
+
         // if every recent detection is false, set to false
-        if (this.isDetectedArray.every(item => item === false)) {
-            this.smoothedIsDetected = false;
+        if (this._isDetectedArray.every(item => item === false)) {
+            this._smoothedIsDetected = false;
         }
+
         // if every recent detection is true, set to true
-        if (this.isDetectedArray.every(item => item === true)) {
-            this.smoothedIsDetected = true;
+        if (this._isDetectedArray.every(item => item === true)) {
+            this._smoothedIsDetected = true;
         }
 
         // if there's a mix of true and false values, do not change the result
     }
 
+    /**
+     * Retrieve the face-sensing state for a given target.
+     * If no state exists yet, clone the default and set it on the target.
+     *
+     * @param {Target} target - collect face sensing state for this target.
+     * @returns {FaceSensingState} the face sensing state associated with that target.
+     * @private
+     */
     _getFaceSensingState (target) {
         let faceSensingState = target.getCustomState(Scratch3FaceSensingBlocks.STATE_KEY);
+
         if (!faceSensingState) {
             faceSensingState = Clone.simple(Scratch3FaceSensingBlocks.DEFAULT_FACE_SENSING_STATE);
             target.setCustomState(Scratch3FaceSensingBlocks.STATE_KEY, faceSensingState);
         }
+
         return faceSensingState;
-    }
-
-    static get STATE_KEY () {
-        return 'Scratch.faceSensing';
-    }
-
-    static get DEFAULT_FACE_SENSING_STATE () {
-        return {
-            attachedToPartNumber: null,
-            prevX: 0,
-            offsetX: 0,
-            prevY: 0,
-            offsetY: 0,
-            prevSize: 100,
-            offsetSize: 0,
-            prevDirection: 0,
-            offsetDirection: 0
-        };
     }
 
     /**
@@ -184,7 +217,6 @@ class Scratch3FaceSensingBlocks {
         // Enable the video layer
         this.runtime.ioDevices.video.enableVideo();
 
-        // Return extension definition
         return {
             id: 'faceSensing',
             name: formatMessage({
@@ -232,7 +264,6 @@ class Scratch3FaceSensingBlocks {
                     blockType: BlockType.COMMAND,
                     filter: [TargetType.SPRITE]
                 },
-                '---',
                 {
                     opcode: 'whenTilted',
                     text: formatMessage({
@@ -253,7 +284,7 @@ class Scratch3FaceSensingBlocks {
                     opcode: 'whenSpriteTouchesPart',
                     text: formatMessage({
                         id: 'faceSensing.whenSpriteTouchesPart',
-                        default: 'when this sprite touches a[PART]',
+                        default: 'when this sprite touches a [PART]',
                         description: ''
                     }),
                     arguments: {
@@ -275,7 +306,6 @@ class Scratch3FaceSensingBlocks {
                     }),
                     blockType: BlockType.HAT
                 },
-                '---',
                 {
                     opcode: 'faceIsDetected',
                     text: formatMessage({
@@ -285,22 +315,6 @@ class Scratch3FaceSensingBlocks {
                     }),
                     blockType: BlockType.BOOLEAN
                 },
-                // {
-                //     opcode: 'attachToPart',
-                //     text: formatMessage({
-                //         id: 'faceSensing.attachToPart',
-                //         default: 'attach to [PART]',
-                //         description: ''
-                //     }),
-                //     blockType: BlockType.COMMAND,
-                //     arguments: {
-                //         PART: {
-                //             type: ArgumentType.STRING,
-                //             menu: 'PART',
-                //             defaultValue: '2'
-                //         }
-                //     }
-                // },
                 {
                     opcode: 'faceTilt',
                     text: formatMessage({
@@ -310,38 +324,6 @@ class Scratch3FaceSensingBlocks {
                     }),
                     blockType: BlockType.REPORTER
                 },
-                // {
-                //     opcode: 'partX',
-                //     text: formatMessage({
-                //         id: 'faceSensing.partX',
-                //         default: 'x position of [PART]',
-                //         description: ''
-                //     }),
-                //     arguments: {
-                //         PART: {
-                //             type: ArgumentType.NUMBER,
-                //             menu: 'PART',
-                //             defaultValue: '2'
-                //         }
-                //     },
-                //     blockType: BlockType.REPORTER
-                // },
-                // {
-                //     opcode: 'partY',
-                //     text: formatMessage({
-                //         id: 'faceSensing.partY',
-                //         default: 'y position of [PART]',
-                //         description: ''
-                //     }),
-                //     arguments: {
-                //         PART: {
-                //             type: ArgumentType.NUMBER,
-                //             menu: 'PART',
-                //             defaultValue: '2'
-                //         }
-                //     },
-                //     blockType: BlockType.REPORTER
-                // },
                 {
                     opcode: 'faceSize',
                     text: formatMessage({
@@ -351,24 +333,6 @@ class Scratch3FaceSensingBlocks {
                     }),
                     blockType: BlockType.REPORTER
                 }
-                // {
-                //     opcode: 'probability',
-                //     text: formatMessage({
-                //         id: 'faceSensing.probability',
-                //         default: 'probability of face detection',
-                //         description: ''
-                //     }),
-                //     blockType: BlockType.REPORTER
-                // },
-                // {
-                //     opcode: 'numberOfFaces',
-                //     text: formatMessage({
-                //         id: 'faceSensing.numberOfFaces',
-                //         default: 'number of faces',
-                //         description: ''
-                //     }),
-                //     blockType: BlockType.REPORTER
-                // }
             ],
             menus: {
                 PART: [
@@ -389,29 +353,39 @@ class Scratch3FaceSensingBlocks {
         };
     }
 
-    getBetweenEyesPosition () {
-        // center point of a line between the eyes
-        const leftEye = this.getPartPosition(0);
-        const rightEye = this.getPartPosition(1);
+    /**
+     * Center point of a line between the eyes
+     *
+     * @returns {{x: number, y: number}} Coordinates of the detected point between eyes.
+     * @private
+     */
+    _getBetweenEyesPosition () {
+        const leftEye = this._getPartPosition(0);
+        const rightEye = this._getPartPosition(1);
         const betweenEyes = {x: 0, y: 0};
         betweenEyes.x = leftEye.x + ((rightEye.x - leftEye.x) / 2);
         betweenEyes.y = leftEye.y + ((rightEye.y - leftEye.y) / 2);
         return betweenEyes;
     }
 
-    getTopOfHeadPosition () {
-        // Estimated top of the head point:
-        // Make a line perpendicular to the line between the eyes, through
-        // its center, and move upward along it the distance from the point
-        // between the eyes to the mouth.
-        const leftEyePos = this.getPartPosition(0);
-        const rightEyePos = this.getPartPosition(1);
-        const mouthPos = this.getPartPosition(3);
+    /**
+     * Estimated top of the head point:
+     * Make a line perpendicular to the line between the eyes, through
+     * its center, and move upward along it the distance from the point
+     * between the eyes to the mouth.
+     *
+     * @returns {{x: number, y: number}} Coordinates of the detected top of head position.
+     * @private
+     */
+    _getTopOfHeadPosition () {
+        const leftEyePos = this._getPartPosition(0);
+        const rightEyePos = this._getPartPosition(1);
+        const mouthPos = this._getPartPosition(3);
         const dx = rightEyePos.x - leftEyePos.x;
         const dy = rightEyePos.y - leftEyePos.y;
         const directionRads = Math.atan2(dy, dx) + (Math.PI / 2);
-        const betweenEyesPos = this.getBetweenEyesPosition();
-        const mouthDistance = this.distance(betweenEyesPos, mouthPos);
+        const betweenEyesPos = this._getBetweenEyesPosition();
+        const mouthDistance = distance(betweenEyesPos, mouthPos);
 
         const topOfHeadPosition = {x: 0, y: 0};
         topOfHeadPosition.x = betweenEyesPos.x + (mouthDistance * Math.cos(directionRads));
@@ -420,80 +394,126 @@ class Scratch3FaceSensingBlocks {
         return topOfHeadPosition;
     }
 
-    distance (pointA, pointB) {
-        const dx = pointA.x - pointB.x;
-        const dy = pointA.y - pointB.y;
-        return Math.sqrt((dx * dx) + (dy * dy));
-    }
-
-    whenSpriteTouchesPart (args, util) {
-        if (!this.currentFace) return false;
-        if (!this.currentFace.keypoints) return false;
-        const pos = this.getPartPosition(args.PART);
-        return util.target.isTouchingScratchPoint(pos.x, pos.y);
-    }
-
-    whenFaceDetected () {
-        return this.smoothedIsDetected;
-    }
-
-    faceIsDetected () {
-        return this.smoothedIsDetected;
-    }
-
-    numberOfFaces () {
-        return this.allFaces.length;
-    }
-
-    probability () {
-        if (this.currentFace) {
-            return Math.round(this.currentFace.probability * 100);
-        }
-        return 0;
-    }
-
-    faceSize () {
-        if (!this.currentFace) return this.cachedSize;
-        const size = Math.round(this.currentFace.box.height);
-        this.cachedSize = size;
-        return size;
-    }
-
-    getPartPosition (part) {
+    /**
+     * Get the position of a given facial keypoint.
+     * Returns {0,0} if no face or keypoints are available.
+     *
+     * @param {number} part - Part of the face to be detected
+     * @returns {{x: number, y: number}} Coordinates of the detected keypoint.
+     * @private
+     */
+    _getPartPosition (part) {
         const defaultPos = {x: 0, y: 0};
-        if (!this.currentFace) return defaultPos;
-        if (!this.currentFace.keypoints) return defaultPos;
+
+        if (!this._currentFace) return defaultPos;
+        if (!this._currentFace.keypoints) return defaultPos;
+
         if (Number(part) === 6) {
-            return this.getBetweenEyesPosition();
+            return this._getBetweenEyesPosition();
         }
         if (Number(part) === 7) {
-            return this.getTopOfHeadPosition();
+            return this._getTopOfHeadPosition();
         }
-        const result = this.currentFace.keypoints[Number(part)];
+
+        const result = this._currentFace.keypoints[Number(part)];
         if (result) {
-            const res = this.toScratchCoords(result);
+            const res = toScratchCoords(result);
             return res;
         }
         return defaultPos;
     }
 
-    toScratchCoords (position) {
-        return {
-            x: position.x - 240,
-            y: 180 - position.y
-        };
+    /**
+     * A scratch hat block handle that reports whether
+     * a target sprite is touching a given facial keypoint
+     *
+     * @param {object} args - the block arguments
+     * @param {BlockUtility} util - the block utility
+     * @returns {boolean} - true if the sprite is touching the given point
+     */
+    whenSpriteTouchesPart (args, util) {
+        if (!this._currentFace) return false;
+        if (!this._currentFace.keypoints) return false;
+
+        const pos = this._getPartPosition(args.PART);
+        return util.target.isTouchingScratchPoint(pos.x, pos.y);
     }
 
-    partX (args) {
-        return this.getPartPosition(args.PART).x;
+    /**
+     * A scratch hat block handle that reports whether
+     * a face is detected
+     *
+     * @returns {boolean} - true a face was detected
+     */
+    whenFaceDetected () {
+        return this._smoothedIsDetected;
     }
 
-    partY (args) {
-        return this.getPartPosition(args.PART).y;
+    /**
+     * A scratch boolean block handle that reports whether
+     * a face is detected
+     *
+     * @returns {boolean} - true a face was detected
+     */
+    faceIsDetected () {
+        return this._smoothedIsDetected;
     }
 
+    /**
+     * A scratch reporter block handle that calculates the face size and caches it.
+     *
+     * @returns {number} the face size
+     */
+    faceSize () {
+        if (!this._currentFace) return this._cachedSize;
+
+        const size = Math.round(this._currentFace.box.height);
+        this._cachedSize = size;
+        return size;
+    }
+
+    /**
+     * A scratch command block handle that sets the size of a target to the current face size
+     *
+     * @param {object} args - the block arguments
+     * @param {BlockUtility} util - the block utility
+     */
+    setSizeToFaceSize (args, util) {
+        if (!this._currentFace) return;
+
+        util.target.setSize(this.faceSize());
+    }
+
+    /**
+     * A scratch reporter block handle that calculates the face tilt and caches it.
+     *
+     * @returns {number} the face tilt
+     */
+    faceTilt () {
+        if (!this._currentFace) return this._cachedTilt;
+
+        const leftEyePos = this._getPartPosition(0);
+        const rightEyePos = this._getPartPosition(1);
+        const dx = rightEyePos.x - leftEyePos.x;
+        const dy = rightEyePos.y - leftEyePos.y;
+        const direction = 90 - MathUtil.radToDeg(Math.atan2(dy, dx));
+        const tilt = Math.round(direction);
+
+        this._cachedTilt = tilt;
+
+        return tilt;
+    }
+
+    /**
+     * A scratch hat block handle that reports whether
+     * a detected face is tilted
+     *
+     * @param {object} args - the block arguments
+     * @returns {boolean} - true if the face is tilted
+     */
     whenTilted (args) {
         const TILT_THRESHOLD = 10;
+
         if (args.DIRECTION === 'left') {
             return this.faceTilt() < (90 - TILT_THRESHOLD);
         }
@@ -503,80 +523,40 @@ class Scratch3FaceSensingBlocks {
         return false;
     }
 
-    goToPart (args, util) {
-        if (!this.currentFace) return;
-        const pos = this.getPartPosition(args.PART);
-        util.target.setXY(pos.x, pos.y);
-    }
-
+    /**
+     * A scratch command block handle that points a target to the current face tilt direction
+     *
+     * @param {object} args - the block arguments
+     * @param {BlockUtility} util - the block utility
+     */
     pointInFaceTiltDirection (args, util) {
-        if (!this.currentFace) return;
+        if (!this._currentFace) return;
+
         util.target.setDirection(this.faceTilt());
     }
 
-    setSizeToFaceSize (args, util) {
-        if (!this.currentFace) return;
-        util.target.setSize(this.faceSize());
+    /**
+     * A scratch command block handle that moves a target to a given facial keypoint
+     *
+     * @param {object} args - the block arguments
+     * @param {BlockUtility} util - the block utility
+     */
+    goToPart (args, util) {
+        if (!this._currentFace) return;
+
+        const pos = this._getPartPosition(args.PART);
+        util.target.setXY(pos.x, pos.y);
     }
 
-    attachToPart (args, util) {
-        const state = this._getFaceSensingState(util.target);
-        state.attachedToPartNumber = args.PART;
-        state.offsetX = 0;
-        state.offsetY = 0;
-        state.prevX = util.target.x;
-        state.prevY = util.target.y;
-        state.offsetDirection = 0;
-        state.prevDirection = util.target.direction;
-        state.offsetSize = 0;
-        state.prevSize = util.target.size;
-    }
-
-    updateAttachments () {
-        this.runtime.targets.forEach(target => {
-            const state = this._getFaceSensingState(target);
-            if (state.attachedToPartNumber) {
-                const partPos = this.getPartPosition(state.attachedToPartNumber);
-                if (target.x !== state.prevX) {
-                    state.offsetX += target.x - state.prevX;
-                }
-                if (target.y !== state.prevY) {
-                    state.offsetY += target.y - state.prevY;
-                }
-                if (target.direction !== state.prevDirection) {
-                    state.offsetDirection += target.direction - state.prevDirection;
-                }
-                if (target.size !== state.prevSize) {
-                    state.offsetSize += target.size - state.prevSize;
-                }
-                target.setXY(partPos.x + state.offsetX, partPos.y + state.offsetY);
-                target.setDirection(this.faceTilt() + state.offsetDirection);
-                target.setSize(this.faceSize() + state.offsetSize);
-                state.prevX = target.x;
-                state.prevY = target.y;
-                state.prevDirection = target.direction;
-                state.prevSize = target.size;
-            }
-        });
-    }
-
+    /**
+     * Reset any attachments between sprites and facial keypoints.
+     * @private
+     */
     _clearAttachments () {
         this.runtime.targets.forEach(target => {
             const state = this._getFaceSensingState(target);
             state.attachedToPartNumber = null;
         });
-    }
-
-    faceTilt () {
-        if (!this.currentFace) return this.cachedTilt;
-        const leftEyePos = this.getPartPosition(0);
-        const rightEyePos = this.getPartPosition(1);
-        const dx = rightEyePos.x - leftEyePos.x;
-        const dy = rightEyePos.y - leftEyePos.y;
-        const direction = 90 - MathUtil.radToDeg(Math.atan2(dy, dx));
-        const tilt = Math.round(direction);
-        this.cachedTilt = tilt;
-        return tilt;
     }
 }
 
