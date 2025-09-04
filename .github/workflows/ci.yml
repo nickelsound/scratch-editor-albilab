@@ -27,15 +27,14 @@ jobs:
       - name: Debug info
         # https://docs.github.com/en/actions/reference/security/secure-use#use-an-intermediate-environment-variable
         env:
-          GH_HEAD_REF: ${{ github.head_ref }}
+          # `env:` values are printed to the log even without using them in `run:`
+          GH_CONTEXT: ${{ toJson(github) }}
         run: |
           cat <<EOF
-          Scratch environment: ${{ vars.SCRATCH_ENV || '<none>' }}
+          Working directory: $(pwd)
           Node version: $(node --version)
           NPM version: $(npm --version)
-          GitHub ref: ${{ github.ref }}
-          GitHub head ref: ${GH_HEAD_REF}
-          Working directory: $(pwd)
+          Scratch environment: ${{ vars.SCRATCH_ENV || '<none>' }}
           EOF
 
       - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3
