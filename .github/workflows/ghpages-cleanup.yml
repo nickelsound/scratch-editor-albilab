@@ -1,3 +1,5 @@
+name: GitHub Pages Cleanup
+
 on:
   schedule:
     - cron: 0 0 * * 6 # midnight on Saturdays
@@ -7,7 +9,7 @@ jobs:
   cleanup:
     runs-on: ubuntu-latest
     steps:
-      - name: Check out GH Pages branch
+      - name: Check out GitHub Pages branch
         uses: actions/checkout@v4
         with:
           # replace `fetch-depth` with `shallow-since` if and when actions/checkout#619 (or an equivalent) gets merged
@@ -22,6 +24,6 @@ jobs:
           done
           git status
       - name: Commit
-        run: "git commit -m 'chore: remove stale GH Pages branches'"
+        run: "git commit -m 'chore: remove stale GitHub Pages branches'"
       - name: Push
         run: "git push"
