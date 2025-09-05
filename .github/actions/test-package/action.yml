@@ -21,7 +21,7 @@ runs:
       shell: bash
       run: |
         mkdir -p test-results
-        npm run test | tee -a ./test-results/${{ inputs.package_name }}-test-results.txt
+        npm run test
     - name: Store Test Results
       if: ${{ !cancelled() }}
       uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4
