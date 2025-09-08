@@ -50,7 +50,7 @@ const whenThreadsComplete = (t, vm, uri, timeLimit = 5000) =>
 
         // Clear the interval to allow the process to exit
         // naturally.
-        t.tearDown(() => {
+        t.teardown(() => {
             clearInterval(intervalId);
             clearTimeout(timeoutId);
         });
@@ -67,7 +67,7 @@ fs.readdirSync(executeDir)
         test(uri, t => {
             // Disable logging during this test.
             log.suggest.deny('vm', 'error');
-            t.tearDown(() => log.suggest.clear());
+            t.teardown(() => log.suggest.clear());
 
             const vm = new VirtualMachine();
 
@@ -117,7 +117,7 @@ fs.readdirSync(executeDir)
 
             // Stop the runtime interval once the test is complete so the test
             // process may naturally exit.
-            t.tearDown(() => {
+            t.teardown(() => {
                 clearInterval(vm.runtime._steppingInterval);
             });
 
