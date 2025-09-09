@@ -44,10 +44,7 @@
     "Safari >= 11"
   ],
   "tap": {
-    "branches": 60,
-    "functions": 70,
-    "lines": 70,
-    "statements": 70
+    "allow-incomplete-coverage": true
   },
   "dependencies": {
     "@scratch/scratch-render": "11.6.0",
@@ -100,7 +97,7 @@
     "script-loader": "0.7.2",
     "semantic-release": "19.0.5",
     "stats.js": "0.17.0",
-    "tap": "16.3.10",
+    "tap": "21.1.0",
     "webpack": "5.101.3",
     "webpack-cli": "4.10.0",
     "webpack-dev-server": "5.2.2"

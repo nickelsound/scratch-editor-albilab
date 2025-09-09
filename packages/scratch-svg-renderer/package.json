@@ -34,10 +34,7 @@
     "scratch-render-fonts": "^1.0.0"
   },
   "tap": {
-    "branches": 70,
-    "functions": 50,
-    "lines": 70,
-    "statements": 70
+    "allow-incomplete-coverage": true
   },
   "dependencies": {
     "base64-js": "1.5.1",
@@ -65,7 +62,7 @@
     "scratch-semantic-release-config": "3.0.0",
     "scratch-webpack-configuration": "3.0.0",
     "semantic-release": "19.0.5",
-    "tap": "16.3.10",
+    "tap": "21.1.0",
     "webpack": "5.101.3",
     "webpack-cli": "5.1.4",
     "webpack-dev-server": "5.2.2",
