@@ -1,6 +1,5 @@
 const ArgumentType = require('../../extension-support/argument-type');
 const BlockType = require('../../extension-support/block-type');
-const Clone = require('../../util/clone');
 const MathUtil = require('../../util/math-util');
 const formatMessage = require('format-message');
 const Video = require('../../io/video');
@@ -25,7 +24,7 @@ const menuIconURI = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iN
 const blockIconURI = 'data:image/svg+xml;base64,PHN2ZyBoZWlnaHQ9IjQwIiB3aWR0aD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgdmlld0JveD0iMCAwIDIzLjg0IDIxLjQ2Ij4KICAgIDxjaXJjbGUgZmlsbD0iI2ZmZiIgY3g9IjguMzUiIGN5PSI5LjY1IiByPSIuOTciLz4KICAgIDxjaXJjbGUgZmlsbD0iI2ZmZiIgY3g9IjE0LjE5IiBjeT0iOS42NSIgcj0iLjk3Ii8+CiAgICA8cGF0aCBmaWxsPSIjZmZmIiBkPSJNMTEuMjcsNC4xNGMtMy45NCwwLTcuMTMsMy4xOS03LjEzLDcuMTNzMy4xOSw3LjEzLDcuMTMsNy4xMyw3LjEzLTMuMTksNy4xMy03LjEzLTMuMTktNy4xMy03LjEzLTcuMTNaTTExLjI3LDUuNDRjMy4yMiwwLDUuODQsMi42MSw1Ljg0LDUuODRzLTIuNjEsNS44NC01Ljg0LDUuODQtNS44NC0yLjYxLTUuODQtNS44NCwyLjYxLTUuODQsNS44NC01Ljg0WiIvPgogICAgPHBhdGggZmlsbD0iI2ZmYmYwMCIgZmlsbC1ydWxlPSJldmVub2RkIiBzdHJva2U9IiMwYjhlNjkiIHN0cm9rZS1taXRlcmxpbWl0PSIyIiBzdHJva2Utd2lkdGg9Ii41cHgiIGQ9Ik0xNy41NywxMy44OGMuNTctLjE1LDEuMDItLjYsMS4xNy0xLjE3bC4zNS0xLjNjLjE2LS42MSwxLjA0LS42MSwxLjIsMGwuMzUsMS4zYy4xNS41Ny42LDEuMDIsMS4xOCwxLjE3bDEuMy4zNWMuNjEuMTYuNjEsMS4wNCwwLDEuMmwtMS4zLjM1Yy0uNTcuMTUtMS4wMi42LTEuMTgsMS4xN2wtLjM1LDEuM2MtLjE3LjYyLTEuMDQuNjItMS4yLDBsLS4zNS0xLjNjLS4xNS0uNTctLjYtMS4wMi0xLjE3LTEuMTdsLTEuMy0uMzVjLS42MS0uMTctLjYxLTEuMDQsMC0xLjJsMS4zLS4zNWgwWk0xLjU3LDIuNDVjLjQzLS4xMi43Ni0uNDUuODgtLjg4bC4yNi0uOThjLjEyLS40Ni43OC0uNDYuOSwwbC4yNi45OGMuMTIuNDMuNDUuNzYuODguODhsLjk4LjI2Yy40Ni4xMi40Ni43OCwwLC45bC0uOTguMjZjLS40My4xMS0uNzcuNDUtLjg4Ljg4bC0uMjYuOThjLS4xMi40Ni0uNzguNDYtLjksMGwtLjI2LS45OGMtLjEyLS40My0uNDUtLjc2LS44OC0uODhsLS45OC0uMjZjLS40Ni0uMTItLjQ2LS43OCwwLS45bC45OC0uMjZaIi8+CiAgICA8cGF0aCBmaWxsPSIjZmZmIiBkPSJNMTIuNjgsMTIuNTNjLjItLjMuNi0uMzguOS0uMTguMy4yLjM4LjYuMTguOS0uNTYuODMtMS40MSwxLjI2LTIuNDgsMS4yNnMtMS45My0uNDMtMi40OC0xLjI2Yy0uMi0uMy0uMTItLjcuMTgtLjkuMy0uMi43LS4xMi45LjE4LjMxLjQ2Ljc1LjY4LDEuNDEuNjhzMS4xLS4yMiwxLjQxLS42OFoiLz4KICAgIDxwYXRoIGZpbGw9IiMwYjhlNjkiIGQ9Ik0yMC44OSw2LjA2Yy0uMzEsMC0uNTctLjI1LS41Ny0uNTd2LTMuMjloLTMuMzFjLS4zMSwwLS41Ny0uMjUtLjU3LS41N3MuMjUtLjU3LjU3LS41N2gzLjg4Yy4zMSwwLC41Ny4yNS41Ny41N3YzLjg2YzAsLjMxLS4yNS41Ny0uNTcuNTdaIi8+CiAgICA8cGF0aCBmaWxsPSIjMGI4ZTY5IiBkPSJNNS40NCwyMS40NkgxLjU5Yy0uMzEsMC0uNTctLjI1LS41Ny0uNTd2LTMuODJjMC0uMzEuMjUtLjU3LjU3LS41N3MuNTcuMjUuNTcuNTd2My4yNWgzLjI4Yy4zMSwwLC41Ny4yNS41Ny41N3MtLjI1LjU3LS41Ny41N1oiLz4KPC9zdmc+Cg==';
 
 /**
- * Class for the motion-related blocks in Scratch 3.0
+ * Class for the Face sensing blocks in Scratch 3.0
  * @param {Runtime} runtime - the runtime instantiating this block package.
  * @constructor
  */
@@ -89,9 +88,6 @@ class Scratch3FaceSensingBlocks {
                     this._loop();
                 }
             });
-
-        this._clearAttachments = this._clearAttachments.bind(this);
-        this.runtime.on('PROJECT_STOP_ALL', this._clearAttachments);
     }
 
     /**
@@ -118,16 +114,6 @@ class Scratch3FaceSensingBlocks {
      */
     static get STATE_KEY () {
         return 'Scratch.faceSensing';
-    }
-
-    /**
-     * The default face sensing state, to be used when a target has no existing state.
-     * @type {FaceSensingState}
-     */
-    static get DEFAULT_FACE_SENSING_STATE () {
-        return {
-            attachedToPartNumber: null
-        };
     }
 
     /**
@@ -192,25 +178,6 @@ class Scratch3FaceSensingBlocks {
     }
 
     /**
-     * Retrieve the face-sensing state for a given target.
-     * If no state exists yet, clone the default and set it on the target.
-     *
-     * @param {Target} target - collect face sensing state for this target.
-     * @returns {FaceSensingState} the face sensing state associated with that target.
-     * @private
-     */
-    _getFaceSensingState (target) {
-        let faceSensingState = target.getCustomState(Scratch3FaceSensingBlocks.STATE_KEY);
-
-        if (!faceSensingState) {
-            faceSensingState = Clone.simple(Scratch3FaceSensingBlocks.DEFAULT_FACE_SENSING_STATE);
-            target.setCustomState(Scratch3FaceSensingBlocks.STATE_KEY, faceSensingState);
-        }
-
-        return faceSensingState;
-    }
-
-    /**
      * @returns {object} metadata for this extension and its blocks.
      */
     getInfo () {
@@ -264,6 +231,7 @@ class Scratch3FaceSensingBlocks {
                     blockType: BlockType.COMMAND,
                     filter: [TargetType.SPRITE]
                 },
+                '---',
                 {
                     opcode: 'whenTilted',
                     text: formatMessage({
@@ -306,6 +274,7 @@ class Scratch3FaceSensingBlocks {
                     }),
                     blockType: BlockType.HAT
                 },
+                '---',
                 {
                     opcode: 'faceIsDetected',
                     text: formatMessage({
@@ -546,17 +515,6 @@ class Scratch3FaceSensingBlocks {
 
         const pos = this._getPartPosition(args.PART);
         util.target.setXY(pos.x, pos.y);
-    }
-
-    /**
-     * Reset any attachments between sprites and facial keypoints.
-     * @private
-     */
-    _clearAttachments () {
-        this.runtime.targets.forEach(target => {
-            const state = this._getFaceSensingState(target);
-            state.attachedToPartNumber = null;
-        });
     }
 }
 

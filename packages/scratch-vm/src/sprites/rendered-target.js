@@ -756,7 +756,7 @@ class RenderedTarget extends Target {
      * Return whether touching a point.
      * @param {number} x X coordinate of test point.
      * @param {number} y Y coordinate of test point.
-     * @return {boolean} True if the rendered target is touching the point.
+     * @return {boolean} True iff the rendered target is touching the point.
      */
     isTouchingPoint (x, y) {
         if (this.renderer) {
@@ -795,7 +795,7 @@ class RenderedTarget extends Target {
 
     /**
      * Return whether touching a stage edge.
-     * @return {boolean} True if the rendered target is touching the stage edge.
+     * @return {boolean} True iff the rendered target is touching the stage edge.
      */
     isTouchingEdge () {
         if (this.renderer) {
@@ -815,7 +815,7 @@ class RenderedTarget extends Target {
     /**
      * Return whether touching any of a named sprite's clones.
      * @param {string} spriteName Name of the sprite.
-     * @return {boolean} True if touching a clone of the sprite.
+     * @return {boolean} True iff touching a clone of the sprite.
      */
     isTouchingSprite (spriteName) {
         spriteName = Cast.toString(spriteName);
@@ -835,7 +835,7 @@ class RenderedTarget extends Target {
     /**
      * Return whether touching a color.
      * @param {Array.<number>} rgb [r,g,b], values between 0-255.
-     * @return {Promise.<boolean>} True if the rendered target is touching the color.
+     * @return {Promise.<boolean>} True iff the rendered target is touching the color.
      */
     isTouchingColor (rgb) {
         if (this.renderer) {
@@ -848,7 +848,7 @@ class RenderedTarget extends Target {
      * Return whether rendered target's color is touching a color.
      * @param {object} targetRgb {Array.<number>} [r,g,b], values between 0-255.
      * @param {object} maskRgb {Array.<number>} [r,g,b], values between 0-255.
-     * @return {Promise.<boolean>} True if the color is touching the color.
+     * @return {Promise.<boolean>} True iff the color is touching the color.
      */
     colorIsTouchingColor (targetRgb, maskRgb) {
         if (this.renderer) {
