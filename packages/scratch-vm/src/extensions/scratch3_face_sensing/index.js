@@ -109,14 +109,6 @@ class Scratch3FaceSensingBlocks {
     }
 
     /**
-     * The key to load & store a target's face sensing state.
-     * @type {string}
-     */
-    static get STATE_KEY () {
-        return 'Scratch.faceSensing';
-    }
-
-    /**
      * Maximum length of face detection history
      * @type {number}
      */
