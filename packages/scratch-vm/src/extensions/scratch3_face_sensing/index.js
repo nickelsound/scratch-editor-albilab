@@ -117,6 +117,102 @@ class Scratch3FaceSensingBlocks {
     }
 
     /**
+     * An array of info about the face part menu choices.
+     * @type {object[]}
+     */
+    get PART_INFO () {
+        return [{
+            text: formatMessage({
+                id: 'faceSensing.nose',
+                default: 'nose',
+                description: 'Option for the "go to [PART]" and "when sprite touches [PART] blocks'
+
+            }),
+            value: '2'
+        }, {
+            text: formatMessage({
+                id: 'faceSensing.mouth',
+                default: 'mouth',
+                description: 'Option for the "go to [PART]" and "when sprite touches [PART] blocks'
+
+            }),
+            value: '3'
+        }, {
+            text: formatMessage({
+                id: 'faceSensing.leftEye',
+                default: 'left eye',
+                description: 'Option for the "go to [PART]" and "when sprite touches [PART] blocks'
+
+            }),
+            value: '0'
+        }, {
+            text: formatMessage({
+                id: 'faceSensing.rightEye',
+                default: 'right eye',
+                description: 'Option for the "go to [PART]" and "when sprite touches [PART] blocks'
+
+            }),
+            value: '1'
+        }, {
+            text: formatMessage({
+                id: 'faceSensing.betweenEyes',
+                default: 'between eyes',
+                description: 'Option for the "go to [PART]" and "when sprite touches [PART] blocks'
+
+            }),
+            value: '6'
+        }, {
+            text: formatMessage({
+                id: 'faceSensing.leftEar',
+                default: 'left ear',
+                description: 'Option for the "go to [PART]" and "when sprite touches [PART] blocks'
+
+            }),
+            value: '4'
+        }, {
+            text: formatMessage({
+                id: 'faceSensing.rightEar',
+                default: 'right ear',
+                description: 'Option for the "go to [PART]" and "when sprite touches [PART] blocks'
+
+            }),
+            value: '5'
+        }, {
+            text: formatMessage({
+                id: 'faceSensing.topOfHead',
+                default: 'top of head',
+                description: 'Option for the "go to [PART]" and "when sprite touches [PART] blocks'
+
+            }),
+            value: '7'
+        }];
+    }
+
+    /**
+     * An array of choices about the tilt direction menu.
+     * @type {object[]}
+     */
+    get TILT_INFO () {
+        return [{
+            text: formatMessage({
+                id: 'faceSensing.left',
+                default: 'left',
+                description: 'Argument for the "when face tilts [DIRECTION]" block'
+
+            }),
+            value: 'left'
+        }, {
+            text: formatMessage({
+                id: 'faceSensing.right',
+                default: 'right',
+                description: 'Argument for the "when face tilts [DIRECTION]" block'
+
+            }),
+            value: 'right'
+        }];
+    }
+
+    /**
      * Occasionally step a loop to sample the video, stamp it to the preview
      * skin, and add a TypedArray copy of the canvas's pixel data.
      * @private
@@ -191,7 +287,7 @@ class Scratch3FaceSensingBlocks {
                     text: formatMessage({
                         id: 'faceSensing.goToPart',
                         default: 'go to [PART]',
-                        description: ''
+                        description: 'Command that moves target to [PART]'
                     }),
                     blockType: BlockType.COMMAND,
                     arguments: {
@@ -208,7 +304,7 @@ class Scratch3FaceSensingBlocks {
                     text: formatMessage({
                         id: 'faceSensing.pointInFaceTiltDirection',
                         default: 'point in direction of face tilt',
-                        description: ''
+                        description: 'Command that points the target in the direction of face tilt'
                     }),
                     blockType: BlockType.COMMAND,
                     filter: [TargetType.SPRITE]
@@ -218,7 +314,7 @@ class Scratch3FaceSensingBlocks {
                     text: formatMessage({
                         id: 'faceSensing.setSizeToFaceSize',
                         default: 'set size to face size',
-                        description: ''
+                        description: 'Command that sets the size of the target to the face size'
                     }),
                     blockType: BlockType.COMMAND,
                     filter: [TargetType.SPRITE]
@@ -229,7 +325,7 @@ class Scratch3FaceSensingBlocks {
                     text: formatMessage({
                         id: 'faceSensing.whenTilted',
                         default: 'when face tilts [DIRECTION]',
-                        description: ''
+                        description: 'Event that triggers when face tilts [DIRECTION]'
                     }),
                     blockType: BlockType.HAT,
                     arguments: {
@@ -245,7 +341,7 @@ class Scratch3FaceSensingBlocks {
                     text: formatMessage({
                         id: 'faceSensing.whenSpriteTouchesPart',
                         default: 'when this sprite touches a [PART]',
-                        description: ''
+                        description: 'Event that triggers when sprite touches a [PART]'
                     }),
                     arguments: {
                         PART: {
@@ -262,7 +358,7 @@ class Scratch3FaceSensingBlocks {
                     text: formatMessage({
                         id: 'faceSensing.whenFaceDetected',
                         default: 'when a face is detected',
-                        description: ''
+                        description: 'Event that triggers when a face is detected'
                     }),
                     blockType: BlockType.HAT
                 },
@@ -272,7 +368,7 @@ class Scratch3FaceSensingBlocks {
                     text: formatMessage({
                         id: 'faceSensing.faceDetected',
                         default: 'a face is detected?',
-                        description: ''
+                        description: 'Reporter that returns whether a face is detected'
                     }),
                     blockType: BlockType.BOOLEAN
                 },
@@ -281,7 +377,7 @@ class Scratch3FaceSensingBlocks {
                     text: formatMessage({
                         id: 'faceSensing.faceTilt',
                         default: 'face tilt',
-                        description: ''
+                        description: 'Reporter that returns the face tilt'
                     }),
                     blockType: BlockType.REPORTER
                 },
@@ -290,26 +386,14 @@ class Scratch3FaceSensingBlocks {
                     text: formatMessage({
                         id: 'faceSensing.faceSize',
                         default: 'face size',
-                        description: ''
+                        description: 'Reporter that returns the face size'
                     }),
                     blockType: BlockType.REPORTER
                 }
             ],
             menus: {
-                PART: [
-                    {text: 'nose', value: '2'},
-                    {text: 'mouth', value: '3'},
-                    {text: 'left eye', value: '0'},
-                    {text: 'right eye', value: '1'},
-                    {text: 'between eyes', value: '6'},
-                    {text: 'left ear', value: '4'},
-                    {text: 'right ear', value: '5'},
-                    {text: 'top of head', value: '7'}
-                ],
-                TILT: [
-                    {text: 'left', value: 'left'},
-                    {text: 'right', value: 'right'}
-                ]
+                PART: this.PART_INFO,
+                TILT: this.TILT_INFO
             }
         };
     }
