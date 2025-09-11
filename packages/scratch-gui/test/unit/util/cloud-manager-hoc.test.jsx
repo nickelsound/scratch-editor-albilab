@@ -167,7 +167,7 @@ describe('CloudManagerHOC', () => {
         const WrappedComponent = cloudManagerHOC(Component);
         vm.extensionManager.isExtensionLoaded = jest.fn(extension => extension === 'faceSensing');
 
-        mount(
+        render(
             <WrappedComponent
                 hasCloudPermission
                 cloudHost="nonEmpty"
