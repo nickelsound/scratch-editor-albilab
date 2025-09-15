@@ -1,0 +1,48 @@
+# Použijeme nejnovější Node.js LTS (22.x) s explicitní registry cestou pro Podman
+FROM docker.io/library/node:22-alpine
+
+# Nastavíme pracovní adresář
+WORKDIR /app
+
+# Zkopírujeme package.json a package-lock.json pro lepší cache vrstvy
+COPY package*.json ./
+COPY packages/scratch-gui/package*.json ./packages/scratch-gui/
+COPY packages/scratch-backend/package*.json ./packages/scratch-backend/
+COPY packages/scratch-vm/package*.json ./packages/scratch-vm/
+COPY packages/scratch-render/package*.json ./packages/scratch-render/
+COPY packages/scratch-svg-renderer/package*.json ./packages/scratch-svg-renderer/
+
+# Zkopírujeme scripts adresář pro prepare script
+COPY packages/scratch-gui/scripts ./packages/scratch-gui/scripts/
+
+# Nainstalujeme závislosti v root (monorepo)
+# Použijeme --ignore-scripts aby se přeskočil prepare script který stahuje z internetu
+RUN npm install --ignore-scripts
+
+# Zkopírujeme pouze potřebné zdrojové soubory (ne node_modules)
+COPY packages/ ./packages/
+COPY scripts/ ./scripts/
+
+# Spustíme prepare script pro scratch-gui (stáhne microbit hex soubor)
+RUN npm run prepare --workspace=packages/scratch-gui
+
+# Sestavíme závislé balíčky v správném pořadí
+# Nejdříve scratch-svg-renderer a scratch-render (závislosti pro scratch-vm)
+RUN npm run build --workspace=packages/scratch-svg-renderer
+RUN npm run build --workspace=packages/scratch-render
+
+# Poté scratch-vm (závisí na výše uvedených balíčcích)
+RUN npm run build --workspace=packages/scratch-vm
+
+# Pro development nepotřebujeme build scratch-gui - webpack dev server sestaví vše za běhu
+# RUN npm run build --workspace=packages/scratch-gui
+
+# Exponujeme port 8601 (výchozí port pro webpack dev server)
+EXPOSE 8601
+
+# Nastavíme environment proměnné
+ENV NODE_ENV=development
+ENV PORT=8601
+
+# Spustíme aplikaci
+CMD ["npm", "start", "--workspace=packages/scratch-gui"]

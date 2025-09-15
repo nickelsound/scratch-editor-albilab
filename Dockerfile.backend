@@ -1,0 +1,40 @@
+# Použijeme nejnovější Node.js LTS (22.x) s explicitní registry cestou pro Podman
+FROM docker.io/library/node:22-alpine
+
+# Nastavíme pracovní adresář
+WORKDIR /app
+
+# Zkopírujeme package.json a package-lock.json pro lepší cache vrstvy
+COPY package*.json ./
+COPY packages/scratch-backend/package*.json ./packages/scratch-backend/
+COPY packages/scratch-vm/package*.json ./packages/scratch-vm/
+COPY packages/scratch-render/package*.json ./packages/scratch-render/
+COPY packages/scratch-svg-renderer/package*.json ./packages/scratch-svg-renderer/
+
+# Zkopírujeme pouze potřebné zdrojové soubory (ne node_modules)
+COPY packages/ ./packages/
+COPY scripts/ ./scripts/
+
+# Nainstalujeme závislosti - použijeme npm install místo npm ci pro flexibilitu
+RUN npm install --ignore-scripts
+
+# Nainstalujeme závislosti pro backend workspace
+RUN npm install --workspace=packages/scratch-backend --ignore-scripts
+
+# Sestavíme závislosti v správném pořadí
+RUN npm run build --workspace=packages/scratch-svg-renderer
+RUN npm run build --workspace=packages/scratch-render
+RUN npm run build --workspace=packages/scratch-vm
+
+# Vytvoříme uploads adresář
+RUN mkdir -p uploads
+
+# Exponujeme porty 3001 (HTTP API) a 3002 (WebSocket)
+EXPOSE 3001 3002
+
+# Nastavíme environment proměnné
+ENV NODE_ENV=production
+ENV PORT=3001
+
+# Spustíme backend server
+CMD ["npm", "start", "--workspace=packages/scratch-backend"]

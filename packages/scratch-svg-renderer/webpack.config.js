@@ -7,13 +7,27 @@ const common = {
     rootPath: path.resolve(__dirname)
 };
 
+const baseConfig = new ScratchWebpackConfigBuilder(common)
+    .merge({
+        resolve: {
+            fallback: {
+                Buffer: require.resolve('buffer/'),
+                buffer: require.resolve('buffer/'),
+                stream: require.resolve('stream-browserify'),
+                util: require.resolve('util/'),
+                process: require.resolve('process/browser')
+            }
+        }
+    });
+
 /**
  * @type {import('webpack').Configuration}
  */
-const nodeConfig = new ScratchWebpackConfigBuilder(common)
+const nodeConfig = baseConfig.clone()
     .setTarget('node')
     .merge({
         output: {
+            path: path.resolve(__dirname, 'dist/node'),
             library: {
                 name: 'ScratchSVGRenderer',
                 type: 'umd'
@@ -25,10 +39,11 @@ const nodeConfig = new ScratchWebpackConfigBuilder(common)
 /**
  * @type {import('webpack').Configuration}
  */
-const webConfig = new ScratchWebpackConfigBuilder(common)
+const webConfig = baseConfig.clone()
     .setTarget('browserslist')
     .merge({
         output: {
+            path: path.resolve(__dirname, 'dist/web'),
             library: {
                 name: 'ScratchSVGRenderer',
                 type: 'umd'
@@ -40,7 +55,7 @@ const webConfig = new ScratchWebpackConfigBuilder(common)
 /**
  * @type {import('webpack').Configuration}
  */
-const playgroundConfig = new ScratchWebpackConfigBuilder(common)
+const playgroundConfig = baseConfig.clone()
     .setTarget('browserslist')
     .merge({
         devServer: {

@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+  # Scratch GUI aplikace
+  scratch-gui:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: scratch-editor-albilab_scratch-gui
+    container_name: scratch-gui-app
+    ports:
+      - "8601:8601"
+    environment:
+      - NODE_ENV=development
+      - PORT=8601
+      - ALBILAB_API_URL=http://10.0.0.108
+    volumes:
+      # Pro development - hot reload (pouze src adresáře)
+      - ./packages/scratch-gui/src:/app/packages/scratch-gui/src:ro
+      - ./packages/scratch-vm/src:/app/packages/scratch-vm/src:ro
+      - ./packages/scratch-render/src:/app/packages/scratch-render/src:ro
+      - ./packages/scratch-svg-renderer/src:/app/packages/scratch-svg-renderer/src:ro
+    network_mode: "host"
+    restart: unless-stopped
+    # depends_on:
+    #   - scratch-backend
+
+  # Backend server pro trvalý běh projektů
+  scratch-backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    image: scratch-editor-albilab_scratch-backend
+    container_name: scratch-backend-app
+    ports:
+      - "3001:3001"
+      - "3002:3002"
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      - ALBILAB_API_URL=http://10.0.0.108
+    volumes:
+      - ./packages/scratch-backend/src:/app/src
+      - scratch-uploads:/app/uploads
+    network_mode: "host"
+    restart: unless-stopped
+volumes:
+  node_modules:
+    driver: local
+  scratch-uploads:
+    driver: local
