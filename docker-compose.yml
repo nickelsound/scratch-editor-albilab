@@ -23,10 +23,10 @@ services:
     network_mode: "host"
     restart: unless-stopped
     # depends_on:
-    #   - scratch-backend
+    #   - scratch-backend-app
 
   # Backend server pro trvalý běh projektů
-  scratch-backend:
+  scratch-backend-app:
     build:
       context: .
       dockerfile: Dockerfile.backend

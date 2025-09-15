@@ -26,8 +26,10 @@ class ServiceButton extends React.Component {
             this.setState({ isLoading: true });
             
             if (this.state.isRunning) {
-                // Zastav službu
+                // Zastav službu a pak automaticky spusť novou
                 await this.stopService();
+                // Po zastavení služby automaticky spusť novou
+                await this.startService();
             } else {
                 // Spusť službu
                 await this.startService();
@@ -74,6 +76,7 @@ class ServiceButton extends React.Component {
             // Spusť WebSocket připojení pro sledování stavu
             this.connectWebSocket();
             
+            // Zobraz alert jen při prvním spuštění, ne při restartu
             alert(`Služba "${projectName}" byla úspěšně spuštěna!`);
             
         } catch (error) {
@@ -95,10 +98,12 @@ class ServiceButton extends React.Component {
                 throw new Error(errorData.error || 'Chyba při zastavování služby');
             }
             
+            // Okamžitě aktualizuj stav - nečekej na WebSocket zprávu
             this.setState({ isRunning: false });
             this.disconnectWebSocket();
             
-            alert('Služba byla zastavena.');
+            // Nezobrazuj alert při restartu - jen při manuálním zastavení
+            // alert('Služba byla zastavena.');
             
         } catch (error) {
             throw new Error(`Nepodařilo se zastavit službu: ${error.message}`);

@@ -1,51 +1,117 @@
-# scratch-editor: The Scratch Editor Monorepo
+# Scratch Editor AlbiLAB
 
-If you'd like to use Scratch, please visit the [Scratch website](https://scratch.mit.edu/). You can build your own
-Scratch project by pressing "Create" on that website or by visiting <https://scratch.mit.edu/projects/editor/>.
+Scratch editor s podporou AlbiLAB zařízení pro Raspberry Pi.
 
-This is a source code repository for the packages that make up the Scratch editor and a few additional support
-packages. Use this if you'd like to learn about how the Scratch editor works or to contribute to its development.
+## Rychlý start
 
-## What's in this repository?
+```bash
+# 1. Klonování repozitáře
+git clone <repository-url>
+cd scratch-editor-albilab
 
-The `packages` directory in this repository contains:
+# 2. Sestavení a spuštění
+podman-compose build
+podman-compose up -d
 
-- `scratch-gui` provides the buttons, menus, and other elements that you interact with when creating and editing a
-  project. It's also the "glue" that brings most of the other modules together at runtime.
-- `scratch-render` draws backdrops, sprites, and clones on the stage.
-- `scratch-svg-renderer` processes SVG (vector) images for use with Scratch projects.
-- `scratch-vm` is the virtual machine that runs Scratch projects.
+# 3. Otevření aplikace
+# Scratch GUI: http://localhost:8601
+# Backend API: http://localhost:3001
+```
 
-_Please add to this list as more packages are migrated to the monorepo._
+## Služby
 
-Each package has its own `README.md` file with more information about that package.
+### Scratch GUI (Port 8601)
+- Webové rozhraní Scratch editoru
+- Hot reload pro development
+- Podpora AlbiLAB extension
 
-## Monorepo migration
+### Backend API (Port 3001)
+- REST API pro spouštění/zastavování služeb
+- WebSocket server (Port 3002) pro real-time komunikaci
+- Správa Scratch projektů jako služeb
 
-### What's going on?
+## API Endpoints
 
-We're migrating the Scratch editor packages into this monorepo. This will allow us to manage all the packages that
-make up the Scratch editor in one place, making  it easier to manage dependencies and make changes that affect
-multiple packages.
+- `GET /api/status` - Stav služby
+- `POST /api/start-service-json` - Spuštění služby z JSON dat
+- `POST /api/stop-service` - Zastavení služby
+- `GET /api/logs` - Logy služby
 
-### Why are there only a few packages in this repo?
+## Konfigurace
 
-We're migrating packages in stages. The current plan, which is subject to change, has us migrating repositories in
-four batches. We plan to complete the migration within 2025.
+### AlbiLAB IP adresa
+Nastavte IP adresu AlbiLAB zařízení v `docker-compose.yml`:
 
-### What will happen to the existing repositories?
+```yaml
+environment:
+  - ALBILAB_API_URL=http://10.0.0.108  # Změňte na vaši IP
+```
 
-The existing repositories will be archived and made read-only. Those repositories contain valuable work and
-information, including but not limited to issues and pull requests. We plan to keep that information available for
-reference, and to selectively migrate it to this new repository.
+### Porty
+- **8601**: Scratch GUI
+- **3001**: Backend API
+- **3002**: WebSocket server
 
-## Thank you!
+## Development
 
-Scratch would not be what it is today without help from the global community of Scratchers and open-source
-contributors. Thank you for your contributions and support. _[Scratch on!](https://scratch.mit.edu/projects/65347738/fullscreen/)_
+### Hot reload
+Zdrojové soubory jsou automaticky mapovány do kontejnerů pro hot reload.
 
-## Donate
+### Logy
+```bash
+# Všechny služby
+podman-compose logs -f
 
-We provide [Scratch](https://scratch.mit.edu) free of charge, and want to keep it that way! Please consider making a
-[donation](https://secure.donationpay.org/scratchfoundation/) to support our continued engineering, design, community,
-and resource development efforts. Donations of any size are appreciated. Thank you!
+# Pouze backend
+podman-compose logs -f scratch-backend
+
+# Pouze GUI
+podman-compose logs -f scratch-gui
+```
+
+### Restart služby
+```bash
+# Restart backend
+podman-compose restart scratch-backend
+
+# Restart GUI
+podman-compose restart scratch-gui
+
+# Restart vše
+podman-compose restart
+```
+
+## Troubleshooting
+
+### Problémy s buildem
+```bash
+# Vyčištění a rebuild
+podman-compose down
+podman-compose build --no-cache
+podman-compose up -d
+```
+
+### Problémy s porty
+Zkontrolujte, že porty 8601, 3001 a 3002 nejsou obsazené:
+```bash
+netstat -tulpn | grep -E ':(8601|3001|3002)'
+```
+
+### Problémy s AlbiLAB
+- Zkontrolujte IP adresu v `docker-compose.yml`
+- Ověřte, že AlbiLAB zařízení je dostupné v síti
+- Zkontrolujte logy backend služby pro chyby komunikace
+
+## Struktura projektu
+
+```
+├── packages/
+│   ├── scratch-gui/          # Webové rozhraní
+│   ├── scratch-backend/      # Backend API
+│   ├── scratch-vm/           # Scratch VM s AlbiLAB extension
+│   ├── scratch-render/       # Render engine
+│   └── scratch-svg-renderer/ # SVG renderer
+├── docker-compose.yml        # Docker konfigurace
+├── Dockerfile               # GUI image
+└── Dockerfile.backend       # Backend image
+```

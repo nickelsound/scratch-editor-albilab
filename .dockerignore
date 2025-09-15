@@ -2,13 +2,14 @@
 node_modules/
 */node_modules/
 **/node_modules/
-packages/*/node_modules/
 
 # Build outputs
 dist/
 build/
 */dist/
 */build/
+**/dist/
+**/build/
 
 # Logs
 *.log
@@ -105,23 +106,5 @@ docker-compose*
 .DS_Store
 Thumbs.db
 
-# Test files
-test/
-tests/
-**/*.test.js
-**/*.spec.js
-
-# Documentation
-README.md
-*.md
-docs/
-
-# CI/CD
-.github/
-.gitlab-ci.yml
-.travis.yml
-.circleci/
-
-# Temporary files
-tmp/
-temp/
+# Uploads
+uploads/

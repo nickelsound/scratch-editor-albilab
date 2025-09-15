@@ -7,7 +7,6 @@ WORKDIR /app
 # Zkopírujeme package.json a package-lock.json pro lepší cache vrstvy
 COPY package*.json ./
 COPY packages/scratch-gui/package*.json ./packages/scratch-gui/
-COPY packages/scratch-backend/package*.json ./packages/scratch-backend/
 COPY packages/scratch-vm/package*.json ./packages/scratch-vm/
 COPY packages/scratch-render/package*.json ./packages/scratch-render/
 COPY packages/scratch-svg-renderer/package*.json ./packages/scratch-svg-renderer/
@@ -16,11 +15,13 @@ COPY packages/scratch-svg-renderer/package*.json ./packages/scratch-svg-renderer
 COPY packages/scratch-gui/scripts ./packages/scratch-gui/scripts/
 
 # Nainstalujeme závislosti v root (monorepo)
-# Použijeme --ignore-scripts aby se přeskočil prepare script který stahuje z internetu
 RUN npm install --ignore-scripts
 
-# Zkopírujeme pouze potřebné zdrojové soubory (ne node_modules)
-COPY packages/ ./packages/
+# Zkopírujeme pouze potřebné zdrojové soubory pro GUI
+COPY packages/scratch-gui/ ./packages/scratch-gui/
+COPY packages/scratch-vm/ ./packages/scratch-vm/
+COPY packages/scratch-render/ ./packages/scratch-render/
+COPY packages/scratch-svg-renderer/ ./packages/scratch-svg-renderer/
 COPY scripts/ ./scripts/
 
 # Spustíme prepare script pro scratch-gui (stáhne microbit hex soubor)
