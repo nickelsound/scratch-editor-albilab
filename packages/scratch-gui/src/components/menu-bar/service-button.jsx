@@ -11,7 +11,7 @@ import styles from './menu-bar.css';
 const messages = defineMessages({
     serviceTitle: {
         id: 'gui.menuBar.service',
-        defaultMessage: 'Spustit jako službu',
+        defaultMessage: 'Nahrát do AlbiLAB',
         description: 'Service button title'
     },
     serviceTooltip: {
