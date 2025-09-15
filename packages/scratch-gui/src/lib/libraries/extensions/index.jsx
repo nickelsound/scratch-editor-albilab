@@ -53,6 +53,26 @@ export default [
     {
         name: (
             <FormattedMessage
+                defaultMessage="AlbiLAB"
+                description="Name for the 'AlbiLAB' extension"
+                id="gui.extension.albilab.name"
+            />
+        ),
+        extensionId: 'albilab',
+        iconURL: albilabIconURL,
+        insetIconURL: albilabInsetIconURL,
+        description: (
+            <FormattedMessage
+                defaultMessage="Test extension for AlbiLAB."
+                description="Description for the 'AlbiLAB' extension"
+                id="gui.extension.albilab.description"
+            />
+        ),
+        featured: true
+    },
+    {
+        name: (
+            <FormattedMessage
                 defaultMessage="Music"
                 description="Name for the 'Music' extension"
                 id="gui.extension.music.name"
@@ -392,25 +412,5 @@ export default [
             />
         ),
         helpLink: 'https://scratch.mit.edu/wedo'
-    },
-    {
-        name: (
-            <FormattedMessage
-                defaultMessage="AlbiLAB"
-                description="Name for the 'AlbiLAB' extension"
-                id="gui.extension.albilab.name"
-            />
-        ),
-        extensionId: 'albilab',
-        iconURL: albilabIconURL,
-        insetIconURL: albilabInsetIconURL,
-        description: (
-            <FormattedMessage
-                defaultMessage="Test extension for AlbiLAB."
-                description="Description for the 'AlbiLAB' extension"
-                id="gui.extension.albilab.description"
-            />
-        ),
-        featured: true
     }
 ];

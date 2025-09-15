@@ -60,7 +60,7 @@
     "@microbit/microbit-universal-hex": "0.2.2",
     "@scratch/scratch-render": "11.6.0",
     "@scratch/scratch-svg-renderer": "11.6.0",
-    "@scratch/scratch-vm": "11.6.0",
+    "@scratch/scratch-vm": "file:../scratch-vm",
     "arraybuffer-loader": "1.0.8",
     "autoprefixer": "9.8.8",
     "balance-text": "3.3.1",
