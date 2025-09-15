@@ -54,7 +54,8 @@ class ServiceButton extends React.Component {
             const projectName = this.props.projectTitle || 'Neznámý projekt';
             
             // Pošli na backend
-            const response = await fetch('http://localhost:3001/api/start-service-json', {
+            const apiUrl = `http://${window.location.hostname}:3001/api/start-service-json`;
+            const response = await fetch(apiUrl, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -86,7 +87,8 @@ class ServiceButton extends React.Component {
 
     async stopService () {
         try {
-            const response = await fetch('http://localhost:3001/api/stop-service', {
+            const apiUrl = `http://${window.location.hostname}:3001/api/stop-service`;
+            const response = await fetch(apiUrl, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -176,7 +178,8 @@ class ServiceButton extends React.Component {
 
     async checkServiceStatus () {
         try {
-            const response = await fetch('http://localhost:3001/api/status');
+            const apiUrl = `http://${window.location.hostname}:3001/api/status`;
+            const response = await fetch(apiUrl);
             if (response.ok) {
                 const status = await response.json();
                 this.setState({ isRunning: status.running });
