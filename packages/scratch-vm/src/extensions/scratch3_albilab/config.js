@@ -24,7 +24,7 @@ const AlbiLABConfig = {
     },
     
     // Device state cache duration (milliseconds)
-    cacheDuration: 2000
+    cacheDuration: 5000
 };
 
 module.exports = AlbiLABConfig;
