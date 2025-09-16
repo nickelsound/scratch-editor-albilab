@@ -5,18 +5,18 @@ import {defineMessages, FormattedMessage, injectIntl, intlShape} from 'react-int
 
 import Button from '../button/button.jsx';
 
-import loadProjectIcon from './load-project-icon.svg';
+import serviceIcon from './service-icon.svg';
 import styles from './menu-bar.css';
 
 const messages = defineMessages({
     loadProjectTitle: {
         id: 'gui.menuBar.loadProject',
-        defaultMessage: 'Načíst projekt',
+        defaultMessage: 'Načíst z AlbiLAB',
         description: 'Load project button title'
     },
     loadProjectTooltip: {
         id: 'gui.menuBar.loadProjectTooltip',
-        defaultMessage: 'Načíst uložený projekt do editoru',
+        defaultMessage: 'Načíst uložený projekt z AlbiLAB do editoru',
         description: 'Load project button tooltip'
     }
 });
@@ -35,13 +35,13 @@ const LoadProjectButton = function (props) {
             className={classNames(
                 className,
                 styles.menuBarButton,
-                styles.loadProjectButton,
+                styles.serviceButton,
                 {
-                    [styles.loadProjectButtonLoading]: isLoading
+                    [styles.serviceButtonRunning]: isLoading
                 }
             )}
-            iconClassName={styles.loadProjectButtonIcon}
-            iconSrc={loadProjectIcon}
+            iconClassName={styles.serviceButtonIcon}
+            iconSrc={serviceIcon}
             onClick={onClick}
             title={intl.formatMessage(messages.loadProjectTooltip)}
             {...componentProps}

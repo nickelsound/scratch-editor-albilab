@@ -262,8 +262,8 @@
 }
 
 .serviceButtonIcon {
-    width: 3rem;
-    height: 3rem;
+    width: 2rem;
+    height: 2rem;
     margin-right: 0.25rem;
     color: $ui-white;
 }
@@ -280,35 +280,11 @@
     }
 }
 
-/* Load Project Button Styles */
-.loadProjectButton {
-    background-color: $looks-secondary;
-    border: 1px solid $looks-secondary;
-    color: $ui-white;
-    transition: all 0.2s ease;
-}
+/* Load Project Button používá stejné styly jako Service Button */
 
-.loadProjectButton:hover {
-    background-color: $looks-secondary-dark;
-    border-color: $looks-secondary-dark;
-}
-
-.loadProjectButtonLoading {
-    background-color: $ui-black-transparent;
-    border-color: $ui-black-transparent;
-    animation: pulse 1s infinite;
-}
-
-.loadProjectButtonLoading:hover {
-    background-color: $ui-black-transparent;
-    border-color: $ui-black-transparent;
-}
-
-.loadProjectButtonIcon {
-    width: 3rem;
-    height: 3rem;
-    margin-right: 0.25rem;
-    color: $ui-white;
+/* Větší mezera mezi tlačítky */
+.menuBarButton + .menuBarButton {
+    margin-left: 1rem;
 }
 
 /* Auto-save Indicator Styles */

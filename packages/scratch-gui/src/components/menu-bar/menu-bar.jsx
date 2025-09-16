@@ -81,8 +81,8 @@ import {PLATFORM} from '../../lib/platform';
 import styles from './menu-bar.css';
 
 import helpIcon from '../../lib/assets/icon--tutorials.svg';
-import mystuffIcon from './icon--mystuff.png';
-import profileIcon from './icon--profile.png';
+// import mystuffIcon from './icon--mystuff.png'; // nepoužíváno
+// import profileIcon from './icon--profile.png'; // nepoužíváno
 import remixIcon from './icon--remix.svg';
 import dropdownCaret from './dropdown-caret.svg';
 import aboutIcon from './icon--about.svg';
@@ -656,6 +656,9 @@ class MenuBar extends React.Component {
                         {/* LoadProjectButton - načtení uloženého projektu */}
                         <LoadProjectButton />
                         
+                        {/* ServiceButton (Nahrát do AlbiLAB) */}
+                        <ServiceButton />
+                        
                         {/* AutoSaveIndicator - indikátor průběžného ukládání */}
                         <AutoSaveIndicator />
                     </div>
@@ -708,23 +711,8 @@ class MenuBar extends React.Component {
                         this.props.username ? (
                             // ************ user is logged in ************
                             <React.Fragment>
-                                {menuOpts.myStuffUrl ? (
-                                    <a href={menuOpts.myStuffUrl}>
-                                        <div
-                                            className={classNames(
-                                                styles.menuBarItem,
-                                                styles.hoverable,
-                                                styles.mystuffButton
-                                            )}
-                                        >
-                                            <img
-                                                className={styles.mystuffIcon}
-                                                src={mystuffIcon}
-                                            />
-                                        </div>
-                                    </a>
-                                ) : null}
-
+                                {/* My Stuff tlačítko - skryto */}
+                                
                                 <AccountNav
                                     className={classNames(
                                         styles.menuBarItem,
@@ -800,48 +788,7 @@ class MenuBar extends React.Component {
                     ) : (
                         // ******** no login session is available, so don't show login stuff
                         <React.Fragment>
-                            {this.props.showComingSoon ? (
-                                <React.Fragment>
-                                    <MenuBarItemTooltip id="mystuff">
-                                        <div
-                                            className={classNames(
-                                                styles.menuBarItem,
-                                                styles.hoverable,
-                                                styles.mystuffButton
-                                            )}
-                                        >
-                                            <img
-                                                className={styles.mystuffIcon}
-                                                src={mystuffIcon}
-                                            />
-                                        </div>
-                                    </MenuBarItemTooltip>
-                                    <MenuBarItemTooltip
-                                        id="account-nav"
-                                        place={this.props.isRtl ? 'right' : 'left'}
-                                    >
-                                        <div
-                                            className={classNames(
-                                                styles.menuBarItem,
-                                                styles.hoverable,
-                                                styles.accountNavMenu
-                                            )}
-                                        >
-                                            <img
-                                                className={styles.profileIcon}
-                                                src={profileIcon}
-                                            />
-                                            <span>
-                                                {'scratch-cat'}
-                                            </span>
-                                            <img
-                                                className={styles.dropdownCaretIcon}
-                                                src={dropdownCaret}
-                                            />
-                                        </div>
-                                    </MenuBarItemTooltip>
-                                </React.Fragment>
-                            ) : []}
+                            {/* My Stuff a scratch-cat tlačítka - skryta */}
                         </React.Fragment>
                     )}
                 </div>
