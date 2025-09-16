@@ -1,5 +1,6 @@
 import {createStore, combineReducers, compose, Store} from 'redux';
 import localesReducer, {initLocale, localesInitialState} from '../reducers/locales';
+import autoSaveReducer from '../reducers/auto-save';
 import locales from 'scratch-l10n';
 import {detectLocale} from './detect-locale';
 import {GUIConfig} from '../gui-config';
@@ -86,11 +87,17 @@ export class EditorState {
             reducers = {
                 locales: localesReducer,
                 scratchGui: guiReducer,
-                scratchPaint: ScratchPaintReducer
+                scratchPaint: ScratchPaintReducer,
+                autoSave: autoSaveReducer
             };
             initialState = {
                 locales: initializedLocales,
-                scratchGui: initializedGui
+                scratchGui: initializedGui,
+                autoSave: {
+                    isSaving: false,
+                    lastSaveTime: null,
+                    saveError: null
+                }
             };
             enhancer = composeEnhancers(guiMiddleware);
         }

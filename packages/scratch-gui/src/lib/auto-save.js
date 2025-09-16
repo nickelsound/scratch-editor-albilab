@@ -79,8 +79,8 @@ class AutoSaveService {
 
             console.log('Provádím automatické uložení projektu...');
             
-            // Získej aktuální data projektu z VM
-            const projectData = await this.vm.saveProjectSb3();
+            // Získej aktuální data projektu z VM jako JSON
+            const projectData = this.vm.toJSON();
             
             // Pošli na backend
             const apiUrl = `${window.location.protocol}//${window.location.hostname}:3001/api/saved-project/auto-save`;

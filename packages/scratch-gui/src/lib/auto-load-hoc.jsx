@@ -1,0 +1,104 @@
+import React from 'react';
+import PropTypes from 'prop-types';
+import {connect} from 'react-redux';
+import {setProjectTitle} from '../reducers/project-title';
+
+/**
+ * Higher Order Component pro automatické načtení uloženého projektu při inicializaci
+ */
+const AutoLoadHOC = function (WrappedComponent) {
+    class AutoLoadComponent extends React.Component {
+        constructor (props) {
+            super(props);
+            this.state = {
+                hasCheckedForSavedProject: false
+            };
+        }
+
+        async componentDidMount () {
+            // Zkontroluj, jestli existuje uložený projekt
+            await this.checkForSavedProject();
+        }
+
+        async checkForSavedProject () {
+            if (this.state.hasCheckedForSavedProject) {
+                return;
+            }
+
+            try {
+                // Zkontroluj, jestli existuje uložený projekt
+                const apiUrl = `${window.location.protocol}//${window.location.hostname}:3001/api/saved-project`;
+                const response = await fetch(apiUrl);
+                
+                if (response.ok) {
+                    const projectInfo = await response.json();
+                    
+                    if (projectInfo.exists) {
+                        console.log('Našel jsem uložený projekt, načítám...', projectInfo);
+                        
+                        // Načti projekt
+                        await this.loadSavedProject();
+                    } else {
+                        console.log('Žádný uložený projekt nenalezen');
+                    }
+                }
+            } catch (error) {
+                console.error('Chyba při kontrole uloženého projektu:', error);
+            } finally {
+                this.setState({ hasCheckedForSavedProject: true });
+            }
+        }
+
+        async loadSavedProject () {
+            try {
+                const apiUrl = `${window.location.protocol}//${window.location.hostname}:3001/api/saved-project/load`;
+                const response = await fetch(apiUrl);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    if (data.success && data.projectData) {
+                        console.log('Načítám uložený projekt do VM:', data.projectData);
+                        
+                        // Načti projekt přímo do VM - data.projectData je už JSON objekt
+                        await this.props.vm.loadProject(data.projectData);
+                        
+                        // Aktualizuj název projektu
+                        if (data.projectName) {
+                            this.props.setProjectTitle(data.projectName);
+                        }
+                        
+                        console.log('Projekt úspěšně načten do VM');
+                    } else {
+                        console.error('Chyba při načítání projektu:', data.error || 'Neznámá chyba');
+                    }
+                } else {
+                    console.error('Chyba při načítání projektu:', response.statusText);
+                }
+            } catch (error) {
+                console.error('Chyba při načítání uloženého projektu:', error);
+            }
+        }
+
+        render () {
+            return <WrappedComponent {...this.props} />;
+        }
+    }
+
+    AutoLoadComponent.propTypes = {
+        vm: PropTypes.object.isRequired,
+        setProjectTitle: PropTypes.func.isRequired
+    };
+
+    const mapStateToProps = state => ({
+        vm: state.scratchGui.vm
+    });
+
+    const mapDispatchToProps = dispatch => ({
+        setProjectTitle: (title) => dispatch(setProjectTitle(title))
+    });
+
+    return connect(mapStateToProps, mapDispatchToProps)(AutoLoadComponent);
+};
+
+export default AutoLoadHOC;

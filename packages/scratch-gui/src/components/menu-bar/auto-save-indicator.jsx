@@ -32,35 +32,33 @@ const AutoSaveIndicator = function (props) {
     const {
         className,
         intl,
-        status,
-        lastSaveTime,
         isSaving,
+        lastSaveTime,
+        saveError,
         ...componentProps
     } = props;
 
     const getStatusMessage = () => {
-        switch (status) {
-            case 'saving':
-                return intl.formatMessage(messages.saving);
-            case 'saved':
-                return intl.formatMessage(messages.saved);
-            case 'error':
-                return intl.formatMessage(messages.error);
-            default:
-                return '';
+        if (isSaving) {
+            return intl.formatMessage(messages.saving);
+        } else if (saveError) {
+            return intl.formatMessage(messages.error);
+        } else if (lastSaveTime) {
+            return intl.formatMessage(messages.saved);
+        } else {
+            return '';
         }
     };
 
     const getStatusIcon = () => {
-        switch (status) {
-            case 'saving':
-                return '⏳';
-            case 'saved':
-                return '✅';
-            case 'error':
-                return '❌';
-            default:
-                return '';
+        if (isSaving) {
+            return '⏳';
+        } else if (saveError) {
+            return '❌';
+        } else if (lastSaveTime) {
+            return '✅';
+        } else {
+            return '';
         }
     };
 
@@ -89,8 +87,8 @@ const AutoSaveIndicator = function (props) {
                 styles.autoSaveIndicator,
                 {
                     [styles.autoSaveIndicatorSaving]: isSaving,
-                    [styles.autoSaveIndicatorSaved]: status === 'saved',
-                    [styles.autoSaveIndicatorError]: status === 'error'
+                    [styles.autoSaveIndicatorSaved]: lastSaveTime && !isSaving && !saveError,
+                    [styles.autoSaveIndicatorError]: saveError
                 }
             )}
             title={lastSaveTime ? intl.formatMessage(messages.lastSaved, {
@@ -111,14 +109,15 @@ const AutoSaveIndicator = function (props) {
 AutoSaveIndicator.propTypes = {
     className: PropTypes.string,
     intl: intlShape.isRequired,
-    status: PropTypes.oneOf(['saving', 'saved', 'error', 'idle']),
-    lastSaveTime: PropTypes.instanceOf(Date),
-    isSaving: PropTypes.bool
+    isSaving: PropTypes.bool,
+    lastSaveTime: PropTypes.string,
+    saveError: PropTypes.string
 };
 
 AutoSaveIndicator.defaultProps = {
-    status: 'idle',
-    isSaving: false
+    isSaving: false,
+    lastSaveTime: null,
+    saveError: null
 };
 
 export default injectIntl(AutoSaveIndicator);

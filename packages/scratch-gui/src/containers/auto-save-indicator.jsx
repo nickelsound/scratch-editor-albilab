@@ -4,17 +4,9 @@ import {connect} from 'react-redux';
 
 import AutoSaveIndicatorComponent from '../components/menu-bar/auto-save-indicator.jsx';
 import autoSaveService from '../lib/auto-save.js';
+import {setAutoSaveStatus, setLastSaveTime, setSaveError} from '../exported-reducers.ts';
 
 class AutoSaveIndicator extends React.Component {
-    constructor (props) {
-        super(props);
-        
-        this.state = {
-            status: 'idle',
-            lastSaveTime: null,
-            isSaving: false
-        };
-    }
 
     componentDidMount () {
         // Inicializuj auto-save službu
@@ -50,19 +42,23 @@ class AutoSaveIndicator extends React.Component {
     }
 
     handleSaveStatusChange = (statusInfo) => {
-        this.setState({
-            status: statusInfo.status,
-            lastSaveTime: statusInfo.lastSaveTime,
-            isSaving: statusInfo.isSaving
-        });
+        // Aktualizuj Redux state
+        if (statusInfo.isSaving) {
+            this.props.setAutoSaveStatus(true);
+        } else if (statusInfo.status === 'saved') {
+            this.props.setAutoSaveStatus(false);
+            this.props.setLastSaveTime(statusInfo.lastSaveTime);
+        } else if (statusInfo.status === 'error') {
+            this.props.setSaveError(statusInfo.error);
+        }
     };
 
     render () {
         return (
             <AutoSaveIndicatorComponent
-                status={this.state.status}
-                lastSaveTime={this.state.lastSaveTime}
-                isSaving={this.state.isSaving}
+                isSaving={this.props.isSaving}
+                lastSaveTime={this.props.lastSaveTime}
+                saveError={this.props.saveError}
             />
         );
     }
@@ -70,12 +66,27 @@ class AutoSaveIndicator extends React.Component {
 
 AutoSaveIndicator.propTypes = {
     vm: PropTypes.object,
-    projectTitle: PropTypes.string
+    projectTitle: PropTypes.string,
+    isSaving: PropTypes.bool,
+    lastSaveTime: PropTypes.string,
+    saveError: PropTypes.string,
+    setAutoSaveStatus: PropTypes.func,
+    setLastSaveTime: PropTypes.func,
+    setSaveError: PropTypes.func
 };
 
 const mapStateToProps = state => ({
     vm: state.scratchGui.vm,
-    projectTitle: state.scratchGui.projectTitle
+    projectTitle: state.scratchGui.projectTitle,
+    isSaving: state.autoSave.isSaving,
+    lastSaveTime: state.autoSave.lastSaveTime,
+    saveError: state.autoSave.saveError
 });
 
-export default connect(mapStateToProps)(AutoSaveIndicator);
+const mapDispatchToProps = dispatch => ({
+    setAutoSaveStatus: (isSaving) => dispatch(setAutoSaveStatus(isSaving)),
+    setLastSaveTime: (lastSaveTime) => dispatch(setLastSaveTime(lastSaveTime)),
+    setSaveError: (error) => dispatch(setSaveError(error))
+});
+
+export default connect(mapStateToProps, mapDispatchToProps)(AutoSaveIndicator);

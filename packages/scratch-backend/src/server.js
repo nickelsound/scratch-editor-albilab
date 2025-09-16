@@ -48,7 +48,7 @@ function broadcast(data) {
 async function saveProject(projectData, projectName) {
     try {
         const projectInfo = {
-            projectData: projectData,
+            projectData: projectData, // Ukládáme jako objekt
             projectName: projectName,
             savedAt: new Date().toISOString(),
             version: '1.0'
