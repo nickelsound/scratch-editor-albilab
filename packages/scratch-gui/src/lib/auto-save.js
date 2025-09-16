@@ -99,17 +99,19 @@ class AutoSaveService {
                 const result = await response.json();
                 this.lastSaveTime = new Date();
                 console.log('Projekt automaticky uložen:', result);
+                this.isSaving = false;
                 this.updateSaveStatus('saved');
             } else {
                 console.error('Chyba při automatickém ukládání:', response.status, response.statusText);
+                this.isSaving = false;
                 this.updateSaveStatus('error');
             }
 
         } catch (error) {
             console.error('Chyba při automatickém ukládání:', error);
+            this.isSaving = false;
             this.updateSaveStatus('error');
         } finally {
-            this.isSaving = false;
             this.scheduleNextSave();
         }
     }
@@ -122,7 +124,7 @@ class AutoSaveService {
             this.onSaveStatusChange({
                 status: status,
                 lastSaveTime: this.lastSaveTime,
-                isSaving: this.isSaving
+                isSaving: status === 'saving' ? true : false
             });
         }
     }

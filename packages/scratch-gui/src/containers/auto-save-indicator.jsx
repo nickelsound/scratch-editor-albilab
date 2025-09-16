@@ -43,10 +43,9 @@ class AutoSaveIndicator extends React.Component {
 
     handleSaveStatusChange = (statusInfo) => {
         // Aktualizuj Redux state
-        if (statusInfo.isSaving) {
-            this.props.setAutoSaveStatus(true);
-        } else if (statusInfo.status === 'saved') {
-            this.props.setAutoSaveStatus(false);
+        this.props.setAutoSaveStatus(statusInfo.isSaving);
+        
+        if (statusInfo.status === 'saved') {
             this.props.setLastSaveTime(statusInfo.lastSaveTime);
         } else if (statusInfo.status === 'error') {
             this.props.setSaveError(statusInfo.error);
