@@ -497,6 +497,58 @@ app.get('/api/saved-project/load', async (req, res) => {
     }
 });
 
+// Průběžné ukládání projektu (bez spuštění služby)
+app.post('/api/saved-project/auto-save', async (req, res) => {
+    try {
+        log('API: Auto-save project requested', 'info', {
+            hasProjectData: !!req.body.projectData,
+            projectName: req.body.projectName,
+            requestBodySize: JSON.stringify(req.body).length
+        });
+        
+        const { projectData, projectName } = req.body;
+        
+        if (!projectData) {
+            log('API: Missing projectData in auto-save request', 'error');
+            return res.status(400).json({ error: 'Chybí projectData' });
+        }
+        
+        const name = projectName || 'Neznámý projekt';
+        
+        // Ulož projekt bez spuštění služby
+        const saved = await saveProject(projectData, name);
+        
+        if (saved) {
+            const response = { 
+                success: true, 
+                message: `Projekt ${name} byl automaticky uložen`,
+                projectName: name,
+                savedAt: new Date().toISOString()
+            };
+            
+            log(`API: Project auto-saved successfully`, 'success', response);
+            res.json(response);
+        } else {
+            res.status(500).json({ 
+                success: false,
+                error: 'Chyba při automatickém ukládání projektu' 
+            });
+        }
+        
+    } catch (error) {
+        log(`API: Error auto-saving project: ${error.message}`, 'error', {
+            errorName: error.name,
+            errorStack: error.stack,
+            projectName: req.body.projectName
+        });
+        res.status(500).json({ 
+            success: false,
+            error: 'Chyba při automatickém ukládání projektu', 
+            details: error.message 
+        });
+    }
+});
+
 // Smazání uloženého projektu
 app.delete('/api/saved-project', async (req, res) => {
     try {

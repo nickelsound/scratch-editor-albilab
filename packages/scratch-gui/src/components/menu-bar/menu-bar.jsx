@@ -15,6 +15,7 @@ import CommunityButton from './community-button.jsx';
 import ShareButton from './share-button.jsx';
 import ServiceButton from '../../containers/service-button.jsx';
 import LoadProjectButton from '../../containers/load-project-button.jsx';
+import AutoSaveIndicator from '../../containers/auto-save-indicator.jsx';
 import {ComingSoonTooltip} from '../coming-soon/coming-soon.jsx';
 import Divider from '../divider/divider.jsx';
 import SaveStatus from './save-status.jsx';
@@ -654,6 +655,9 @@ class MenuBar extends React.Component {
                     <div className={classNames(styles.menuBarItem)}>
                         {/* LoadProjectButton - načtení uloženého projektu */}
                         <LoadProjectButton />
+                        
+                        {/* AutoSaveIndicator - indikátor průběžného ukládání */}
+                        <AutoSaveIndicator />
                     </div>
                     <div className={classNames(styles.menuBarItem, styles.communityButtonWrapper)}>
                         {/* See Project Page tlačítko - skryto */}
