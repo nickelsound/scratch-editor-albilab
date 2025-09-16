@@ -169,7 +169,7 @@ const StageHeaderComponent = function (props) {
                         <div className={styles.rightSection}>
                             {manuallySaveThumbnails && (
                                 <Button
-                                    aria-label={props.intl.formatMessage(messages.setThumbnail)}
+                                    aria-label={intl.formatMessage(messages.setThumbnail)}
                                     className={styles.setThumbnailButton}
                                     onClick={onUpdateThumbnail}
                                 >
