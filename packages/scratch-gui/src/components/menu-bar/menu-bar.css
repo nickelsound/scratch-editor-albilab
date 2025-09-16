@@ -279,3 +279,34 @@
         opacity: 1;
     }
 }
+
+/* Load Project Button Styles */
+.loadProjectButton {
+    background-color: $looks-primary;
+    border: 1px solid $looks-primary;
+    color: $ui-white;
+    transition: all 0.2s ease;
+}
+
+.loadProjectButton:hover {
+    background-color: $looks-primary-dark;
+    border-color: $looks-primary-dark;
+}
+
+.loadProjectButtonLoading {
+    background-color: $ui-black-transparent;
+    border-color: $ui-black-transparent;
+    animation: pulse 1s infinite;
+}
+
+.loadProjectButtonLoading:hover {
+    background-color: $ui-black-transparent;
+    border-color: $ui-black-transparent;
+}
+
+.loadProjectButtonIcon {
+    width: 3rem;
+    height: 3rem;
+    margin-right: 0.25rem;
+    color: $ui-white;
+}

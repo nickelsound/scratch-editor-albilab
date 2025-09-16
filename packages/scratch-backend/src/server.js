@@ -29,6 +29,9 @@ let serviceStatus = {
     logs: []
 };
 
+// Cesta k uloženému projektu - ukládáme do uploads volume, které je trvalé
+const SAVED_PROJECT_PATH = path.join(process.cwd(), 'uploads', 'saved-project.json');
+
 // WebSocket server
 const wss = new WebSocket.Server({ port: 3002 });
 
@@ -39,6 +42,79 @@ function broadcast(data) {
             client.send(JSON.stringify(data));
         }
     });
+}
+
+// Uložení projektu do trvalého úložiště
+async function saveProject(projectData, projectName) {
+    try {
+        const projectInfo = {
+            projectData: projectData,
+            projectName: projectName,
+            savedAt: new Date().toISOString(),
+            version: '1.0'
+        };
+        
+        await fs.writeFile(SAVED_PROJECT_PATH, JSON.stringify(projectInfo, null, 2));
+        log(`Projekt ${projectName} byl uložen do trvalého úložiště`, 'success', {
+            savedAt: projectInfo.savedAt,
+            filePath: SAVED_PROJECT_PATH
+        });
+        
+        return true;
+    } catch (error) {
+        log(`Chyba při ukládání projektu: ${error.message}`, 'error', {
+            errorName: error.name,
+            errorStack: error.stack,
+            projectName
+        });
+        return false;
+    }
+}
+
+// Načtení uloženého projektu
+async function loadSavedProject() {
+    try {
+        if (await fs.pathExists(SAVED_PROJECT_PATH)) {
+            const projectInfo = await fs.readJson(SAVED_PROJECT_PATH);
+            log(`Načten uložený projekt: ${projectInfo.projectName}`, 'info', {
+                savedAt: projectInfo.savedAt,
+                version: projectInfo.version
+            });
+            return projectInfo;
+        } else {
+            log('Žádný uložený projekt nebyl nalezen', 'info');
+            return null;
+        }
+    } catch (error) {
+        log(`Chyba při načítání uloženého projektu: ${error.message}`, 'error', {
+            errorName: error.name,
+            errorStack: error.stack
+        });
+        return null;
+    }
+}
+
+// Automatické spuštění uloženého projektu při startu
+async function autoStartSavedProject() {
+    try {
+        log('Kontroluji uložený projekt pro automatické spuštění...', 'info');
+        
+        const savedProject = await loadSavedProject();
+        if (savedProject) {
+            log(`Spouštím automaticky uložený projekt: ${savedProject.projectName}`, 'info');
+            await startService(savedProject.projectData, savedProject.projectName);
+            return true;
+        } else {
+            log('Žádný projekt k automatickému spuštění', 'info');
+            return false;
+        }
+    } catch (error) {
+        log(`Chyba při automatickém spuštění projektu: ${error.message}`, 'error', {
+            errorName: error.name,
+            errorStack: error.stack
+        });
+        return false;
+    }
 }
 
 // Logging funkce
@@ -147,6 +223,9 @@ async function startService(projectData, projectName) {
             vmState: 'running'
         });
         broadcast({ type: 'serviceStarted', data: { projectName, startTime: currentService.startTime } });
+        
+        // Ulož projekt do trvalého úložiště
+        await saveProject(projectData, projectName);
         
         // Sleduj chyby VM
         vm.on('error', (error) => {
@@ -361,6 +440,84 @@ app.get('/api/logs', (req, res) => {
     res.json(serviceStatus.logs);
 });
 
+// Informace o uloženém projektu
+app.get('/api/saved-project', async (req, res) => {
+    try {
+        log('API: Saved project info requested', 'info');
+        
+        const savedProject = await loadSavedProject();
+        if (savedProject) {
+            res.json({
+                exists: true,
+                projectName: savedProject.projectName,
+                savedAt: savedProject.savedAt,
+                version: savedProject.version
+            });
+        } else {
+            res.json({
+                exists: false
+            });
+        }
+    } catch (error) {
+        log(`API: Error getting saved project info: ${error.message}`, 'error');
+        res.status(500).json({ 
+            error: 'Chyba při získávání informací o uloženém projektu', 
+            details: error.message 
+        });
+    }
+});
+
+// Načtení uloženého projektu pro frontend
+app.get('/api/saved-project/load', async (req, res) => {
+    try {
+        log('API: Load saved project for frontend requested', 'info');
+        
+        const savedProject = await loadSavedProject();
+        if (savedProject) {
+            res.json({
+                success: true,
+                projectData: savedProject.projectData,
+                projectName: savedProject.projectName,
+                savedAt: savedProject.savedAt,
+                version: savedProject.version
+            });
+        } else {
+            res.status(404).json({
+                success: false,
+                error: 'Žádný uložený projekt nebyl nalezen'
+            });
+        }
+    } catch (error) {
+        log(`API: Error loading saved project for frontend: ${error.message}`, 'error');
+        res.status(500).json({ 
+            success: false,
+            error: 'Chyba při načítání uloženého projektu', 
+            details: error.message 
+        });
+    }
+});
+
+// Smazání uloženého projektu
+app.delete('/api/saved-project', async (req, res) => {
+    try {
+        log('API: Delete saved project requested', 'info');
+        
+        if (await fs.pathExists(SAVED_PROJECT_PATH)) {
+            await fs.remove(SAVED_PROJECT_PATH);
+            log('Uložený projekt byl smazán', 'success');
+            res.json({ success: true, message: 'Uložený projekt byl smazán' });
+        } else {
+            res.json({ success: true, message: 'Žádný uložený projekt nebyl nalezen' });
+        }
+    } catch (error) {
+        log(`API: Error deleting saved project: ${error.message}`, 'error');
+        res.status(500).json({ 
+            error: 'Chyba při mazání uloženého projektu', 
+            details: error.message 
+        });
+    }
+});
+
 // WebSocket připojení
 wss.on('connection', (ws) => {
     const clientId = Math.random().toString(36).substr(2, 9);
@@ -436,10 +593,38 @@ process.on('SIGTERM', async () => {
     process.exit(0);
 });
 
+// Startup script - spustí se při každém startu serveru
+async function runServerStartupScript() {
+    try {
+        log('Spouštím startup script...', 'info');
+        
+        // Spusť externí startup script
+        await runStartupScript();
+        
+        // Počkej chvilku, aby se server stabilizoval
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        // Automaticky spusť uložený projekt
+        await autoStartSavedProject();
+        
+        log('Startup script dokončen', 'success');
+    } catch (error) {
+        log(`Chyba v startup scriptu: ${error.message}`, 'error', {
+            errorName: error.name,
+            errorStack: error.stack
+        });
+        // Nechceme, aby se server nespustil kvůli chybě v auto-startu
+        // throw error; // Zakomentováno - server se spustí i při chybě auto-startu
+    }
+}
+
 // Spusť server
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
     log(`Backend server běží na portu ${PORT}`, 'info');
     log(`WebSocket server běží na portu 3002`, 'info');
+    
+    // Spusť startup script po spuštění serveru
+    await runServerStartupScript();
 });
 
 module.exports = app;
