@@ -651,7 +651,8 @@ class MenuBar extends React.Component {
                         />
                     ) : null)}
                     <div className={classNames(styles.menuBarItem)}>
-                        {this.props.canShare ? (
+                        {/* Share/Shared tlačítko - skryto */}
+                        {/* {this.props.canShare ? (
                             (this.props.isShowingProject || this.props.isUpdating) && (
                                 <ProjectWatcher onDoneUpdating={this.props.onSeeCommunity}>
                                     {
@@ -675,12 +676,17 @@ class MenuBar extends React.Component {
                                     <ShareButton className={styles.menuBarButton} />
                                 </MenuBarItemTooltip>
                             ) : []
-                        )}
-                        {this.props.canRemix ? remixButton : []}
-                        <ServiceButton />
+                        )} */}
+                        
+                        {/* Remix tlačítko - skryto */}
+                        {/* {this.props.canRemix ? remixButton : []} */}
+                        
+                        {/* ServiceButton (Nahrát do AlbiLAB) - skryto */}
+                        {/* <ServiceButton /> */}
                     </div>
                     <div className={classNames(styles.menuBarItem, styles.communityButtonWrapper)}>
-                        {this.props.enableCommunity ? (
+                        {/* See Project Page tlačítko - skryto */}
+                        {/* {this.props.enableCommunity ? (
                             (this.props.isShowingProject || this.props.isUpdating) && (
                                 <ProjectWatcher onDoneUpdating={this.props.onSeeCommunity}>
                                     {
@@ -701,7 +707,7 @@ class MenuBar extends React.Component {
                             <MenuBarItemTooltip id="community-button">
                                 <CommunityButton className={styles.menuBarButton} />
                             </MenuBarItemTooltip>
-                        ) : [])}
+                        ) : [])} */}
                     </div>
                     <Divider className={classNames(styles.divider)} />
                     <div className={styles.fileGroup}>
