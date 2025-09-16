@@ -216,7 +216,7 @@ const alerts = [
     {
         alertId: 'loadingExtensionData',
         alertType: AlertTypes.STANDARD,
-        clearList: [],
+        clearList: ['loadingExtensionData'],
         content: (
             <FormattedMessage
                 defaultMessage="Loading extension..."
