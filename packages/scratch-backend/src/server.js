@@ -17,7 +17,7 @@ app.use(express.static('public'));
 
 // Multer pro upload souborů
 const upload = multer({ 
-    dest: 'uploads/',
+    dest: '/app/uploads/',
     limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
 });
 
@@ -31,7 +31,8 @@ let serviceStatus = {
 };
 
 // Cesta k uloženému projektu - ukládáme do uploads volume, které je trvalé
-const SAVED_PROJECT_PATH = path.join(process.cwd(), 'uploads', 'saved-project.json');
+// V Docker kontejneru je process.cwd() /app/packages/scratch-backend, ale uploads je mapováno na /app/uploads
+const SAVED_PROJECT_PATH = path.join('/app', 'uploads', 'saved-project.json');
 
 // WebSocket server
 const wss = new WebSocket.Server({ port: 3002 });
