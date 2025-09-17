@@ -64,24 +64,15 @@ const AutoSaveManager = function (props) {
     const formatLastSaveTime = (time) => {
         if (!time) return '';
         
-        const now = new Date();
         const saveTime = new Date(time);
-        const diffMs = now - saveTime;
-        const diffMins = Math.floor(diffMs / 60000);
-        
-        if (diffMins < 1) {
-            return 'právě teď';
-        } else if (diffMins < 60) {
-            return `před ${diffMins} min`;
-        } else {
-            const diffHours = Math.floor(diffMins / 60);
-            if (diffHours < 24) {
-                return `před ${diffHours} h`;
-            } else {
-                const diffDays = Math.floor(diffHours / 24);
-                return `před ${diffDays} dny`;
-            }
-        }
+        return saveTime.toLocaleString('cs-CZ', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+        });
     };
 
     const handleDeleteProject = (project) => {

@@ -24,17 +24,33 @@ const ProjectTitleInput = ({
     intl,
     onSubmit,
     projectTitle
-}) => (
-    <BufferedInput
-        className={classNames(styles.titleField, className)}
-        maxLength="100"
-        placeholder={intl.formatMessage(messages.projectTitlePlaceholder)}
-        tabIndex="0"
-        type="text"
-        value={projectTitle}
-        onSubmit={onSubmit}
-    />
-);
+}) => {
+    const handleManageClick = () => {
+        // Vyvolej event pro otevření manageru
+        window.dispatchEvent(new CustomEvent('openAutoSaveManager'));
+    };
+
+    return (
+        <div className={styles.titleFieldContainer}>
+            <BufferedInput
+                className={classNames(styles.titleField, className)}
+                maxLength="100"
+                placeholder={intl.formatMessage(messages.projectTitlePlaceholder)}
+                tabIndex="0"
+                type="text"
+                value={projectTitle}
+                onSubmit={onSubmit}
+            />
+            <button
+                className={styles.manageButton}
+                onClick={handleManageClick}
+                title="Spravovat automaticky uložené projekty"
+            >
+                📁
+            </button>
+        </div>
+    );
+};
 
 ProjectTitleInput.propTypes = {
     className: PropTypes.string,

@@ -64,27 +64,15 @@ const AutoSaveIndicator = function (props) {
         }
     };
 
-    const handleManageClick = () => {
-        // Vyvolej event pro otevření manageru
-        window.dispatchEvent(new CustomEvent('openAutoSaveManager'));
-    };
-
     const formatLastSaveTime = (time) => {
         if (!time) return '';
         
-        const now = new Date();
         const saveTime = new Date(time);
-        const diffMs = now - saveTime;
-        const diffMins = Math.floor(diffMs / 60000);
-        
-        if (diffMins < 1) {
-            return 'právě teď';
-        } else if (diffMins < 60) {
-            return `před ${diffMins} min`;
-        } else {
-            const diffHours = Math.floor(diffMins / 60);
-            return `před ${diffHours} h`;
-        }
+        return saveTime.toLocaleTimeString('cs-CZ', {
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+        });
     };
 
     return (
@@ -109,15 +97,6 @@ const AutoSaveIndicator = function (props) {
             <span className={styles.autoSaveText}>
                 {getStatusMessage()}
             </span>
-            {lastSaveTime && (
-                <button
-                    className={styles.autoSaveManageButton}
-                    onClick={handleManageClick}
-                    title="Spravovat automaticky uložené projekty"
-                >
-                    📁
-                </button>
-            )}
         </div>
     );
 };
