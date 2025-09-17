@@ -44,7 +44,9 @@ const AutoSaveIndicator = function (props) {
         } else if (saveError) {
             return intl.formatMessage(messages.error);
         } else if (lastSaveTime) {
-            return intl.formatMessage(messages.saved);
+            return intl.formatMessage(messages.lastSaved, {
+                time: formatLastSaveTime(lastSaveTime)
+            });
         } else {
             return '';
         }

@@ -30,13 +30,17 @@ class AutoSaveService {
     /**
      * Spustí automatické ukládání
      */
-    start() {
+    async start() {
         if (!this.isEnabled || !this.vm) {
             console.log('Auto-save nelze spustit - není inicializován');
             return;
         }
 
         console.log('Spouštím auto-save službu');
+        
+        // Zkus načíst existující auto-save projekt
+        await this.loadExistingProject();
+        
         this.scheduleNextSave();
     }
 
@@ -50,6 +54,43 @@ class AutoSaveService {
         if (this.saveTimeout) {
             clearTimeout(this.saveTimeout);
             this.saveTimeout = null;
+        }
+    }
+
+    /**
+     * Načte existující auto-save projekt podle názvu
+     */
+    async loadExistingProject() {
+        if (!this.projectTitle || this.projectTitle === 'Neznámý projekt') {
+            console.log('Název projektu není zadán - nelze načíst auto-save projekt');
+            return;
+        }
+
+        try {
+            const apiUrl = `${window.location.protocol}//${window.location.hostname}:3001/api/saved-project/auto-save/load?projectName=${encodeURIComponent(this.projectTitle)}`;
+            const response = await fetch(apiUrl);
+            
+            if (response.ok) {
+                const result = await response.json();
+                if (result.success && result.projectData) {
+                    console.log(`Načítám existující auto-save projekt: ${result.projectName}`);
+                    
+                    // Načti projekt do VM
+                    await this.vm.loadProject(result.projectData);
+                    
+                    // Aktualizuj čas posledního uložení
+                    this.lastSaveTime = new Date(result.savedAt);
+                    this.updateSaveStatus('loaded');
+                    
+                    console.log('Auto-save projekt úspěšně načten');
+                } else {
+                    console.log('Žádný auto-save projekt nebyl nalezen pro:', this.projectTitle);
+                }
+            } else {
+                console.log('Auto-save projekt nebyl nalezen pro:', this.projectTitle);
+            }
+        } catch (error) {
+            console.error('Chyba při načítání auto-save projektu:', error);
         }
     }
 

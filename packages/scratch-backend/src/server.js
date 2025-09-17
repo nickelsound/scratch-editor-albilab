@@ -33,7 +33,7 @@ let serviceStatus = {
 // Cesta k uloženému projektu - ukládáme do uploads volume, které je trvalé
 // V Docker kontejneru je process.cwd() /app/packages/scratch-backend, ale uploads je mapováno na /app/uploads
 const SAVED_PROJECT_PATH = path.join('/app', 'uploads', 'saved-project.json');
-const AUTO_SAVE_PROJECT_PATH = path.join('/app', 'uploads', 'auto-save-project.json');
+const AUTO_SAVE_DIR = path.join('/app', 'uploads', 'auto-save');
 
 // WebSocket server
 const wss = new WebSocket.Server({ port: 3002 });
@@ -58,8 +58,16 @@ async function saveProject(projectData, projectName, isAutoSave = false) {
             isAutoSave: isAutoSave
         };
         
-        // Rozhodni, kam uložit projekt
-        const filePath = isAutoSave ? AUTO_SAVE_PROJECT_PATH : SAVED_PROJECT_PATH;
+        let filePath;
+        if (isAutoSave) {
+            // Pro auto-save vytvoř adresář a ulož podle názvu projektu
+            await fs.ensureDir(AUTO_SAVE_DIR);
+            const safeFileName = projectName.replace(/[^a-zA-Z0-9_-]/g, '_') + '.json';
+            filePath = path.join(AUTO_SAVE_DIR, safeFileName);
+        } else {
+            // Pro AlbiLAB projekty použij původní soubor
+            filePath = SAVED_PROJECT_PATH;
+        }
         
         await fs.writeFile(filePath, JSON.stringify(projectInfo, null, 2));
         log(`Projekt ${projectName} byl uložen do trvalého úložiště`, 'success', {
@@ -99,6 +107,52 @@ async function loadSavedProject() {
             errorName: error.name,
             errorStack: error.stack
         });
+        return null;
+    }
+}
+
+// Načtení auto-save projektu podle názvu
+async function loadAutoSaveProject(projectName) {
+    try {
+        if (!projectName || projectName === 'Neznámý projekt') {
+            log('Název projektu není zadán pro auto-save načtení', 'info');
+            return null;
+        }
+        
+        // Pokud adresář neexistuje, projekt neexistuje
+        if (!await fs.pathExists(AUTO_SAVE_DIR)) {
+            log(`Auto-save projekt ${projectName} nebyl nalezen - adresář neexistuje`, 'info');
+            return null;
+        }
+        
+        // Projdi všechny soubory a hledej podle originálního názvu
+        const files = await fs.readdir(AUTO_SAVE_DIR);
+        
+        for (const file of files) {
+            if (file.endsWith('.json')) {
+                try {
+                    const filePath = path.join(AUTO_SAVE_DIR, file);
+                    const projectInfo = await fs.readJson(filePath);
+                    
+                    // Porovnej originální názvy (case-sensitive)
+                    if (projectInfo.projectName === projectName) {
+                        log(`Auto-save projekt načten: ${projectInfo.projectName}`, 'info', {
+                            savedAt: projectInfo.savedAt,
+                            version: projectInfo.version,
+                            filePath: filePath
+                        });
+                        return projectInfo;
+                    }
+                } catch (error) {
+                    log(`Chyba při načítání souboru ${file}: ${error.message}`, 'error');
+                }
+            }
+        }
+        
+        log(`Auto-save projekt ${projectName} nebyl nalezen`, 'info');
+        return null;
+    } catch (error) {
+        log(`Chyba při načítání auto-save projektu: ${error.message}`, 'error');
         return null;
     }
 }
@@ -506,13 +560,21 @@ app.get('/api/saved-project/load', async (req, res) => {
     }
 });
 
-// Načtení auto-save projektu pro frontend
+// Načtení auto-save projektu pro frontend podle názvu
 app.get('/api/saved-project/auto-save/load', async (req, res) => {
     try {
-        log('API: Load auto-save project for frontend requested', 'info');
+        const projectName = req.query.projectName;
+        log('API: Load auto-save project for frontend requested', 'info', { projectName });
         
-        if (await fs.pathExists(AUTO_SAVE_PROJECT_PATH)) {
-            const autoSaveProject = await fs.readJson(AUTO_SAVE_PROJECT_PATH);
+        if (!projectName) {
+            return res.status(400).json({
+                success: false,
+                error: 'Název projektu je povinný'
+            });
+        }
+        
+        const autoSaveProject = await loadAutoSaveProject(projectName);
+        if (autoSaveProject) {
             res.json({
                 success: true,
                 projectData: autoSaveProject.projectData,
@@ -524,7 +586,7 @@ app.get('/api/saved-project/auto-save/load', async (req, res) => {
         } else {
             res.status(404).json({
                 success: false,
-                error: 'Žádný auto-save projekt nebyl nalezen'
+                error: `Auto-save projekt "${projectName}" nebyl nalezen`
             });
         }
     } catch (error) {
@@ -610,22 +672,100 @@ app.delete('/api/saved-project', async (req, res) => {
     }
 });
 
-// Smazání auto-save projektu
+// Smazání auto-save projektu podle názvu
 app.delete('/api/saved-project/auto-save', async (req, res) => {
     try {
-        log('API: Delete auto-save project requested', 'info');
+        const projectName = req.query.projectName;
+        log('API: Delete auto-save project requested', 'info', { projectName });
         
-        if (await fs.pathExists(AUTO_SAVE_PROJECT_PATH)) {
-            await fs.remove(AUTO_SAVE_PROJECT_PATH);
-            log('Auto-save projekt byl smazán', 'success');
-            res.json({ success: true, message: 'Auto-save projekt byl smazán' });
-        } else {
-            res.json({ success: true, message: 'Žádný auto-save projekt nebyl nalezen' });
+        if (!projectName) {
+            return res.status(400).json({
+                success: false,
+                error: 'Název projektu je povinný'
+            });
         }
+        
+        // Pokud adresář neexistuje, projekt neexistuje
+        if (!await fs.pathExists(AUTO_SAVE_DIR)) {
+            return res.json({ success: true, message: `Auto-save projekt "${projectName}" nebyl nalezen` });
+        }
+        
+        // Projdi všechny soubory a hledej podle originálního názvu
+        const files = await fs.readdir(AUTO_SAVE_DIR);
+        
+        for (const file of files) {
+            if (file.endsWith('.json')) {
+                try {
+                    const filePath = path.join(AUTO_SAVE_DIR, file);
+                    const projectInfo = await fs.readJson(filePath);
+                    
+                    // Porovnej originální názvy (case-sensitive)
+                    if (projectInfo.projectName === projectName) {
+                        await fs.remove(filePath);
+                        log(`Auto-save projekt ${projectName} byl smazán`, 'success');
+                        return res.json({ success: true, message: `Auto-save projekt "${projectName}" byl smazán` });
+                    }
+                } catch (error) {
+                    log(`Chyba při načítání souboru ${file}: ${error.message}`, 'error');
+                }
+            }
+        }
+        
+        res.json({ success: true, message: `Auto-save projekt "${projectName}" nebyl nalezen` });
     } catch (error) {
         log(`API: Error deleting auto-save project: ${error.message}`, 'error');
         res.status(500).json({ 
             error: 'Chyba při mazání auto-save projektu', 
+            details: error.message 
+        });
+    }
+});
+
+// Seznam všech auto-save projektů
+app.get('/api/saved-project/auto-save/list', async (req, res) => {
+    try {
+        log('API: List auto-save projects requested', 'info');
+        
+        if (!await fs.pathExists(AUTO_SAVE_DIR)) {
+            return res.json({
+                success: true,
+                projects: []
+            });
+        }
+        
+        const files = await fs.readdir(AUTO_SAVE_DIR);
+        const projects = [];
+        
+        for (const file of files) {
+            if (file.endsWith('.json')) {
+                try {
+                    const filePath = path.join(AUTO_SAVE_DIR, file);
+                    const projectInfo = await fs.readJson(filePath);
+                    projects.push({
+                        fileName: file,
+                        projectName: projectInfo.projectName,
+                        savedAt: projectInfo.savedAt,
+                        version: projectInfo.version
+                    });
+                } catch (error) {
+                    log(`Chyba při načítání souboru ${file}: ${error.message}`, 'error');
+                }
+            }
+        }
+        
+        // Seřaď podle času uložení (nejnovější první)
+        projects.sort((a, b) => new Date(b.savedAt) - new Date(a.savedAt));
+        
+        res.json({
+            success: true,
+            projects: projects
+        });
+        
+    } catch (error) {
+        log(`API: Error listing auto-save projects: ${error.message}`, 'error');
+        res.status(500).json({ 
+            success: false,
+            error: 'Chyba při získávání seznamu auto-save projektů', 
             details: error.message 
         });
     }

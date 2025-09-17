@@ -8,7 +8,7 @@ import {setAutoSaveStatus, setLastSaveTime, setSaveError} from '../exported-redu
 
 class AutoSaveIndicator extends React.Component {
 
-    componentDidMount () {
+    async componentDidMount () {
         // Inicializuj auto-save službu
         autoSaveService.initialize(
             this.props.vm,
@@ -16,8 +16,8 @@ class AutoSaveIndicator extends React.Component {
             this.handleSaveStatusChange
         );
 
-        // Spusť auto-save
-        autoSaveService.start();
+        // Spusť auto-save (asynchronně pro načtení existujícího projektu)
+        await autoSaveService.start();
     }
 
     componentDidUpdate (prevProps) {
