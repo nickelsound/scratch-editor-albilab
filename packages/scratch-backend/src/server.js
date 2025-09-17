@@ -5,6 +5,7 @@ const fs = require('fs-extra');
 const path = require('path');
 const WebSocket = require('ws');
 const VirtualMachine = require('@scratch/scratch-vm');
+const { runStartupScript } = require('./startup');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
