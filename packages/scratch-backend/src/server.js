@@ -33,6 +33,7 @@ let serviceStatus = {
 // Cesta k uloženému projektu - ukládáme do uploads volume, které je trvalé
 // V Docker kontejneru je process.cwd() /app/packages/scratch-backend, ale uploads je mapováno na /app/uploads
 const SAVED_PROJECT_PATH = path.join('/app', 'uploads', 'saved-project.json');
+const AUTO_SAVE_PROJECT_PATH = path.join('/app', 'uploads', 'auto-save-project.json');
 
 // WebSocket server
 const wss = new WebSocket.Server({ port: 3002 });
@@ -47,19 +48,24 @@ function broadcast(data) {
 }
 
 // Uložení projektu do trvalého úložiště
-async function saveProject(projectData, projectName) {
+async function saveProject(projectData, projectName, isAutoSave = false) {
     try {
         const projectInfo = {
             projectData: projectData, // Ukládáme jako objekt
             projectName: projectName,
             savedAt: new Date().toISOString(),
-            version: '1.0'
+            version: '1.0',
+            isAutoSave: isAutoSave
         };
         
-        await fs.writeFile(SAVED_PROJECT_PATH, JSON.stringify(projectInfo, null, 2));
+        // Rozhodni, kam uložit projekt
+        const filePath = isAutoSave ? AUTO_SAVE_PROJECT_PATH : SAVED_PROJECT_PATH;
+        
+        await fs.writeFile(filePath, JSON.stringify(projectInfo, null, 2));
         log(`Projekt ${projectName} byl uložen do trvalého úložiště`, 'success', {
             savedAt: projectInfo.savedAt,
-            filePath: SAVED_PROJECT_PATH
+            filePath: filePath,
+            isAutoSave: isAutoSave
         });
         
         return true;
@@ -67,7 +73,8 @@ async function saveProject(projectData, projectName) {
         log(`Chyba při ukládání projektu: ${error.message}`, 'error', {
             errorName: error.name,
             errorStack: error.stack,
-            projectName
+            projectName,
+            isAutoSave: isAutoSave
         });
         return false;
     }
@@ -226,8 +233,8 @@ async function startService(projectData, projectName) {
         });
         broadcast({ type: 'serviceStarted', data: { projectName, startTime: currentService.startTime } });
         
-        // Ulož projekt do trvalého úložiště
-        await saveProject(projectData, projectName);
+        // Ulož projekt do trvalého úložiště (nahrání do AlbiLAB)
+        await saveProject(projectData, projectName, false);
         
         // Sleduj chyby VM
         vm.on('error', (error) => {
@@ -499,6 +506,37 @@ app.get('/api/saved-project/load', async (req, res) => {
     }
 });
 
+// Načtení auto-save projektu pro frontend
+app.get('/api/saved-project/auto-save/load', async (req, res) => {
+    try {
+        log('API: Load auto-save project for frontend requested', 'info');
+        
+        if (await fs.pathExists(AUTO_SAVE_PROJECT_PATH)) {
+            const autoSaveProject = await fs.readJson(AUTO_SAVE_PROJECT_PATH);
+            res.json({
+                success: true,
+                projectData: autoSaveProject.projectData,
+                projectName: autoSaveProject.projectName,
+                savedAt: autoSaveProject.savedAt,
+                version: autoSaveProject.version,
+                isAutoSave: true
+            });
+        } else {
+            res.status(404).json({
+                success: false,
+                error: 'Žádný auto-save projekt nebyl nalezen'
+            });
+        }
+    } catch (error) {
+        log(`API: Error loading auto-save project for frontend: ${error.message}`, 'error');
+        res.status(500).json({ 
+            success: false,
+            error: 'Chyba při načítání auto-save projektu', 
+            details: error.message 
+        });
+    }
+});
+
 // Průběžné ukládání projektu (bez spuštění služby)
 app.post('/api/saved-project/auto-save', async (req, res) => {
     try {
@@ -517,8 +555,8 @@ app.post('/api/saved-project/auto-save', async (req, res) => {
         
         const name = projectName || 'Neznámý projekt';
         
-        // Ulož projekt bez spuštění služby
-        const saved = await saveProject(projectData, name);
+        // Ulož projekt bez spuštění služby (auto-save)
+        const saved = await saveProject(projectData, name, true);
         
         if (saved) {
             const response = { 
@@ -567,6 +605,27 @@ app.delete('/api/saved-project', async (req, res) => {
         log(`API: Error deleting saved project: ${error.message}`, 'error');
         res.status(500).json({ 
             error: 'Chyba při mazání uloženého projektu', 
+            details: error.message 
+        });
+    }
+});
+
+// Smazání auto-save projektu
+app.delete('/api/saved-project/auto-save', async (req, res) => {
+    try {
+        log('API: Delete auto-save project requested', 'info');
+        
+        if (await fs.pathExists(AUTO_SAVE_PROJECT_PATH)) {
+            await fs.remove(AUTO_SAVE_PROJECT_PATH);
+            log('Auto-save projekt byl smazán', 'success');
+            res.json({ success: true, message: 'Auto-save projekt byl smazán' });
+        } else {
+            res.json({ success: true, message: 'Žádný auto-save projekt nebyl nalezen' });
+        }
+    } catch (error) {
+        log(`API: Error deleting auto-save project: ${error.message}`, 'error');
+        res.status(500).json({ 
+            error: 'Chyba při mazání auto-save projektu', 
             details: error.message 
         });
     }
