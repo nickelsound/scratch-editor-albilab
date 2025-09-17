@@ -52,6 +52,11 @@ const AutoSaveIndicator = function (props) {
         }
     };
 
+    const handleForceSave = () => {
+        // Vyvolej event pro vynucení uložení
+        window.dispatchEvent(new CustomEvent('forceAutoSave'));
+    };
+
     const getStatusIcon = () => {
         if (isSaving) {
             return '⏳';
@@ -94,9 +99,19 @@ const AutoSaveIndicator = function (props) {
             <span className={styles.autoSaveIcon}>
                 {getStatusIcon()}
             </span>
-            <span className={styles.autoSaveText}>
-                {getStatusMessage()}
-            </span>
+            {lastSaveTime && !isSaving && !saveError ? (
+                <button
+                    className={styles.autoSaveTimeButton}
+                    onClick={handleForceSave}
+                    title="Klikněte pro okamžité uložení"
+                >
+                    {getStatusMessage()}
+                </button>
+            ) : (
+                <span className={styles.autoSaveText}>
+                    {getStatusMessage()}
+                </span>
+            )}
         </div>
     );
 };

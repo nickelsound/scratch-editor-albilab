@@ -18,6 +18,9 @@ class AutoSaveIndicator extends React.Component {
 
         // Spusť auto-save (asynchronně pro načtení existujícího projektu)
         await autoSaveService.start();
+
+        // Přidej event listener pro vynucení uložení
+        window.addEventListener('forceAutoSave', this.handleForceSave);
     }
 
     componentDidUpdate (prevProps) {
@@ -39,7 +42,15 @@ class AutoSaveIndicator extends React.Component {
     componentWillUnmount () {
         // Zastav auto-save službu
         autoSaveService.stop();
+        
+        // Odstraň event listener
+        window.removeEventListener('forceAutoSave', this.handleForceSave);
     }
+
+    handleForceSave = () => {
+        // Vynutí okamžité uložení
+        autoSaveService.forceSave();
+    };
 
     handleSaveStatusChange = (statusInfo) => {
         // Aktualizuj Redux state
