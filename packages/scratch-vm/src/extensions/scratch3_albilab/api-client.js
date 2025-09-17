@@ -31,14 +31,15 @@ class AlbiLABAPIClient {
         const fullUrl = url.toString();
         const startTime = Date.now();
         
-        // Log request details
-        console.log(`[AlbiLAB API] Making request to: ${fullUrl}`);
-        console.log(`[AlbiLAB API] Request params:`, JSON.stringify(params, null, 2));
-        console.log(`[AlbiLAB API] Timeout: ${this.timeout}ms`);
+        // Log request details with timestamp
+        const timestamp = new Date().toISOString();
+        console.log(`[${timestamp}] [AlbiLAB API] Making request to: ${fullUrl}`);
+        console.log(`[${timestamp}] [AlbiLAB API] Request params:`, JSON.stringify(params, null, 2));
+        console.log(`[${timestamp}] [AlbiLAB API] Timeout: ${this.timeout}ms`);
 
         const controller = new AbortController();
         const timeoutId = setTimeout(() => {
-            console.log(`[AlbiLAB API] Request timeout after ${this.timeout}ms for: ${fullUrl}`);
+            console.log(`[${new Date().toISOString()}] [AlbiLAB API] Request timeout after ${this.timeout}ms for: ${fullUrl}`);
             controller.abort();
         }, this.timeout);
 
@@ -56,25 +57,25 @@ class AlbiLABAPIClient {
             const duration = Date.now() - startTime;
 
             // Log response details
-            console.log(`[AlbiLAB API] Response received in ${duration}ms`);
-            console.log(`[AlbiLAB API] Status: ${response.status} ${response.statusText}`);
-            console.log(`[AlbiLAB API] Response headers:`, Object.fromEntries(response.headers.entries()));
+            console.log(`[${new Date().toISOString()}] [AlbiLAB API] Response received in ${duration}ms`);
+            console.log(`[${new Date().toISOString()}] [AlbiLAB API] Status: ${response.status} ${response.statusText}`);
+            console.log(`[${new Date().toISOString()}] [AlbiLAB API] Response headers:`, Object.fromEntries(response.headers.entries()));
 
             if (!response.ok) {
                 const errorText = await response.text();
-                console.error(`[AlbiLAB API] Error response body:`, errorText);
+                console.error(`[${new Date().toISOString()}] [AlbiLAB API] Error response body:`, errorText);
                 throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
 
             const data = await response.json();
-            console.log(`[AlbiLAB API] Response data:`, JSON.stringify(data, null, 2));
+            console.log(`[${new Date().toISOString()}] [AlbiLAB API] Response data:`, JSON.stringify(data, null, 2));
             return data;
         } catch (error) {
             clearTimeout(timeoutId);
             const duration = Date.now() - startTime;
             
-            console.error(`[AlbiLAB API] Request failed after ${duration}ms for: ${fullUrl}`);
-            console.error(`[AlbiLAB API] Error details:`, {
+            console.error(`[${new Date().toISOString()}] [AlbiLAB API] Request failed after ${duration}ms for: ${fullUrl}`);
+            console.error(`[${new Date().toISOString()}] [AlbiLAB API] Error details:`, {
                 name: error.name,
                 message: error.message,
                 stack: error.stack
@@ -111,7 +112,7 @@ class AlbiLABAPIClient {
             
             return data;
         } catch (error) {
-            console.warn('Failed to get device info:', error.message);
+            console.warn(`[${new Date().toISOString()}] [AlbiLAB API] Failed to get device info:`, error.message);
             // Return fallback data if device is not available
             return this.getFallbackDeviceInfo();
         }
@@ -124,22 +125,22 @@ class AlbiLABAPIClient {
      * @returns {Promise<object>} Response
      */
     async controlPump(action, duration = null) {
-        console.log(`[AlbiLAB API] Control pump called with action: ${action}, duration: ${duration}`);
+        console.log(`[${new Date().toISOString()}] [AlbiLAB API] Control pump called with action: ${action}, duration: ${duration}`);
         
         const params = { action };
         
         if (action === 'timed' && duration) {
             params.duration = Math.min(Math.max(duration, 1), 300); // Limit 1-300 seconds
-            console.log(`[AlbiLAB API] Pump timed action with duration: ${params.duration}s`);
+            console.log(`[${new Date().toISOString()}] [AlbiLAB API] Pump timed action with duration: ${params.duration}s`);
         }
 
         try {
             const response = await this.makeRequest(AlbiLABConfig.endpoints.pump, params);
-            console.log(`[AlbiLAB API] Pump control successful:`, response);
+            console.log(`[${new Date().toISOString()}] [AlbiLAB API] Pump control successful:`, response);
             this.clearCache(); // Clear cache after state change
             return response;
         } catch (error) {
-            console.error(`[AlbiLAB API] Pump control failed:`, error.message);
+            console.error(`[${new Date().toISOString()}] [AlbiLAB API] Pump control failed:`, error.message);
             throw error;
         }
     }
@@ -162,7 +163,7 @@ class AlbiLABAPIClient {
             this.clearCache(); // Clear cache after state change
             return response;
         } catch (error) {
-            console.error('Fan control failed:', error.message);
+            console.error(`[${new Date().toISOString()}] [AlbiLAB API] Fan control failed:`, error.message);
             throw error;
         }
     }
@@ -187,7 +188,7 @@ class AlbiLABAPIClient {
             this.clearCache(); // Clear cache after state change
             return response;
         } catch (error) {
-            console.error('Lights control failed:', error.message);
+            console.error(`[${new Date().toISOString()}] [AlbiLAB API] Lights control failed:`, error.message);
             throw error;
         }
     }

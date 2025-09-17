@@ -257,9 +257,9 @@ class Scratch3AlbiLABBlocks {
         try {
             await this.apiClient.controlLights('on');
             this.deviceState.lights.on = true;
-            console.log('AlbiLAB: Lights turned ON');
+            console.log(`[${new Date().toISOString()}] AlbiLAB: Lights turned ON`);
         } catch (error) {
-            console.error('AlbiLAB: Failed to turn on lights:', error.message);
+            console.error(`[${new Date().toISOString()}] AlbiLAB: Failed to turn on lights:`, error.message);
             // Fallback to local state
             this.deviceState.lights.on = true;
         }
@@ -269,9 +269,9 @@ class Scratch3AlbiLABBlocks {
         try {
             await this.apiClient.controlLights('off');
             this.deviceState.lights.on = false;
-            console.log('AlbiLAB: Lights turned OFF');
+            console.log(`[${new Date().toISOString()}] AlbiLAB: Lights turned OFF`);
         } catch (error) {
-            console.error('AlbiLAB: Failed to turn off lights:', error.message);
+            console.error(`[${new Date().toISOString()}] AlbiLAB: Failed to turn off lights:`, error.message);
             // Fallback to local state
             this.deviceState.lights.on = false;
         }
@@ -289,9 +289,9 @@ class Scratch3AlbiLABBlocks {
             
             this.deviceState.lights.on = true;
             this.deviceState.lights.color = `R:${red}% B:${blue}% W:${white}%`;
-            console.log(`AlbiLAB: Lights set to Red:${red}% Blue:${blue}% White:${white}%`);
+            console.log(`[${new Date().toISOString()}] AlbiLAB: Lights set to Red:${red}% Blue:${blue}% White:${white}%`);
         } catch (error) {
-            console.error('AlbiLAB: Failed to set custom light colors:', error.message);
+            console.error(`[${new Date().toISOString()}] AlbiLAB: Failed to set custom light colors:`, error.message);
             // Fallback to local state
             this.deviceState.lights.on = true;
             const red = Math.max(0, Math.min(100, args.RED || 0));
@@ -306,9 +306,9 @@ class Scratch3AlbiLABBlocks {
         try {
             await this.apiClient.controlPump('start');
             this.deviceState.pump.on = true;
-            console.log('AlbiLAB: Pump turned ON');
+            console.log(`[${new Date().toISOString()}] AlbiLAB: Pump turned ON`);
         } catch (error) {
-            console.error('AlbiLAB: Failed to turn on pump:', error.message);
+            console.error(`[${new Date().toISOString()}] AlbiLAB: Failed to turn on pump:`, error.message);
             // Fallback to local state
             this.deviceState.pump.on = true;
         }
@@ -322,9 +322,9 @@ class Scratch3AlbiLABBlocks {
                 clearTimeout(this.deviceState.pump.timer);
                 this.deviceState.pump.timer = null;
             }
-            console.log('AlbiLAB: Pump turned OFF');
+            console.log(`[${new Date().toISOString()}] AlbiLAB: Pump turned OFF`);
         } catch (error) {
-            console.error('AlbiLAB: Failed to turn off pump:', error.message);
+            console.error(`[${new Date().toISOString()}] AlbiLAB: Failed to turn off pump:`, error.message);
             // Fallback to local state
             this.deviceState.pump.on = false;
             if (this.deviceState.pump.timer) {
@@ -340,22 +340,22 @@ class Scratch3AlbiLABBlocks {
         try {
             await this.apiClient.controlPump('timed', seconds);
             this.deviceState.pump.on = true;
-            console.log(`AlbiLAB: Pump turned ON for ${seconds} seconds`);
+            console.log(`[${new Date().toISOString()}] AlbiLAB: Pump turned ON for ${seconds} seconds`);
 
             // Set local timer as backup
             this.deviceState.pump.timer = setTimeout(() => {
                 this.deviceState.pump.on = false;
                 this.deviceState.pump.timer = null;
-                console.log('AlbiLAB: Pump automatically turned OFF');
+                console.log(`[${new Date().toISOString()}] AlbiLAB: Pump automatically turned OFF`);
             }, seconds * 1000);
         } catch (error) {
-            console.error('AlbiLAB: Failed to turn on pump for timed duration:', error.message);
+            console.error(`[${new Date().toISOString()}] AlbiLAB: Failed to turn on pump for timed duration:`, error.message);
             // Fallback to local timer
             this.deviceState.pump.on = true;
             this.deviceState.pump.timer = setTimeout(() => {
                 this.deviceState.pump.on = false;
                 this.deviceState.pump.timer = null;
-                console.log('AlbiLAB: Pump automatically turned OFF');
+                console.log(`[${new Date().toISOString()}] AlbiLAB: Pump automatically turned OFF`);
             }, seconds * 1000);
         }
     }
@@ -372,19 +372,19 @@ class Scratch3AlbiLABBlocks {
                 try {
                     await this.apiClient.controlPump('start');
                     this.deviceState.pump.on = true;
-                    console.log('AlbiLAB: Pump automatically turned ON');
+                    console.log(`[${new Date().toISOString()}] AlbiLAB: Pump automatically turned ON`);
                 } catch (error) {
-                    console.error('AlbiLAB: Failed to automatically turn on pump:', error.message);
+                    console.error(`[${new Date().toISOString()}] AlbiLAB: Failed to automatically turn on pump:`, error.message);
                     this.deviceState.pump.on = true;
                 }
             }, seconds * 1000);
         } catch (error) {
-            console.error('AlbiLAB: Failed to turn off pump for timed duration:', error.message);
+            console.error(`[${new Date().toISOString()}] AlbiLAB: Failed to turn off pump for timed duration:`, error.message);
             // Fallback to local timer
             this.deviceState.pump.on = false;
             setTimeout(() => {
                 this.deviceState.pump.on = true;
-                console.log('AlbiLAB: Pump automatically turned ON');
+                console.log(`[${new Date().toISOString()}] AlbiLAB: Pump automatically turned ON`);
             }, seconds * 1000);
         }
     }
@@ -394,9 +394,9 @@ class Scratch3AlbiLABBlocks {
         try {
             await this.apiClient.controlFan('start');
             this.deviceState.fan.on = true;
-            console.log('AlbiLAB: Fan turned ON');
+            console.log(`[${new Date().toISOString()}] AlbiLAB: Fan turned ON`);
         } catch (error) {
-            console.error('AlbiLAB: Failed to turn on fan:', error.message);
+            console.error(`[${new Date().toISOString()}] AlbiLAB: Failed to turn on fan:`, error.message);
             // Fallback to local state
             this.deviceState.fan.on = true;
         }
@@ -410,9 +410,9 @@ class Scratch3AlbiLABBlocks {
                 clearTimeout(this.deviceState.fan.timer);
                 this.deviceState.fan.timer = null;
             }
-            console.log('AlbiLAB: Fan turned OFF');
+            console.log(`[${new Date().toISOString()}] AlbiLAB: Fan turned OFF`);
         } catch (error) {
-            console.error('AlbiLAB: Failed to turn off fan:', error.message);
+            console.error(`[${new Date().toISOString()}] AlbiLAB: Failed to turn off fan:`, error.message);
             // Fallback to local state
             this.deviceState.fan.on = false;
             if (this.deviceState.fan.timer) {
@@ -428,22 +428,22 @@ class Scratch3AlbiLABBlocks {
         try {
             await this.apiClient.controlFan('timed', seconds);
             this.deviceState.fan.on = true;
-            console.log(`AlbiLAB: Fan turned ON for ${seconds} seconds`);
+            console.log(`[${new Date().toISOString()}] AlbiLAB: Fan turned ON for ${seconds} seconds`);
 
             // Set local timer as backup
             this.deviceState.fan.timer = setTimeout(() => {
                 this.deviceState.fan.on = false;
                 this.deviceState.fan.timer = null;
-                console.log('AlbiLAB: Fan automatically turned OFF');
+                console.log(`[${new Date().toISOString()}] AlbiLAB: Fan automatically turned OFF`);
             }, seconds * 1000);
         } catch (error) {
-            console.error('AlbiLAB: Failed to turn on fan for timed duration:', error.message);
+            console.error(`[${new Date().toISOString()}] AlbiLAB: Failed to turn on fan for timed duration:`, error.message);
             // Fallback to local timer
             this.deviceState.fan.on = true;
             this.deviceState.fan.timer = setTimeout(() => {
                 this.deviceState.fan.on = false;
                 this.deviceState.fan.timer = null;
-                console.log('AlbiLAB: Fan automatically turned OFF');
+                console.log(`[${new Date().toISOString()}] AlbiLAB: Fan automatically turned OFF`);
             }, seconds * 1000);
         }
     }
@@ -455,7 +455,7 @@ class Scratch3AlbiLABBlocks {
             this.deviceState.sensors.temperature = sensorData.temperature;
             return this.deviceState.sensors.temperature;
         } catch (error) {
-            console.error('AlbiLAB: Failed to get temperature:', error.message);
+            console.error(`[${new Date().toISOString()}] AlbiLAB: Failed to get temperature:`, error.message);
             // Fallback to simulated data
             const baseTemp = 22.5;
             const variation = (Math.random() - 0.5) * 2; // ±1°C variation
@@ -470,7 +470,7 @@ class Scratch3AlbiLABBlocks {
             this.deviceState.sensors.humidity = sensorData.humidity;
             return this.deviceState.sensors.humidity;
         } catch (error) {
-            console.error('AlbiLAB: Failed to get humidity:', error.message);
+            console.error(`[${new Date().toISOString()}] AlbiLAB: Failed to get humidity:`, error.message);
             // Fallback to simulated data
             const baseHumidity = 65.0;
             const variation = (Math.random() - 0.5) * 10; // ±5% variation
@@ -485,7 +485,7 @@ class Scratch3AlbiLABBlocks {
             this.deviceState.sensors.soilMoisture = sensorData.soilMoisture;
             return this.deviceState.sensors.soilMoisture;
         } catch (error) {
-            console.error('AlbiLAB: Failed to get soil moisture:', error.message);
+            console.error(`[${new Date().toISOString()}] AlbiLAB: Failed to get soil moisture:`, error.message);
             // Fallback to simulated data
             const baseMoisture = 45.0;
             const variation = (Math.random() - 0.5) * 20; // ±10% variation
@@ -500,7 +500,7 @@ class Scratch3AlbiLABBlocks {
             this.deviceState.sensors.waterLevel = sensorData.waterLevel;
             return this.deviceState.sensors.waterLevel;
         } catch (error) {
-            console.error('AlbiLAB: Failed to get water level:', error.message);
+            console.error(`[${new Date().toISOString()}] AlbiLAB: Failed to get water level:`, error.message);
             // Fallback to simulated data
             this.deviceState.sensors.waterLevel = Math.random() > 0.1; // 90% chance of water present
             return this.deviceState.sensors.waterLevel;
@@ -516,9 +516,9 @@ class Scratch3AlbiLABBlocks {
         
         if (ipRegex.test(ipAddress)) {
             this.apiClient.updateBaseURL(ipAddress);
-            console.log(`AlbiLAB: Device IP address set to ${ipAddress}`);
+            console.log(`[${new Date().toISOString()}] AlbiLAB: Device IP address set to ${ipAddress}`);
         } else {
-            console.error(`AlbiLAB: Invalid IP address format: ${ipAddress}`);
+            console.error(`[${new Date().toISOString()}] AlbiLAB: Invalid IP address format: ${ipAddress}`);
         }
     }
 }
