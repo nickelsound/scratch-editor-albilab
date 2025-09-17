@@ -41,11 +41,9 @@ services:
       - ALBILAB_API_URL=http://10.0.0.108
     volumes:
       - ./packages/scratch-backend/src:/app/src
-      - scratch-uploads:/app/uploads
+      - ./uploads:/app/uploads
     network_mode: "host"
     restart: unless-stopped
 volumes:
   node_modules:
-    driver: local
-  scratch-uploads:
     driver: local
