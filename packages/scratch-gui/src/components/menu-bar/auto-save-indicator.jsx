@@ -64,6 +64,11 @@ const AutoSaveIndicator = function (props) {
         }
     };
 
+    const handleManageClick = () => {
+        // Vyvolej event pro otevření manageru
+        window.dispatchEvent(new CustomEvent('openAutoSaveManager'));
+    };
+
     const formatLastSaveTime = (time) => {
         if (!time) return '';
         
@@ -104,6 +109,15 @@ const AutoSaveIndicator = function (props) {
             <span className={styles.autoSaveText}>
                 {getStatusMessage()}
             </span>
+            {lastSaveTime && (
+                <button
+                    className={styles.autoSaveManageButton}
+                    onClick={handleManageClick}
+                    title="Spravovat automaticky uložené projekty"
+                >
+                    📁
+                </button>
+            )}
         </div>
     );
 };
