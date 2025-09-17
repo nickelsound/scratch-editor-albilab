@@ -370,7 +370,7 @@
     justify-content: space-between;
     align-items: center;
     padding: 1rem 1.5rem;
-    border-bottom: 1px solid $ui-border;
+    border-bottom: 1px solid $motion-primary;
 }
 
 .autoSaveManagerHeader h3 {
@@ -385,7 +385,7 @@
     border: none;
     font-size: 1.5rem;
     cursor: pointer;
-    color: $text-secondary;
+    color: $ui-black-transparent;
     padding: 0;
     width: 2rem;
     height: 2rem;
@@ -410,7 +410,7 @@
 .autoSaveManagerEmpty {
     text-align: center;
     padding: 2rem;
-    color: $text-secondary;
+    color: $ui-black-transparent;
     font-style: italic;
 }
 
@@ -425,14 +425,14 @@
     justify-content: space-between;
     align-items: center;
     padding: 1rem;
-    border: 1px solid $ui-border;
+    border: 1px solid $motion-primary;
     border-radius: 6px;
     background-color: $ui-tertiary;
     transition: background-color 0.2s ease;
 }
 
 .autoSaveManagerItem:hover {
-    background-color: $ui-tertiary-hover;
+    background-color: $ui-tertiary;
 }
 
 .autoSaveManagerItemInfo {
@@ -448,7 +448,7 @@
 
 .autoSaveManagerItemTime {
     font-size: 0.875rem;
-    color: $text-secondary;
+    color: $ui-black-transparent;
 }
 
 .autoSaveManagerItemActions {
@@ -458,7 +458,7 @@
 
 .autoSaveManagerButton {
     padding: 0.5rem 1rem;
-    border: 1px solid $ui-border;
+    border: 1px solid $motion-primary;
     border-radius: 4px;
     background-color: $ui-white;
     color: $text-primary;
@@ -470,7 +470,7 @@
 
 .autoSaveManagerButton:hover {
     background-color: $ui-tertiary;
-    border-color: $ui-tertiary-hover;
+    border-color: $ui-tertiary;
 }
 
 .autoSaveManagerButtonDanger {
@@ -485,7 +485,7 @@
 
 .autoSaveManagerFooter {
     padding: 1rem 1.5rem;
-    border-top: 1px solid $ui-border;
+    border-top: 1px solid $motion-primary;
     display: flex;
     justify-content: flex-end;
 }
