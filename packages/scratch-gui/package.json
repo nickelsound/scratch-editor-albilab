@@ -109,7 +109,7 @@
     "react-virtualized": "9.22.6",
     "react-visibility-sensor": "5.1.1",
     "redux-throttle": "0.1.1",
-    "scratch-audio": "2.0.232",
+    "scratch-audio": "2.0.234",
     "scratch-blocks": "1.1.217",
     "scratch-l10n": "6.0.43",
     "scratch-paint": "3.0.339",
