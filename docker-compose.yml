@@ -1,7 +1,7 @@
 version: '3.8'
 
 services:
-  # Scratch GUI aplikace
+  # Scratch GUI aplikace - produkční režim
   scratch-gui:
     build:
       context: .
@@ -11,15 +11,10 @@ services:
     ports:
       - "8601:8601"
     environment:
-      - NODE_ENV=development
+      - NODE_ENV=production
       - PORT=8601
       - ALBILAB_API_URL=http://10.0.0.108
-    volumes:
-      # Pro development - hot reload (pouze src adresáře)
-      - ./packages/scratch-gui/src:/app/packages/scratch-gui/src:ro
-      - ./packages/scratch-vm/src:/app/packages/scratch-vm/src:ro
-      - ./packages/scratch-render/src:/app/packages/scratch-render/src:ro
-      - ./packages/scratch-svg-renderer/src:/app/packages/scratch-svg-renderer/src:ro
+    # Odstraněny development volumes pro produkční režim
     network_mode: "host"
     restart: unless-stopped
     # depends_on:

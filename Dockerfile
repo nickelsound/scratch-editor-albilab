@@ -35,15 +35,19 @@ RUN npm run build --workspace=packages/scratch-render
 # Poté scratch-vm (závisí na výše uvedených balíčcích)
 RUN npm run build --workspace=packages/scratch-vm
 
-# Pro development nepotřebujeme build scratch-gui - webpack dev server sestaví vše za běhu
-# RUN npm run build --workspace=packages/scratch-gui
+# Pro produkční režim sestavíme scratch-gui
+RUN npm run build --workspace=packages/scratch-gui
 
-# Exponujeme port 8601 (výchozí port pro webpack dev server)
+# Exponujeme port 8601
 EXPOSE 8601
 
-# Nastavíme environment proměnné
-ENV NODE_ENV=development
+# Nastavíme environment proměnné pro produkční režim
+ENV NODE_ENV=production
 ENV PORT=8601
 
-# Spustíme aplikaci
-CMD ["npm", "start", "--workspace=packages/scratch-gui"]
+# Pro produkční režim použijeme statický server místo webpack dev server
+# Nainstalujeme serve pro statické soubory
+RUN npm install -g serve
+
+# Spustíme statický server pro produkční build
+CMD ["serve", "-s", "packages/scratch-gui/build", "-l", "8601"]
