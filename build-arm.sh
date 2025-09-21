@@ -25,15 +25,21 @@ ulimit -n 65536
 ulimit -Hn 65536
 echo "✅ Limity nastaveny: $(ulimit -n)"
 
+# Vyčistíme npm cache
+echo "🧹 Čistím npm cache..."
+npm cache clean --force 2>/dev/null || true
+rm -rf ~/.npm/_cacache 2>/dev/null || true
+echo "✅ Npm cache vyčištěna"
+
 echo ""
 
 # Build GUI image (nativní ARM64)
 echo "🔨 Sestavuji GUI image (může trvat 30-60 minut)..."
-podman build -f Dockerfile -t scratch-gui .
+podman build --platform linux/arm64 -f Dockerfile -t scratch-gui .
 
 # Build Backend image (nativní ARM64)
 echo "🔨 Sestavuji Backend image (může trvat 20-40 minut)..."
-podman build -f Dockerfile.backend -t scratch-backend .
+podman build --platform linux/arm64 -f Dockerfile.backend -t scratch-backend .
 
 echo ""
 echo "✅ ARM64 images byly úspěšně sestaveny!"
