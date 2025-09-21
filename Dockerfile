@@ -23,8 +23,10 @@ RUN if [ "$TARGETPLATFORM" = "linux/arm64" ]; then \
         npm config set fetch-retry-maxtimeout 120000 && \
         npm config set fetch-retries 3 && \
         npm config set fetch-retry-factor 2 && \
-        npm cache clean --force && \
-        npm install --ignore-scripts --no-audit --no-fund --maxsockets 1 --prefer-offline; \
+        npm config set cache false && \
+        npm config set prefer-offline true && \
+        rm -rf ~/.npm && \
+        npm install --ignore-scripts --no-audit --no-fund --no-cache --maxsockets 1; \
     else \
         npm install --ignore-scripts; \
     fi
