@@ -1,61 +1,70 @@
 #!/bin/bash
 
-# Script pro cross-compilation ARM build na x86_64 systému
-# Spustit na výkonnějším systému (x86_64) - build pro Raspberry Pi
+# ARM64 build script pro Raspberry Pi
+# Spustit přímo na Raspberry Pi
 
 set -e
 
-echo "🚀 Cross-compilation ARM build pro Raspberry Pi"
-echo "💻 Build na: $(uname -m) systému"
-echo "🎯 Target: ARM64 (Raspberry Pi 3 64bit)"
+echo "🚀 ARM64 Build pro Raspberry Pi"
+echo "💻 Architektura: $(uname -m)"
+echo "🎯 Target: linux/arm64"
 echo ""
 
-# Zkontrolujeme, jestli máme buildx
-echo "🔧 Kontroluji buildx podporu..."
-if ! podman buildx version >/dev/null 2>&1; then
-    echo "❌ buildx není dostupný"
-    echo "💡 Nainstalujte buildx nebo použijte Docker místo Podman"
+# Kontrola Podman
+echo "🔧 Kontroluji Podman..."
+if ! podman version >/dev/null 2>&1; then
+    echo "❌ Podman není dostupný"
     exit 1
 fi
+echo "✅ Podman je dostupný"
 
-echo "✅ buildx je dostupný"
-echo ""
+# Nastavení limitů pro ARM build
+echo "🔧 Nastavuji limity pro ARM build..."
+ulimit -n 65536
+ulimit -Hn 65536
+echo "✅ Limity nastaveny: $(ulimit -n)"
 
-# Build GUI image pro ARM64 (Raspberry Pi)
-echo "🔨 Sestavuji GUI image pro ARM64 (může trvat 10-20 minut)..."
-podman buildx build --platform linux/arm64 \
-    -f Dockerfile \
-    -t scratch-gui \
-    --load .
-
-# Build Backend image pro ARM64 (Raspberry Pi)
-echo "🔨 Sestavuji Backend image pro ARM64 (může trvat 10-20 minut)..."
-podman buildx build --platform linux/arm64 \
-    -f Dockerfile.backend \
-    -t scratch-backend \
-    --load .
+# Vyčištění cache
+echo "🧹 Čistím npm cache..."
+npm cache clean --force 2>/dev/null || true
+rm -rf ~/.npm/_cacache 2>/dev/null || true
+echo "✅ Cache vyčištěna"
 
 echo ""
-echo "✅ ARM64 images byly úspěšně sestaveny!"
+
+# Build GUI image (ARM64) přímo do tar archivu
+echo "🔨 Sestavuji GUI image pro ARM64..."
+podman build --platform linux/arm64 \
+    --ulimit nofile=65536:65536 \
+    -f Dockerfile.arm \
+    -t scratch-gui-temp .
+
+echo "📦 Ukládám GUI image do tar archivu..."
+podman save -o scratch-gui-arm64.tar scratch-gui-temp
+
+# Build Backend image (ARM64) přímo do tar archivu
+echo "🔨 Sestavuji Backend image pro ARM64..."
+podman build --platform linux/arm64 \
+    --ulimit nofile=65536:65536 \
+    -f Dockerfile.backend.arm \
+    -t scratch-backend-temp .
+
+echo "📦 Ukládám Backend image do tar archivu..."
+podman save -o scratch-backend-arm64.tar scratch-backend-temp
+
+# Vyčistíme dočasné images
+echo "🧹 Čistím dočasné images..."
+podman rmi scratch-gui-temp scratch-backend-temp 2>/dev/null || true
+
 echo ""
-
-# Uložíme images do tar archivů
-echo "💾 Ukládám images do tar archivů..."
-
-# Uložíme GUI image
-echo "📦 Ukládám GUI image..."
-podman save -o scratch-gui-arm64.tar scratch-gui
-
-# Uložíme Backend image
-echo "📦 Ukládám Backend image..."
-podman save -o scratch-backend-arm64.tar scratch-backend
+echo "✅ ARM64 tar archivy byly úspěšně vytvořeny!"
 
 echo ""
-echo "✅ Hotovo! Vytvořené tar soubory:"
+echo "✅ Hotovo! Vytvořené soubory:"
 echo "  - scratch-gui-arm64.tar"
 echo "  - scratch-backend-arm64.tar"
 echo ""
 echo "📊 Velikosti souborů:"
 ls -lh *.tar
 echo ""
-echo "🚀 Nyní můžete přenést tar soubory na Raspberry Pi"
+echo "🚀 Images jsou připraveny pro nasazení na Raspberry Pi"
