@@ -51,9 +51,9 @@ RUN npm run build --workspace=packages/scratch-render
 RUN npm run build --workspace=packages/scratch-vm
 
 # Pro produkční režim sestavíme scratch-gui
-# Zvýšíme heap limit pro RPi build
+# Zvýšíme heap limit pro RPi build - maximum co RPi snese
 RUN if [ "$TARGETPLATFORM" = "linux/arm64" ]; then \
-        NODE_OPTIONS="--max-old-space-size=2048" npm run build --workspace=packages/scratch-gui; \
+        NODE_OPTIONS="--max-old-space-size=3072" npm run build --workspace=packages/scratch-gui; \
     else \
         npm run build --workspace=packages/scratch-gui; \
     fi
