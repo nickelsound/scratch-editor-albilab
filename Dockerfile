@@ -2,6 +2,12 @@
 # Podporuje x86_64 (amd64) i ARM64 (arm64) pro Raspberry Pi
 FROM --platform=$BUILDPLATFORM docker.io/library/node:22-alpine
 
+# Pro ARM64 nastavíme systemové limity
+RUN if [ "$TARGETPLATFORM" = "linux/arm64" ]; then \
+        echo "* soft nofile 65536" >> /etc/security/limits.conf && \
+        echo "* hard nofile 65536" >> /etc/security/limits.conf; \
+    fi
+
 # Nastavíme pracovní adresář
 WORKDIR /app
 
@@ -23,10 +29,7 @@ RUN if [ "$TARGETPLATFORM" = "linux/arm64" ]; then \
         npm config set fetch-retry-maxtimeout 120000 && \
         npm config set fetch-retries 3 && \
         npm config set fetch-retry-factor 2 && \
-        npm config set cache false && \
-        npm config set prefer-offline true && \
-        rm -rf ~/.npm && \
-        npm install --ignore-scripts --no-audit --no-fund --no-cache --maxsockets 1; \
+        npm install --ignore-scripts --no-audit --no-fund --maxsockets 1; \
     else \
         npm install --ignore-scripts; \
     fi
