@@ -19,9 +19,11 @@ COPY scripts/ ./scripts/
 # Nainstalujeme závislosti - použijeme npm install místo npm ci pro flexibilitu
 # Podmíněné optimalizace pro RPi (pouze pokud je TARGETPLATFORM arm64):
 RUN if [ "$TARGETPLATFORM" = "linux/arm64" ]; then \
+        ulimit -n 65536 && \
         npm config set maxsockets 1 && \
         npm config set fetch-retry-mintimeout 20000 && \
         npm config set fetch-retry-maxtimeout 120000 && \
+        npm cache clean --force && \
         npm install --ignore-scripts --no-audit --no-fund; \
     else \
         npm install --ignore-scripts; \
@@ -30,6 +32,7 @@ RUN if [ "$TARGETPLATFORM" = "linux/arm64" ]; then \
 # Nainstalujeme závislosti pro backend workspace
 # Podmíněné optimalizace pro RPi (pouze pokud je TARGETPLATFORM arm64):
 RUN if [ "$TARGETPLATFORM" = "linux/arm64" ]; then \
+        ulimit -n 65536 && \
         npm install --workspace=packages/scratch-backend --ignore-scripts --no-audit --no-fund; \
     else \
         npm install --workspace=packages/scratch-backend --ignore-scripts; \
