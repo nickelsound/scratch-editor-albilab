@@ -24,12 +24,10 @@ COPY packages/scratch-gui/scripts ./packages/scratch-gui/scripts/
 # Nainstalujeme závislosti v root (monorepo)
 # Podmíněné optimalizace pro RPi (pouze pokud je TARGETPLATFORM arm64):
 RUN if [ "$TARGETPLATFORM" = "linux/arm64" ]; then \
-        npm config set maxsockets 1 && \
-        npm config set fetch-retry-mintimeout 20000 && \
-        npm config set fetch-retry-maxtimeout 120000 && \
-        npm config set fetch-retries 3 && \
-        npm config set fetch-retry-factor 2 && \
-        npm install --ignore-scripts --no-audit --no-fund --maxsockets 1; \
+        npm install -g yarn && \
+        yarn config set network-timeout 300000 && \
+        yarn config set network-concurrency 1 && \
+        yarn install --ignore-scripts --no-audit --no-fund; \
     else \
         npm install --ignore-scripts; \
     fi

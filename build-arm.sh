@@ -35,11 +35,11 @@ echo ""
 
 # Build GUI image (nativní ARM64)
 echo "🔨 Sestavuji GUI image (může trvat 30-60 minut)..."
-podman build --platform linux/arm64 -f Dockerfile -t scratch-gui .
+podman build --platform linux/arm64 --ulimit nofile=65536:65536 -f Dockerfile -t scratch-gui .
 
 # Build Backend image (nativní ARM64)
 echo "🔨 Sestavuji Backend image (může trvat 20-40 minut)..."
-podman build --platform linux/arm64 -f Dockerfile.backend -t scratch-backend .
+podman build --platform linux/arm64 --ulimit nofile=65536:65536 -f Dockerfile.backend -t scratch-backend .
 
 echo ""
 echo "✅ ARM64 images byly úspěšně sestaveny!"
