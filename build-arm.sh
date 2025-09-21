@@ -1,42 +1,49 @@
 #!/bin/bash
 
-# Script pro cross-compilation ARM build na x86_64 systému
-# Spustit na výkonnějším systému (x86_64) - build pro Raspberry Pi
+# Script pro build na Raspberry Pi s opravenými limity
+# Spustit přímo na Raspberry Pi
 
 set -e
 
-echo "🚀 Cross-compilation ARM build pro Raspberry Pi"
+echo "🚀 Build pro Raspberry Pi s opravenými limity"
 echo "💻 Build na: $(uname -m) systému"
 echo "🎯 Target: ARM64 (Raspberry Pi 3 64bit)"
 echo ""
 
-# Zkontrolujeme, jestli máme buildx
-echo "🔧 Kontroluji buildx podporu..."
-if ! podman buildx version >/dev/null 2>&1; then
-    echo "❌ buildx není dostupný"
-    echo "💡 Nainstalujte buildx nebo použijte Docker místo Podman"
+# Zkontrolujeme, jestli máme Podman
+echo "🔧 Kontroluji Podman..."
+if ! podman version >/dev/null 2>&1; then
+    echo "❌ Podman není dostupný"
     exit 1
 fi
 
-echo "✅ buildx je dostupný"
+echo "✅ Podman je dostupný"
+
+# Opravíme limity pro build
+echo "🔧 Opravuji limity otevřených souborů..."
+ulimit -n 65536
+ulimit -Hn 65536
+echo "✅ Limity nastaveny: $(ulimit -n)"
+
 echo ""
 
-# Build GUI image pro ARM64 (Raspberry Pi)
-echo "🔨 Sestavuji GUI image pro ARM64 (může trvat 10-20 minut)..."
-podman buildx build --platform linux/arm64 \
-    -f Dockerfile \
-    -t scratch-gui \
-    --load .
+# Build GUI image (nativní ARM64)
+echo "🔨 Sestavuji GUI image (může trvat 30-60 minut)..."
+podman build -f Dockerfile -t scratch-gui .
 
-# Build Backend image pro ARM64 (Raspberry Pi)
-echo "🔨 Sestavuji Backend image pro ARM64 (může trvat 10-20 minut)..."
-podman buildx build --platform linux/arm64 \
-    -f Dockerfile.backend \
-    -t scratch-backend \
-    --load .
+# Build Backend image (nativní ARM64)
+echo "🔨 Sestavuji Backend image (může trvat 20-40 minut)..."
+podman build -f Dockerfile.backend -t scratch-backend .
 
 echo ""
 echo "✅ ARM64 images byly úspěšně sestaveny!"
+
+# Ověříme architekturu images
+echo "🔍 Ověřuji architekturu images..."
+echo "GUI image architektura:"
+podman inspect scratch-gui | grep -i arch
+echo "Backend image architektura:"
+podman inspect scratch-backend | grep -i arch
 echo ""
 
 # Uložíme images do tar archivů

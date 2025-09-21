@@ -16,12 +16,15 @@ COPY packages/scratch-svg-renderer/package*.json ./packages/scratch-svg-renderer
 COPY packages/scratch-gui/scripts ./packages/scratch-gui/scripts/
 
 # Nainstalujeme závislosti v root (monorepo)
-# Pro RPi optimalizace (zakomentováno pro rychlejší build na x86_64):
-# RUN npm config set maxsockets 1 && \
-#     npm config set fetch-retry-mintimeout 20000 && \
-#     npm config set fetch-retry-maxtimeout 120000 && \
-#     npm install --ignore-scripts --no-audit --no-fund
-RUN npm install --ignore-scripts
+# Podmíněné optimalizace pro RPi (pouze pokud je TARGETPLATFORM arm64):
+RUN if [ "$TARGETPLATFORM" = "linux/arm64" ]; then \
+        npm config set maxsockets 1 && \
+        npm config set fetch-retry-mintimeout 20000 && \
+        npm config set fetch-retry-maxtimeout 120000 && \
+        npm install --ignore-scripts --no-audit --no-fund; \
+    else \
+        npm install --ignore-scripts; \
+    fi
 
 # Zkopírujeme pouze potřebné zdrojové soubory pro GUI
 COPY packages/scratch-gui/ ./packages/scratch-gui/
