@@ -9,7 +9,7 @@ services:
       platforms:
         - linux/amd64
         - linux/arm64
-    image: scratch-editor-albilab_scratch-gui
+    image: scratch-gui
     container_name: scratch-gui-app
     ports:
       - "8601:8601"
@@ -30,7 +30,7 @@ services:
       platforms:
         - linux/amd64
         - linux/arm64
-    image: scratch-editor-albilab_scratch-backend
+    image: scratch-backend
     container_name: scratch-backend-app
     ports:
       - "3001:3001"

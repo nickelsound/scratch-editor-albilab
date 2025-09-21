@@ -38,8 +38,6 @@ chmod +x build-arm.sh
 # Přeneste tar soubory na Raspberry Pi a načtěte:
 podman load -i scratch-gui-arm64.tar
 podman load -i scratch-backend-arm64.tar
-podman tag scratch-editor-albilab_scratch-gui:arm64 scratch-editor-albilab_scratch-gui
-podman tag scratch-editor-albilab_scratch-backend:arm64 scratch-editor-albilab_scratch-backend
 podman-compose up -d
 ```
 

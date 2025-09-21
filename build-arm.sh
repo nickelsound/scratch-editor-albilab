@@ -25,14 +25,14 @@ echo ""
 echo "🔨 Sestavuji GUI image pro ARM64 (může trvat 10-20 minut)..."
 podman buildx build --platform linux/arm64 \
     -f Dockerfile \
-    -t scratch-editor-albilab_scratch-gui:arm64 \
+    -t scratch-gui \
     --load .
 
 # Build Backend image pro ARM64 (Raspberry Pi)
 echo "🔨 Sestavuji Backend image pro ARM64 (může trvat 10-20 minut)..."
 podman buildx build --platform linux/arm64 \
     -f Dockerfile.backend \
-    -t scratch-editor-albilab_scratch-backend:arm64 \
+    -t scratch-backend \
     --load .
 
 echo ""
@@ -44,11 +44,11 @@ echo "💾 Ukládám images do tar archivů..."
 
 # Uložíme GUI image
 echo "📦 Ukládám GUI image..."
-podman save -o scratch-gui-arm64.tar scratch-editor-albilab_scratch-gui:arm64
+podman save -o scratch-gui-arm64.tar scratch-gui
 
 # Uložíme Backend image
 echo "📦 Ukládám Backend image..."
-podman save -o scratch-backend-arm64.tar scratch-editor-albilab_scratch-backend:arm64
+podman save -o scratch-backend-arm64.tar scratch-backend
 
 echo ""
 echo "✅ Hotovo! Vytvořené tar soubory:"
