@@ -1,7 +1,7 @@
 version: '3.8'
 
 services:
-  # Scratch GUI aplikace - multi-platform build (x86_64 i ARM64)
+  # Scratch GUI aplikace
   scratch-gui:
     build:
       context: .
@@ -18,12 +18,11 @@ services:
       - PORT=8601
       - ALBILAB_API_URL=http://10.0.0.108
     # Odstraněny development volumes pro produkční režim
-    network_mode: "host"
     restart: unless-stopped
     # depends_on:
     #   - scratch-backend-app
 
-  # Backend server pro trvalý běh projektů - multi-platform build
+  # Backend server pro trvalý běh projektů
   scratch-backend-app:
     build:
       context: .
@@ -43,7 +42,6 @@ services:
     volumes:
       - ./packages/scratch-backend/src:/app/src
       - ./uploads:/app/uploads
-    network_mode: "host"
     restart: unless-stopped
 volumes:
   node_modules:
