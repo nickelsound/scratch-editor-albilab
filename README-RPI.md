@@ -29,6 +29,21 @@ source ~/.bashrc
 
 ## 📋 Použití
 
+### Možnost 1: Cross-compilation build (DOPORUČENO)
+```bash
+# Na výkonnějším systému (x86_64):
+chmod +x build-arm.sh
+./build-arm.sh
+
+# Přeneste tar soubory na Raspberry Pi a načtěte:
+podman load -i scratch-gui-arm64.tar
+podman load -i scratch-backend-arm64.tar
+podman tag scratch-editor-albilab_scratch-gui:arm64 scratch-editor-albilab_scratch-gui
+podman tag scratch-editor-albilab_scratch-backend:arm64 scratch-editor-albilab_scratch-backend
+podman-compose up -d
+```
+
+### Možnost 2: Přímý build na Raspberry Pi
 ```bash
 # Spuštění na Raspberry Pi
 podman-compose up --build

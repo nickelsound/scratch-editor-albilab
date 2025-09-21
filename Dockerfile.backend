@@ -16,14 +16,18 @@ COPY packages/scratch-svg-renderer/package*.json ./packages/scratch-svg-renderer
 COPY packages/ ./packages/
 COPY scripts/ ./scripts/
 
-# Nainstalujeme závislosti s optimalizací pro RPi
-RUN npm config set maxsockets 1 && \
-    npm config set fetch-retry-mintimeout 20000 && \
-    npm config set fetch-retry-maxtimeout 120000 && \
-    npm install --ignore-scripts --no-audit --no-fund
+# Nainstalujeme závislosti - použijeme npm install místo npm ci pro flexibilitu
+# Pro RPi optimalizace (zakomentováno pro rychlejší build na x86_64):
+# RUN npm config set maxsockets 1 && \
+#     npm config set fetch-retry-mintimeout 20000 && \
+#     npm config set fetch-retry-maxtimeout 120000 && \
+#     npm install --ignore-scripts --no-audit --no-fund
+RUN npm install --ignore-scripts
 
 # Nainstalujeme závislosti pro backend workspace
-RUN npm install --workspace=packages/scratch-backend --ignore-scripts --no-audit --no-fund
+# Pro RPi optimalizace (zakomentováno pro rychlejší build na x86_64):
+# RUN npm install --workspace=packages/scratch-backend --ignore-scripts --no-audit --no-fund
+RUN npm install --workspace=packages/scratch-backend --ignore-scripts
 
 # Sestavíme závislosti v správném pořadí
 RUN npm run build --workspace=packages/scratch-svg-renderer
