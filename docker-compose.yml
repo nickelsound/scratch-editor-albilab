@@ -1,11 +1,14 @@
 version: '3.8'
 
 services:
-  # Scratch GUI aplikace - produkční režim
+  # Scratch GUI aplikace - multi-platform build (x86_64 i ARM64)
   scratch-gui:
     build:
       context: .
       dockerfile: Dockerfile
+      platforms:
+        - linux/amd64
+        - linux/arm64
     image: scratch-editor-albilab_scratch-gui
     container_name: scratch-gui-app
     ports:
@@ -20,11 +23,14 @@ services:
     # depends_on:
     #   - scratch-backend-app
 
-  # Backend server pro trvalý běh projektů
+  # Backend server pro trvalý běh projektů - multi-platform build
   scratch-backend-app:
     build:
       context: .
       dockerfile: Dockerfile.backend
+      platforms:
+        - linux/amd64
+        - linux/arm64
     image: scratch-editor-albilab_scratch-backend
     container_name: scratch-backend-app
     ports:

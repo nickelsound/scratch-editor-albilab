@@ -1,5 +1,6 @@
-# Použijeme nejnovější Node.js LTS (22.x) s explicitní registry cestou pro Podman
-FROM docker.io/library/node:22-alpine
+# Multi-platform build - automaticky se rozhodne podle architektury
+# Podporuje x86_64 (amd64) i ARM64 (arm64) pro Raspberry Pi
+FROM --platform=$BUILDPLATFORM docker.io/library/node:22-alpine
 
 # Nastavíme pracovní adresář
 WORKDIR /app
