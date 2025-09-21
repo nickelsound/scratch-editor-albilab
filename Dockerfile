@@ -51,7 +51,12 @@ RUN npm run build --workspace=packages/scratch-render
 RUN npm run build --workspace=packages/scratch-vm
 
 # Pro produkční režim sestavíme scratch-gui
-RUN npm run build --workspace=packages/scratch-gui
+# Zvýšíme heap limit pro RPi build
+RUN if [ "$TARGETPLATFORM" = "linux/arm64" ]; then \
+        NODE_OPTIONS="--max-old-space-size=1024" npm run build --workspace=packages/scratch-gui; \
+    else \
+        npm run build --workspace=packages/scratch-gui; \
+    fi
 
 # Exponujeme port 8601
 EXPOSE 8601

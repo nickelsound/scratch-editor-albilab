@@ -42,9 +42,16 @@ RUN if [ "$TARGETPLATFORM" = "linux/arm64" ]; then \
     fi
 
 # Sestavíme závislosti v správném pořadí
-RUN npm run build --workspace=packages/scratch-svg-renderer
-RUN npm run build --workspace=packages/scratch-render
-RUN npm run build --workspace=packages/scratch-vm
+# Zvýšíme heap limit pro RPi build
+RUN if [ "$TARGETPLATFORM" = "linux/arm64" ]; then \
+        NODE_OPTIONS="--max-old-space-size=1024" npm run build --workspace=packages/scratch-svg-renderer; \
+        NODE_OPTIONS="--max-old-space-size=1024" npm run build --workspace=packages/scratch-render; \
+        NODE_OPTIONS="--max-old-space-size=1024" npm run build --workspace=packages/scratch-vm; \
+    else \
+        npm run build --workspace=packages/scratch-svg-renderer; \
+        npm run build --workspace=packages/scratch-render; \
+        npm run build --workspace=packages/scratch-vm; \
+    fi
 
 # Vytvoříme uploads adresář
 RUN mkdir -p uploads
