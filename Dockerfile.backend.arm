@@ -16,8 +16,9 @@ COPY packages/scratch-render/package*.json ./packages/scratch-render/
 COPY packages/scratch-svg-renderer/package*.json ./packages/scratch-svg-renderer/
 
 # Nainstalujeme závislosti s ARM optimalizacemi
-RUN npm config set network-timeout 300000 && \
-    npm config set maxsockets 1 && \
+RUN npm config set fetch-timeout 300000 && \
+    npm config set fetch-retry-mintimeout 20000 && \
+    npm config set fetch-retry-maxtimeout 120000 && \
     npm install --ignore-scripts --no-audit --no-fund
 
 # Zkopírujeme zdrojové soubory
