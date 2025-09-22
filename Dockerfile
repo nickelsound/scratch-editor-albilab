@@ -22,15 +22,7 @@ COPY packages/scratch-svg-renderer/package*.json ./packages/scratch-svg-renderer
 COPY packages/scratch-gui/scripts ./packages/scratch-gui/scripts/
 
 # Nainstalujeme závislosti v root (monorepo)
-# Podmíněné optimalizace pro RPi (pouze pokud je TARGETPLATFORM arm64):
-RUN if [ "$TARGETPLATFORM" = "linux/arm64" ]; then \
-        npm install -g yarn && \
-        yarn config set network-timeout 300000 && \
-        yarn config set network-concurrency 1 && \
-        yarn install --ignore-scripts --no-audit --no-fund; \
-    else \
-        npm install --ignore-scripts; \
-    fi
+RUN npm install --ignore-scripts
 
 # Zkopírujeme pouze potřebné zdrojové soubory pro GUI
 COPY packages/scratch-gui/ ./packages/scratch-gui/
@@ -51,12 +43,7 @@ RUN npm run build --workspace=packages/scratch-render
 RUN npm run build --workspace=packages/scratch-vm
 
 # Pro produkční režim sestavíme scratch-gui
-# Zvýšíme heap limit pro RPi build - maximum co RPi snese
-RUN if [ "$TARGETPLATFORM" = "linux/arm64" ]; then \
-        NODE_OPTIONS="--max-old-space-size=3072" npm run build --workspace=packages/scratch-gui; \
-    else \
-        npm run build --workspace=packages/scratch-gui; \
-    fi
+RUN npm run build --workspace=packages/scratch-gui
 
 # Exponujeme port 8601
 EXPOSE 8601

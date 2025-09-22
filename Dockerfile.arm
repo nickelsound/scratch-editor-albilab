@@ -1,0 +1,47 @@
+# ARM64 specifický Dockerfile pro Scratch GUI (Raspberry Pi)
+FROM --platform=linux/arm64 node:22-alpine
+
+# Nastavíme systemové limity pro ARM64
+RUN echo "* soft nofile 65536" >> /etc/security/limits.conf && \
+    echo "* hard nofile 65536" >> /etc/security/limits.conf
+
+# Nastavíme pracovní adresář
+WORKDIR /app
+
+# Zkopírujeme package.json soubory pro lepší cache
+COPY package*.json ./
+COPY packages/scratch-gui/package*.json ./packages/scratch-gui/
+COPY packages/scratch-vm/package*.json ./packages/scratch-vm/
+COPY packages/scratch-render/package*.json ./packages/scratch-render/
+COPY packages/scratch-svg-renderer/package*.json ./packages/scratch-svg-renderer/
+
+# Nainstalujeme závislosti s ARM optimalizacemi
+RUN npm config set network-timeout 300000 && \
+    npm config set maxsockets 1 && \
+    npm install --ignore-scripts --no-audit --no-fund
+
+# Zkopírujeme zdrojové soubory
+COPY packages/ ./packages/
+COPY scripts/ ./scripts/
+
+# Spustíme prepare script
+RUN npm run prepare --workspace=packages/scratch-gui
+
+# Sestavíme balíčky v pořadí
+RUN npm run build --workspace=packages/scratch-svg-renderer
+RUN npm run build --workspace=packages/scratch-render
+RUN npm run build --workspace=packages/scratch-vm
+RUN npm run build --workspace=packages/scratch-gui
+
+# Nainstalujeme serve pro statické soubory
+RUN npm install -g serve
+
+# Exponujeme port
+EXPOSE 8601
+
+# Nastavíme environment proměnné
+ENV NODE_ENV=production
+ENV PORT=8601
+
+# Spustíme server
+CMD ["serve", "-s", "packages/scratch-gui/build", "-l", "8601"]

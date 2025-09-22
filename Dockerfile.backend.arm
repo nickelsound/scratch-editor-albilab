@@ -1,0 +1,43 @@
+# ARM64 specifický Dockerfile pro Scratch Backend (Raspberry Pi)
+FROM --platform=linux/arm64 node:22-alpine
+
+# Nastavíme systemové limity pro ARM64
+RUN echo "* soft nofile 65536" >> /etc/security/limits.conf && \
+    echo "* hard nofile 65536" >> /etc/security/limits.conf
+
+# Nastavíme pracovní adresář
+WORKDIR /app
+
+# Zkopírujeme package.json soubory pro lepší cache
+COPY package*.json ./
+COPY packages/scratch-backend/package*.json ./packages/scratch-backend/
+COPY packages/scratch-vm/package*.json ./packages/scratch-vm/
+COPY packages/scratch-render/package*.json ./packages/scratch-render/
+COPY packages/scratch-svg-renderer/package*.json ./packages/scratch-svg-renderer/
+
+# Nainstalujeme závislosti s ARM optimalizacemi
+RUN npm config set network-timeout 300000 && \
+    npm config set maxsockets 1 && \
+    npm install --ignore-scripts --no-audit --no-fund
+
+# Zkopírujeme zdrojové soubory
+COPY packages/ ./packages/
+COPY scripts/ ./scripts/
+
+# Sestavíme závislé balíčky
+RUN npm run build --workspace=packages/scratch-svg-renderer
+RUN npm run build --workspace=packages/scratch-render
+RUN npm run build --workspace=packages/scratch-vm
+
+# Vytvoříme uploads adresář
+RUN mkdir -p uploads
+
+# Exponujeme porty
+EXPOSE 3001 3002
+
+# Nastavíme environment proměnné
+ENV NODE_ENV=production
+ENV PORT=3001
+
+# Spustíme backend server
+CMD ["npm", "start", "--workspace=packages/scratch-backend"]

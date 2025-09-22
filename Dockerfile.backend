@@ -22,36 +22,14 @@ COPY packages/scratch-svg-renderer/package*.json ./packages/scratch-svg-renderer
 COPY packages/ ./packages/
 COPY scripts/ ./scripts/
 
-# Nainstalujeme závislosti - použijeme npm install místo npm ci pro flexibilitu
-# Podmíněné optimalizace pro RPi (pouze pokud je TARGETPLATFORM arm64):
-RUN if [ "$TARGETPLATFORM" = "linux/arm64" ]; then \
-        npm install -g yarn && \
-        yarn config set network-timeout 300000 && \
-        yarn config set network-concurrency 1 && \
-        yarn install --ignore-scripts --no-audit --no-fund; \
-    else \
-        npm install --ignore-scripts; \
-    fi
-
-# Nainstalujeme závislosti pro backend workspace
-# Podmíněné optimalizace pro RPi (pouze pokud je TARGETPLATFORM arm64):
-RUN if [ "$TARGETPLATFORM" = "linux/arm64" ]; then \
-        yarn install --ignore-scripts --no-audit --no-fund; \
-    else \
-        npm install --workspace=packages/scratch-backend --ignore-scripts; \
-    fi
+# Nainstalujeme závislosti
+RUN npm install --ignore-scripts
+RUN npm install --workspace=packages/scratch-backend --ignore-scripts
 
 # Sestavíme závislosti v správném pořadí
-# Zvýšíme heap limit pro RPi build - maximum co RPi snese
-RUN if [ "$TARGETPLATFORM" = "linux/arm64" ]; then \
-        NODE_OPTIONS="--max-old-space-size=3072" npm run build --workspace=packages/scratch-svg-renderer; \
-        NODE_OPTIONS="--max-old-space-size=3072" npm run build --workspace=packages/scratch-render; \
-        NODE_OPTIONS="--max-old-space-size=3072" npm run build --workspace=packages/scratch-vm; \
-    else \
-        npm run build --workspace=packages/scratch-svg-renderer; \
-        npm run build --workspace=packages/scratch-render; \
-        npm run build --workspace=packages/scratch-vm; \
-    fi
+RUN npm run build --workspace=packages/scratch-svg-renderer
+RUN npm run build --workspace=packages/scratch-render
+RUN npm run build --workspace=packages/scratch-vm
 
 # Vytvoříme uploads adresář
 RUN mkdir -p uploads
