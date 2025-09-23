@@ -21,6 +21,7 @@ export interface EditorStateParams {
     isPlayerOnly?: boolean;
     showTelemetryModal?: boolean;
     isEmbedded?: boolean;
+    locale?: string;
 }
 
 /**
@@ -40,10 +41,18 @@ export class EditorState {
         let enhancer;
 
         let initializedLocales = localesInitialState;
-        const locale = detectLocale(Object.keys(locales));
+
+        let locale = 'en';
+        if (params.locale && Object.keys(locales).includes(params.locale)) {
+            locale = params.locale;
+        } else {
+            locale = detectLocale(Object.keys(locales));
+        }
+
         if (locale !== 'en') {
             initializedLocales = initLocale(initializedLocales, locale);
         }
+
         if (params.localesOnly) {
             // Used for instantiating minimal state for the unsupported
             // browser modal
