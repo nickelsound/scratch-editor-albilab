@@ -43,8 +43,12 @@ export class EditorState {
         let initializedLocales = localesInitialState;
 
         let locale = 'en';
-        if (params.locale && Object.keys(locales).includes(params.locale)) {
-            locale = params.locale;
+        if (params.locale) {
+            if (Object.keys(locales).includes(params.locale)) {
+                locale = params.locale;
+            } else {
+                console.warn(`Unsupported locale ${params.locale}, falling back to en`);
+            }
         } else {
             locale = detectLocale(Object.keys(locales));
         }
