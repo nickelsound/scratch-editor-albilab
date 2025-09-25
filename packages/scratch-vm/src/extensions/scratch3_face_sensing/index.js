@@ -219,6 +219,13 @@ class Scratch3FaceSensingBlocks {
      */
     _loop () {
         setTimeout(this._loop.bind(this), Math.max(this.runtime.currentStepTime, Scratch3FaceSensingBlocks.INTERVAL));
+   
+        // Close the alert if the face detector is created and the video loading has either succeeded or failed.
+        // The alert will remain open until the permissions are set
+        if (!this._firstTime && this._videoLoadingCompleted) {
+            this.runtime.emit('EXTENSION_DATA_LOADING', false);
+            this._firstTime = true;
+        }
 
         const frame = this.runtime.ioDevices.video.getFrame({
             format: Video.FORMAT_IMAGE_DATA,
@@ -270,7 +277,10 @@ class Scratch3FaceSensingBlocks {
      */
     getInfo () {
         // Enable the video layer
-        this.runtime.ioDevices.video.enableVideo();
+        this.runtime.ioDevices.video.enableVideo()
+            .finally(() => {
+                this._videoLoadingCompleted = true;
+            });
 
         return {
             id: 'faceSensing',
