@@ -145,35 +145,3 @@ jobs:
         run: |
           git tag -f "${{github.event.release.tag_name}}" HEAD
           git push -f origin "refs/tags/${{github.event.release.tag_name}}"
-
-      - name: Deploy scratch-svg-renderer to GitHub Pages
-        uses: peaceiris/actions-gh-pages@4f9cc6602d3f66b9c108549d475ec49e8ef4d45e # v4
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./packages/scratch-svg-renderer/playground
-          destination_dir: scratch-svg-renderer
-          full_commit_message: "Build for ${{ github.sha }} ${{ github.event.head_commit.message }}"
-
-      - name: Deploy scratch-render to GitHub Pages
-        uses: peaceiris/actions-gh-pages@4f9cc6602d3f66b9c108549d475ec49e8ef4d45e # v4
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./packages/scratch-render/playground
-          destination_dir: scratch-render
-          full_commit_message: "Build for ${{ github.sha }} ${{ github.event.head_commit.message }}"
-
-      - name: Deploy scratch-vm to GitHub Pages
-        uses: peaceiris/actions-gh-pages@4f9cc6602d3f66b9c108549d475ec49e8ef4d45e # v4
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./packages/scratch-vm/playground
-          destination_dir: scratch-vm
-          full_commit_message: "Build for ${{ github.sha }} ${{ github.event.head_commit.message }}"
-
-      - name: Deploy scratch-gui to GitHub Pages
-        uses: peaceiris/actions-gh-pages@4f9cc6602d3f66b9c108549d475ec49e8ef4d45e # v4
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./packages/scratch-gui/build
-          destination_dir: scratch-gui
-          full_commit_message: "Build for ${{ github.sha }} ${{ github.event.head_commit.message }}"
