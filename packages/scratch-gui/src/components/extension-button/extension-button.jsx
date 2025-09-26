@@ -1,0 +1,160 @@
+import React, {useEffect, useCallback, useState} from 'react';
+import classNames from 'classnames';
+// eslint-disable-next-line import/no-unresolved
+import {driver} from 'driver.js';
+import 'driver.js/dist/driver.css';
+import {defineMessages, injectIntl, intlShape} from 'react-intl';
+import PropTypes from 'prop-types';
+
+import Box from '../box/box.jsx';
+import {BLOCKS_TAB_INDEX} from '../../reducers/editor-tab';
+import {getLocalStorageValue, setLocalStorageValue} from '../../lib/local-storage.js';
+import addExtensionIcon from '../gui/icon--extensions.svg';
+import styles from './extension-button.css';
+import './extension-button.raw.css';
+
+const messages = defineMessages({
+    addExtension: {
+        id: 'gui.gui.addExtension',
+        description: 'Button to add an extension in the target pane',
+        defaultMessage: 'Add Extension'
+    },
+    faceSensingCalloutTitle: {
+        id: 'gui.gui.faceSensingCalloutTitle',
+        description: 'Hey there! \u{1F44B}',
+        defaultMessage: 'Hey there! \u{1F44B}'
+    },
+    faceSensingCalloutDescription: {
+        id: 'gui.gui.faceSensingCalloutDescription',
+        description: 'There is a new extension!',
+        defaultMessage: 'There is a new extension!'
+    }
+});
+
+const localStorageAvailable =
+  'localStorage' in window && window.localStorage !== null;
+
+// Default to true to make sure we don't end up showing the feature
+// callouts multiple times if localStorage isn't available.
+const hasIntroducedFaceSensing = (username = 'guest') => {
+    if (!localStorageAvailable) return true;
+    return getLocalStorageValue('hasIntroducedFaceSensing', username) === true;
+};
+
+const setHasIntroducedFaceSensing = (username = 'guest') => {
+    if (!localStorageAvailable) return;
+    setLocalStorageValue('hasIntroducedFaceSensing', username, true);
+};
+
+const ExtensionButton = props => {
+    const {
+        activeTabIndex,
+        intl,
+        showNewFeatureCallouts,
+        onExtensionButtonClick,
+        username
+    } = props;
+
+    const [tooltipDriver, setTooltipDriver] = useState(null);
+    // Keep in a state to avoid reads from localStorage on every render.
+    const [shouldShowFaceSensingCallouts, setShouldShowFaceSensingCallouts] =
+        useState(showNewFeatureCallouts && !hasIntroducedFaceSensing(username));
+
+    useEffect(() => {
+        if (!shouldShowFaceSensingCallouts) return;
+
+        const onFirstClick = () => {
+            const isExtensionButtonVisible = document.querySelector('div[class*="extension-button-container"]');
+            if (!isExtensionButtonVisible) return;
+
+            const tooltip = driver({
+                allowClose: false,
+                allowInteraction: true,
+                overlayColor: 'transparent',
+                popoverOffset: -3,
+                steps: [{
+                    element: 'div[class*="extension-button-container"]',
+                    popover: {
+                        title: intl.formatMessage(messages.faceSensingCalloutTitle),
+                        description: intl.formatMessage(messages.faceSensingCalloutDescription),
+                        side: 'right',
+                        align: 'center',
+                        popoverClass: 'tooltip-face-sensing',
+                        showButtons: []
+                    }
+                }]
+            });
+            setTooltipDriver(tooltip);
+            tooltip.drive();
+        };
+        window.addEventListener('click', onFirstClick, {once: true});
+    }, []);
+
+    useEffect(() => {
+        if (!tooltipDriver) return;
+
+        if (!shouldShowFaceSensingCallouts && tooltipDriver) {
+            tooltipDriver.destroy();
+        }
+
+        if (!shouldShowFaceSensingCallouts && !tooltipDriver) return;
+
+        const destroyTooltipIfHidden = () => {
+            const isExtensionButtonVisible = document.querySelector('div[class*="extension-button-container"]');
+            if (tooltipDriver && (
+                !isExtensionButtonVisible ||
+                activeTabIndex !== BLOCKS_TAB_INDEX
+            )) {
+                tooltipDriver.destroy();
+                setTooltipDriver(null);
+            }
+        };
+        window.addEventListener('click', destroyTooltipIfHidden);
+
+        return () => window.removeEventListener('click', destroyTooltipIfHidden);
+    }, [tooltipDriver, activeTabIndex]);
+
+    const handleExtensionButtonClick = useCallback(() => {
+        if (tooltipDriver) {
+            tooltipDriver.destroy();
+            setTooltipDriver(null);
+        }
+
+        if (shouldShowFaceSensingCallouts) {
+            setHasIntroducedFaceSensing(username);
+            setShouldShowFaceSensingCallouts(false);
+        }
+        onExtensionButtonClick?.();
+    }, [tooltipDriver]);
+
+    return (
+        <Box className={styles.extensionButtonContainer}>
+            <button
+                className={
+                    classNames(styles.extensionButton,
+                        shouldShowFaceSensingCallouts && styles.radiate
+                    )}
+                title={intl.formatMessage(messages.addExtension)}
+                onClick={handleExtensionButtonClick}
+            >
+                <img
+                    className={styles.extensionButtonIcon}
+                    draggable={false}
+                    src={addExtensionIcon}
+                />
+            </button>
+        </Box>
+    );
+};
+
+ExtensionButton.propTypes = {
+    activeTabIndex: PropTypes.number,
+    intl: intlShape.isRequired,
+    onExtensionButtonClick: PropTypes.func,
+    showNewFeatureCallouts: PropTypes.bool,
+    username: PropTypes.string
+};
+
+const ExtensionButtonIntl = injectIntl(ExtensionButton);
+
+export default ExtensionButtonIntl;
