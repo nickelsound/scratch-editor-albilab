@@ -105,12 +105,10 @@ jobs:
     steps:
       - name: Determine GitHub Pages directory name
         id: branch_dir_name
+        # even `develop` should be published to a subdirectory
+        # that way each branch can be updated or cleaned up independently
         run: |
-          if [ "$GITHUB_REF_NAME" == "develop" ]; then
-            echo "result=."
-          else
-            echo "result=${GITHUB_REF_NAME//[^A-Za-z0-9._-]/_}"
-          fi | tee --append "$GITHUB_OUTPUT"
+          echo "result=${GITHUB_REF_NAME//[^A-Za-z0-9._-]/_}" | tee --append "$GITHUB_OUTPUT"
       - uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4
         with:
           name: build
