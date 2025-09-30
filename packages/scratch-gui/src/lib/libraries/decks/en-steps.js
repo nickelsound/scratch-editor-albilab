@@ -92,14 +92,14 @@ import videoAnimate from './steps/video-animate.en.png';
 import videoPop from './steps/video-pop.en.png';
 
 // Face Sensing
-import faceAddExtension from './steps/face-add-extension.gif';
-import faceAllowCamera from './steps/face-allow-camera.png';
-import faceAddFashionSprite from './steps/face-add-fashion-sprite.png';
-import faceGoToTopHead from './steps/face-go-to-top-head.gif';
-import faceGoToTopHeadForever from './steps/face-go-to-top-head-forever.png';
-import faceAdjustSize from './steps/face-adjust-size.gif';
-import faceAddAnotherSprite from './steps/face-add-another-sprite.png';
-import faceClickerGame from './steps/face-clicker-game.png';
+import faceAddExtension from './steps/face-add-extension.en.gif';
+import faceAllowCamera from './steps/face-allow-camera.en.png';
+import faceAddFashionSprite from './steps/face-add-fashion-sprite.en.png';
+import faceGoToTopHead from './steps/face-go-to-top-head.en.gif';
+import faceGoToTopHeadForever from './steps/face-go-to-top-head-forever.en.png';
+import faceAdjustSize from './steps/face-adjust-size.en.gif';
+import faceAddAnotherSprite from './steps/face-add-another-sprite.en.png';
+import faceClickerGame from './steps/face-clicker-game.en.png';
 
 // Make it Fly
 import flyChooseBackdrop from './steps/fly-choose-backdrop.LTR.gif';
