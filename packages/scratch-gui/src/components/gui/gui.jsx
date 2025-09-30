@@ -357,6 +357,8 @@ const GUIComponent = props => {
                                             stageSize={stageSize}
                                             theme={theme}
                                             vm={vm}
+                                            showNewFeatureCallouts={showNewFeatureCallouts}
+                                            username={username}
                                         />
                                     </Box>
                                     <ExtensionsButton
