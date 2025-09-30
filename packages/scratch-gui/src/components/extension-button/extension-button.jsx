@@ -1,4 +1,4 @@
-import React, {useEffect, useCallback, useState} from 'react';
+import React, {useEffect, useCallback, useState, useRef} from 'react';
 import classNames from 'classnames';
 // eslint-disable-next-line import/no-unresolved
 import {driver} from 'driver.js';
@@ -55,10 +55,11 @@ const ExtensionButton = props => {
         username
     } = props;
 
-    const [tooltipDriver, setTooltipDriver] = useState(null);
+    const driverRef = useRef(null);
     // Keep in a state to avoid reads from localStorage on every render.
     const [shouldShowFaceSensingCallouts, setShouldShowFaceSensingCallouts] =
         useState(showNewFeatureCallouts && !hasIntroducedFaceSensing(username));
+    const [clicked, setClicked] = useState(false);
 
     useEffect(() => {
         if (!shouldShowFaceSensingCallouts) return;
@@ -84,40 +85,48 @@ const ExtensionButton = props => {
                     }
                 }]
             });
-            setTooltipDriver(tooltip);
+            setClicked(true);
+            driverRef.current = tooltip;
             tooltip.drive();
         };
         window.addEventListener('click', onFirstClick, {once: true});
+
+        return () => {
+            if (driverRef.current) {
+                driverRef.current.destroy();
+                driverRef.current = null;
+            }
+        };
     }, []);
 
     useEffect(() => {
-        if (!tooltipDriver) return;
+        if (!driverRef.current) return;
 
-        if (!shouldShowFaceSensingCallouts && tooltipDriver) {
-            tooltipDriver.destroy();
+        if (!shouldShowFaceSensingCallouts && driverRef.current) {
+            driverRef.current.destroy();
         }
 
-        if (!shouldShowFaceSensingCallouts && !tooltipDriver) return;
+        if (!shouldShowFaceSensingCallouts || !clicked) return;
 
-        const destroyTooltipIfHidden = () => {
-            const isExtensionButtonVisible = document.querySelector('div[class*="extension-button-container"]');
-            if (tooltipDriver && (
-                !isExtensionButtonVisible ||
-                activeTabIndex !== BLOCKS_TAB_INDEX
-            )) {
-                tooltipDriver.destroy();
-                setTooltipDriver(null);
-            }
-        };
-        window.addEventListener('click', destroyTooltipIfHidden);
+        const isExtensionButtonVisible = document.querySelector('div[class*="extension-button-container"]');
 
-        return () => window.removeEventListener('click', destroyTooltipIfHidden);
-    }, [tooltipDriver, activeTabIndex]);
+        if (!isExtensionButtonVisible || activeTabIndex !== BLOCKS_TAB_INDEX) {
+            driverRef.current.destroy();
+        }
+
+        if (isExtensionButtonVisible && activeTabIndex === BLOCKS_TAB_INDEX) {
+            driverRef.current.drive();
+        }
+    }, [shouldShowFaceSensingCallouts, activeTabIndex, clicked]);
 
     const handleExtensionButtonClick = useCallback(() => {
-        if (tooltipDriver) {
-            tooltipDriver.destroy();
-            setTooltipDriver(null);
+        if (shouldShowFaceSensingCallouts && !driverRef.current) {
+            return;
+        }
+
+        if (driverRef.current) {
+            driverRef.current.destroy();
+            driverRef.current = null;
         }
 
         if (shouldShowFaceSensingCallouts) {
@@ -125,7 +134,7 @@ const ExtensionButton = props => {
             setShouldShowFaceSensingCallouts(false);
         }
         onExtensionButtonClick?.();
-    }, [tooltipDriver]);
+    }, [shouldShowFaceSensingCallouts]);
 
     return (
         <Box className={styles.extensionButtonContainer}>
