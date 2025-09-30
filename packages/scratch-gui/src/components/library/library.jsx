@@ -148,6 +148,7 @@ class LibraryComponent extends React.Component {
             'handlePlayingEnd',
             'handleSelect',
             'handleTagClick',
+            'handleScroll',
             'setFilteredDataRef'
         ]);
         this.state = {
@@ -176,6 +177,9 @@ class LibraryComponent extends React.Component {
         // We need to create the driver when the content is loaded for the target element to exist
         if (!prevState.loaded && this.state.loaded && this.state.shouldShowFaceSensingCallout) {
             const onFirstClick = () => {
+                const isExtensionItemVisible = document.getElementById('faceSensing');
+                if (!isExtensionItemVisible) return;
+
                 const tooltip = driver({
                     allowClose: false,
                     allowInteraction: true,
@@ -196,8 +200,9 @@ class LibraryComponent extends React.Component {
                 this.driver = tooltip;
                 tooltip.drive();
             };
-            
+
             window.addEventListener('click', onFirstClick, {once: true});
+            this.filteredDataRef.addEventListener('scroll', this.handleScroll);
         }
     }
     componentWillUnmount () {
@@ -205,15 +210,30 @@ class LibraryComponent extends React.Component {
             this.driver.destroy();
             this.driver = null;
         }
-    }
-    handleSelect (id) {
-        if (this.state.shouldShowFaceSensingCallout && !this.driver) {
-            return;
+        
+        if (this.animationFrameId) {
+            window.cancelAnimationFrame(this.animationFrameId);
         }
 
-        const selectedItem = this.getFilteredData()
-            .find(item => this.constructKey(item) === id);
+        this.filteredDataRef.removeEventListener('scroll', this.handleScroll);
+    }
+    handleScroll () {
+        if (this.animationFrameId) return;
 
+        this.animationFrameId = window.requestAnimationFrame(() => {
+            if (this.driver) {
+                this.driver.refresh();
+            }
+            
+            this.animationFrameId = null;
+        });
+    }
+    handleSelect (id) {
+        const selectedItem = this.getFilteredData().find(item => this.constructKey(item) === id);
+        
+        if (this.state.shouldShowFaceSensingCallout && !this.driver && selectedItem.extensionId !== 'faceSensing') {
+            return;
+        }
         if (this.state.shouldShowFaceSensingCallout && selectedItem.extensionId === 'faceSensing') {
             setHasUsedFaceSensing(this.props.username);
             this.setState({

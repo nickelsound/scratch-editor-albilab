@@ -46,6 +46,11 @@ const setHasIntroducedFaceSensing = (username = 'guest') => {
     setLocalStorageValue('hasIntroducedFaceSensing', username, true);
 };
 
+const hasUsedFaceSensing = (username = 'guest') => {
+    if (!localStorageAvailable) return true;
+    return getLocalStorageValue('hasUsedFaceSensing', username) === true;
+};
+
 const ExtensionButton = props => {
     const {
         activeTabIndex,
@@ -58,7 +63,7 @@ const ExtensionButton = props => {
     const driverRef = useRef(null);
     // Keep in a state to avoid reads from localStorage on every render.
     const [shouldShowFaceSensingCallouts, setShouldShowFaceSensingCallouts] =
-        useState(showNewFeatureCallouts && !hasIntroducedFaceSensing(username));
+        useState(showNewFeatureCallouts && !hasIntroducedFaceSensing(username) && !hasUsedFaceSensing(username));
     const [clicked, setClicked] = useState(false);
 
     useEffect(() => {
@@ -120,10 +125,6 @@ const ExtensionButton = props => {
     }, [shouldShowFaceSensingCallouts, activeTabIndex, clicked]);
 
     const handleExtensionButtonClick = useCallback(() => {
-        if (shouldShowFaceSensingCallouts && !driverRef.current) {
-            return;
-        }
-
         if (driverRef.current) {
             driverRef.current.destroy();
             driverRef.current = null;

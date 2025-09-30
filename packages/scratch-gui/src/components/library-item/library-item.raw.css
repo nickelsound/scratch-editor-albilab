@@ -20,10 +20,6 @@
     visibility: hidden;
 }
 
-:not(body):has(>.driver-active-element) {
-    overflow-y: auto;
-}
-
 .driver-popover.tooltip-face-sensing-modal {
     padding: 1rem;
     background-color: $looks-secondary;
