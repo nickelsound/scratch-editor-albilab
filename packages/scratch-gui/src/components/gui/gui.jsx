@@ -518,7 +518,7 @@ GUIComponent.defaultProps = {
     isTotallyNormal: false,
     loading: false,
     showComingSoon: false,
-    showNewFeatureCallouts: true /* TODO: change to false */,
+    showNewFeatureCallouts: false,
     stageSizeMode: STAGE_SIZE_MODES.large,
     useExternalPeripheralList: false
 };
