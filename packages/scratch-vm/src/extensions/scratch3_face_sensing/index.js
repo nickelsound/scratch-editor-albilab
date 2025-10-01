@@ -24,6 +24,32 @@ const menuIconURI = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53M
 const blockIconURI = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgdmlld0JveD0iMCAwIDIzLjg0IDIxLjQ2Ij48Y2lyY2xlIGN4PSI4LjM1IiBjeT0iOS42NSIgcj0iLjk3IiBmaWxsPSIjZmZmIi8+PGNpcmNsZSBjeD0iMTQuMTkiIGN5PSI5LjY1IiByPSIuOTciIGZpbGw9IiNmZmYiLz48cGF0aCBmaWxsPSIjZmZmIiBkPSJNMTEuMjcgNC4xNGMtMy45NCAwLTcuMTMgMy4xOS03LjEzIDcuMTNzMy4xOSA3LjEzIDcuMTMgNy4xMyA3LjEzLTMuMTkgNy4xMy03LjEzLTMuMTktNy4xMy03LjEzLTcuMTNtMCAxLjNjMy4yMiAwIDUuODQgMi42MSA1Ljg0IDUuODRzLTIuNjEgNS44NC01Ljg0IDUuODQtNS44NC0yLjYxLTUuODQtNS44NCAyLjYxLTUuODQgNS44NC01Ljg0Ii8+PHBhdGggZmlsbD0iI2ZmYmYwMCIgZmlsbC1ydWxlPSJldmVub2RkIiBzdHJva2U9IiMwYjhlNjkiIHN0cm9rZS1taXRlcmxpbWl0PSIyIiBzdHJva2Utd2lkdGg9Ii41IiBkPSJNMTcuNTcgMTMuODhjLjU3LS4xNSAxLjAyLS42IDEuMTctMS4xN2wuMzUtMS4zYy4xNi0uNjEgMS4wNC0uNjEgMS4yIDBsLjM1IDEuM2MuMTUuNTcuNiAxLjAyIDEuMTggMS4xN2wxLjMuMzVjLjYxLjE2LjYxIDEuMDQgMCAxLjJsLTEuMy4zNWMtLjU3LjE1LTEuMDIuNi0xLjE4IDEuMTdsLS4zNSAxLjNjLS4xNy42Mi0xLjA0LjYyLTEuMiAwbC0uMzUtMS4zYy0uMTUtLjU3LS42LTEuMDItMS4xNy0xLjE3bC0xLjMtLjM1Yy0uNjEtLjE3LS42MS0xLjA0IDAtMS4ybDEuMy0uMzVabS0xNi0xMS40M2MuNDMtLjEyLjc2LS40NS44OC0uODhsLjI2LS45OGMuMTItLjQ2Ljc4LS40Ni45IDBsLjI2Ljk4Yy4xMi40My40NS43Ni44OC44OGwuOTguMjZjLjQ2LjEyLjQ2Ljc4IDAgLjlsLS45OC4yNmMtLjQzLjExLS43Ny40NS0uODguODhsLS4yNi45OGMtLjEyLjQ2LS43OC40Ni0uOSAwbC0uMjYtLjk4YTEuMjYgMS4yNiAwIDAgMC0uODgtLjg4bC0uOTgtLjI2Yy0uNDYtLjEyLS40Ni0uNzggMC0uOXoiLz48cGF0aCBmaWxsPSIjZmZmIiBkPSJNMTIuNjggMTIuNTNjLjItLjMuNi0uMzguOS0uMThzLjM4LjYuMTguOWMtLjU2LjgzLTEuNDEgMS4yNi0yLjQ4IDEuMjZzLTEuOTMtLjQzLTIuNDgtMS4yNmMtLjItLjMtLjEyLS43LjE4LS45cy43LS4xMi45LjE4Yy4zMS40Ni43NS42OCAxLjQxLjY4czEuMS0uMjIgMS40MS0uNjhaIi8+PHBhdGggZmlsbD0iIzBiOGU2OSIgZD0iTTIwLjg5IDYuMDZhLjU3LjU3IDAgMCAxLS41Ny0uNTdWMi4yaC0zLjMxYy0uMzEgMC0uNTctLjI1LS41Ny0uNTdzLjI1LS41Ny41Ny0uNTdoMy44OGMuMzEgMCAuNTcuMjUuNTcuNTd2My44NmMwIC4zMS0uMjUuNTctLjU3LjU3TTUuNDQgMjEuNDZIMS41OWEuNTcuNTcgMCAwIDEtLjU3LS41N3YtMy44MmMwLS4zMS4yNS0uNTcuNTctLjU3cy41Ny4yNS41Ny41N3YzLjI1aDMuMjhjLjMxIDAgLjU3LjI1LjU3LjU3cy0uMjUuNTctLjU3LjU3Ii8+PC9zdmc+';
 
 /**
+ * Face detection keypoints from TensorFlow's face sensing model.
+ * @readonly
+ * @enum {string}
+ */
+const PARTS = {
+    NOSE: '2',
+    MOUTH: '3',
+    LEFT_EYE: '0',
+    RIGHT_EYE: '1',
+    BETWEEN_EYES: '6',
+    LEFT_EAR: '4',
+    RIGHT_EAR: '5',
+    TOP_OF_HEAD: '7'
+};
+
+/**
+ * Possible tilt directions.
+ * @readonly
+ * @enum {string}
+ */
+const TILT = {
+    LEFT: 'left',
+    RIGHT: 'right'
+};
+
+/**
  * Class for the Face sensing blocks in Scratch 3.0
  * @param {Runtime} runtime - the runtime instantiating this block package.
  * @constructor
@@ -117,6 +143,22 @@ class Scratch3FaceSensingBlocks {
     }
 
     /**
+     * Minimum tilt (in degrees) needed before counting as a tilt event.
+     * @type {number}
+     */
+    static get TILT_THRESHOLD () {
+        return 10;
+    }
+
+    /**
+     * Default face part position when no facial keypoints are detected.
+     * @type {{x: number, y: number}}
+     */
+    static get DEFAULT_PART_POSITION () {
+        return {x: 0, y: 0};
+    }
+
+    /**
      * An array of info about the face part menu choices.
      * @type {object[]}
      */
@@ -128,7 +170,7 @@ class Scratch3FaceSensingBlocks {
                 description: 'Option for the "go to [PART]" and "when sprite touches [PART] blocks'
 
             }),
-            value: '2'
+            value: PARTS.NOSE
         }, {
             text: formatMessage({
                 id: 'faceSensing.mouth',
@@ -136,7 +178,7 @@ class Scratch3FaceSensingBlocks {
                 description: 'Option for the "go to [PART]" and "when sprite touches [PART] blocks'
 
             }),
-            value: '3'
+            value: PARTS.MOUTH
         }, {
             text: formatMessage({
                 id: 'faceSensing.leftEye',
@@ -144,7 +186,7 @@ class Scratch3FaceSensingBlocks {
                 description: 'Option for the "go to [PART]" and "when sprite touches [PART] blocks'
 
             }),
-            value: '0'
+            value: PARTS.LEFT_EYE
         }, {
             text: formatMessage({
                 id: 'faceSensing.rightEye',
@@ -152,7 +194,7 @@ class Scratch3FaceSensingBlocks {
                 description: 'Option for the "go to [PART]" and "when sprite touches [PART] blocks'
 
             }),
-            value: '1'
+            value: PARTS.RIGHT_EYE
         }, {
             text: formatMessage({
                 id: 'faceSensing.betweenEyes',
@@ -160,7 +202,7 @@ class Scratch3FaceSensingBlocks {
                 description: 'Option for the "go to [PART]" and "when sprite touches [PART] blocks'
 
             }),
-            value: '6'
+            value: PARTS.BETWEEN_EYES
         }, {
             text: formatMessage({
                 id: 'faceSensing.leftEar',
@@ -168,7 +210,7 @@ class Scratch3FaceSensingBlocks {
                 description: 'Option for the "go to [PART]" and "when sprite touches [PART] blocks'
 
             }),
-            value: '4'
+            value: PARTS.LEFT_EAR
         }, {
             text: formatMessage({
                 id: 'faceSensing.rightEar',
@@ -176,7 +218,7 @@ class Scratch3FaceSensingBlocks {
                 description: 'Option for the "go to [PART]" and "when sprite touches [PART] blocks'
 
             }),
-            value: '5'
+            value: PARTS.RIGHT_EAR
         }, {
             text: formatMessage({
                 id: 'faceSensing.topOfHead',
@@ -184,7 +226,7 @@ class Scratch3FaceSensingBlocks {
                 description: 'Option for the "go to [PART]" and "when sprite touches [PART] blocks'
 
             }),
-            value: '7'
+            value: PARTS.TOP_OF_HEAD
         }];
     }
 
@@ -200,7 +242,7 @@ class Scratch3FaceSensingBlocks {
                 description: 'Argument for the "when face tilts [DIRECTION]" block'
 
             }),
-            value: 'left'
+            value: TILT.LEFT
         }, {
             text: formatMessage({
                 id: 'faceSensing.right',
@@ -208,7 +250,7 @@ class Scratch3FaceSensingBlocks {
                 description: 'Argument for the "when face tilts [DIRECTION]" block'
 
             }),
-            value: 'right'
+            value: TILT.RIGHT
         }];
     }
 
@@ -304,7 +346,7 @@ class Scratch3FaceSensingBlocks {
                         PART: {
                             type: ArgumentType.STRING,
                             menu: 'PART',
-                            defaultValue: '2'
+                            defaultValue: PARTS.NOSE
                         }
                     },
                     filter: [TargetType.SPRITE]
@@ -342,7 +384,7 @@ class Scratch3FaceSensingBlocks {
                         DIRECTION: {
                             type: ArgumentType.STRING,
                             menu: 'TILT',
-                            defaultValue: 'left'
+                            defaultValue: TILT.LEFT
                         }
                     }
                 },
@@ -357,7 +399,7 @@ class Scratch3FaceSensingBlocks {
                         PART: {
                             type: ArgumentType.STRING,
                             menu: 'PART',
-                            defaultValue: '2'
+                            defaultValue: PARTS.NOSE
                         }
                     },
                     blockType: BlockType.HAT,
@@ -415,8 +457,8 @@ class Scratch3FaceSensingBlocks {
      * @private
      */
     _getBetweenEyesPosition () {
-        const leftEye = this._getPartPosition(0);
-        const rightEye = this._getPartPosition(1);
+        const leftEye = this._getPartPosition(PARTS.LEFT_EYE);
+        const rightEye = this._getPartPosition(PARTS.RIGHT_EYE);
         const betweenEyes = {x: 0, y: 0};
         betweenEyes.x = leftEye.x + ((rightEye.x - leftEye.x) / 2);
         betweenEyes.y = leftEye.y + ((rightEye.y - leftEye.y) / 2);
@@ -433,9 +475,9 @@ class Scratch3FaceSensingBlocks {
      * @private
      */
     _getTopOfHeadPosition () {
-        const leftEyePos = this._getPartPosition(0);
-        const rightEyePos = this._getPartPosition(1);
-        const mouthPos = this._getPartPosition(3);
+        const leftEyePos = this._getPartPosition(PARTS.LEFT_EYE);
+        const rightEyePos = this._getPartPosition(PARTS.RIGHT_EYE);
+        const mouthPos = this._getPartPosition(PARTS.MOUTH);
         const dx = rightEyePos.x - leftEyePos.x;
         const dy = rightEyePos.y - leftEyePos.y;
         const directionRads = Math.atan2(dy, dx) + (Math.PI / 2);
@@ -453,20 +495,20 @@ class Scratch3FaceSensingBlocks {
      * Get the position of a given facial keypoint.
      * Returns {0,0} if no face or keypoints are available.
      *
-     * @param {number} part - Part of the face to be detected
+     * @param {string} part - Part of the face to be detected
      * @returns {{x: number, y: number}} Coordinates of the detected keypoint.
      * @private
      */
     _getPartPosition (part) {
-        const defaultPos = {x: 0, y: 0};
+        const defaultPos = Scratch3FaceSensingBlocks.DEFAULT_PART_POSITION;
 
         if (!this._currentFace) return defaultPos;
         if (!this._currentFace.keypoints) return defaultPos;
 
-        if (Number(part) === 6) {
+        if (part === PARTS.BETWEEN_EYES) {
             return this._getBetweenEyesPosition();
         }
-        if (Number(part) === 7) {
+        if (part === PARTS.TOP_OF_HEAD) {
             return this._getTopOfHeadPosition();
         }
 
@@ -547,8 +589,8 @@ class Scratch3FaceSensingBlocks {
     faceTilt () {
         if (!this._currentFace) return this._cachedTilt;
 
-        const leftEyePos = this._getPartPosition(0);
-        const rightEyePos = this._getPartPosition(1);
+        const leftEyePos = this._getPartPosition(PARTS.LEFT_EYE);
+        const rightEyePos = this._getPartPosition(PARTS.RIGHT_EYE);
         const dx = rightEyePos.x - leftEyePos.x;
         const dy = rightEyePos.y - leftEyePos.y;
         const direction = 90 - MathUtil.radToDeg(Math.atan2(dy, dx));
@@ -567,13 +609,11 @@ class Scratch3FaceSensingBlocks {
      * @returns {boolean} - true if the face is tilted
      */
     whenTilted (args) {
-        const TILT_THRESHOLD = 10;
-
-        if (args.DIRECTION === 'left') {
-            return this.faceTilt() < (90 - TILT_THRESHOLD);
+        if (args.DIRECTION === TILT.LEFT) {
+            return this.faceTilt() < (90 - Scratch3FaceSensingBlocks.TILT_THRESHOLD);
         }
-        if (args.DIRECTION === 'right') {
-            return this.faceTilt() > (90 + TILT_THRESHOLD);
+        if (args.DIRECTION === TILT.RIGHT) {
+            return this.faceTilt() > (90 + Scratch3FaceSensingBlocks.TILT_THRESHOLD);
         }
         return false;
     }
