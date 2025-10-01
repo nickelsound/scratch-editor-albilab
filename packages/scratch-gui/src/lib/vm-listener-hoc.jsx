@@ -69,6 +69,8 @@ const vmListenerHOC = function (WrappedComponent) {
         }
         componentWillUnmount () {
             this.props.vm.removeListener('PERIPHERAL_CONNECTION_LOST_ERROR', this.props.onShowExtensionAlert);
+            this.props.vm.removeListener('EXTENSION_DATA_LOADING', this.props.onExtensionDataLoading);
+            
             if (this.props.attachKeyboardEvents) {
                 document.removeEventListener('keydown', this.handleKeyDown);
                 document.removeEventListener('keyup', this.handleKeyUp);
