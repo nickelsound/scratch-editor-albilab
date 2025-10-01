@@ -47,3 +47,8 @@
     border-left-color: $looks-secondary;
     border-width: 0.5rem;
 }
+
+.driver-popover.tooltip-face-sensing-modal .driver-popover-arrow-side-bottom {
+    border-bottom-color: $looks-secondary;
+    border-width: 0.5rem;
+}
