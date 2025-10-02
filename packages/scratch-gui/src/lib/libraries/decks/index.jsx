@@ -40,7 +40,7 @@ import libraryStory from './thumbnails/tell-a-story.jpg';
 import libraryVideoSens from './thumbnails/video-sensing.jpg';
 
 // Face Sensing
-import libraryFaceSens from './thumbnails/face-sensing.jpg';
+import libraryFaceSens from './thumbnails/face-sensing.png';
 
 // Make-it-Fly
 import libraryMakeFly from './thumbnails/make-it-fly.jpg';
