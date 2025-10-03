@@ -229,7 +229,7 @@
 }
 
 /* Sprite Selection Watermark */
-.watermark {
+body .watermark {
     position: absolute;
     top: 1.25rem;
     pointer-events: none;
@@ -251,7 +251,7 @@
 }
 /* Alerts */
 
-.alerts-container {
+body .alerts-container {
     display: flex;
     justify-content: center;
     width: 100%;

@@ -232,10 +232,11 @@ class LibraryComponent extends React.Component {
     handleSelect (id) {
         const selectedItem = this.getFilteredData().find(item => this.constructKey(item) === id);
         
-        if (this.state.shouldShowFaceSensingCallout && !this.driver && selectedItem.extensionId !== 'faceSensing') {
-            return;
-        }
         if (this.state.shouldShowFaceSensingCallout && selectedItem.extensionId === 'faceSensing') {
+            if (!this.driver) {
+                return;
+            }
+       
             setHasUsedFaceSensing(this.props.username);
             this.setState({
                 shouldShowFaceSensingCallout: false
