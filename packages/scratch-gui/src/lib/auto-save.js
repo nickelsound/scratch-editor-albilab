@@ -1,3 +1,5 @@
+import {getApiUrl} from './api-config.js';
+
 /**
  * Auto-save služba pro automatické ukládání projektů
  */
@@ -67,7 +69,7 @@ class AutoSaveService {
         }
 
         try {
-            const apiUrl = `${window.location.protocol}//${window.location.hostname}:3001/api/saved-project/auto-save/load?projectName=${encodeURIComponent(this.projectTitle)}`;
+            const apiUrl = getApiUrl(`/saved-project/auto-save/load?projectName=${encodeURIComponent(this.projectTitle)}`);
             const response = await fetch(apiUrl);
             
             if (response.ok) {
@@ -124,7 +126,7 @@ class AutoSaveService {
             const projectData = this.vm.toJSON();
             
             // Pošli na backend
-            const apiUrl = `${window.location.protocol}//${window.location.hostname}:3001/api/saved-project/auto-save`;
+            const apiUrl = getApiUrl('/saved-project/auto-save');
             const response = await fetch(apiUrl, {
                 method: 'POST',
                 headers: {

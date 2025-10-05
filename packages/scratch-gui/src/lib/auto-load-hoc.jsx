@@ -2,6 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import {connect} from 'react-redux';
 import {setProjectTitle} from '../reducers/project-title';
+import {getApiUrl} from './api-config.js';
 
 /**
  * Higher Order Component pro automatické načtení uloženého projektu při inicializaci
@@ -27,7 +28,7 @@ const AutoLoadHOC = function (WrappedComponent) {
 
             try {
                 // Zkontroluj, jestli existuje uložený projekt
-                const apiUrl = `${window.location.protocol}//${window.location.hostname}:3001/api/saved-project`;
+                const apiUrl = getApiUrl('/saved-project');
                 const response = await fetch(apiUrl);
                 
                 if (response.ok) {
@@ -51,7 +52,7 @@ const AutoLoadHOC = function (WrappedComponent) {
 
         async loadSavedProject () {
             try {
-                const apiUrl = `${window.location.protocol}//${window.location.hostname}:3001/api/saved-project/load`;
+                const apiUrl = getApiUrl('/saved-project/load');
                 const response = await fetch(apiUrl);
                 
                 if (response.ok) {

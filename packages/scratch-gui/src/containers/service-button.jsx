@@ -54,7 +54,7 @@ class ServiceButton extends React.Component {
             const projectName = this.props.projectTitle || 'Neznámý projekt';
             
             // Pošli na backend
-            const apiUrl = `http://${window.location.hostname}:3001/api/start-service-json`;
+            const apiUrl = getApiUrl('/start-service-json');
             const response = await fetch(apiUrl, {
                 method: 'POST',
                 headers: {
@@ -87,7 +87,7 @@ class ServiceButton extends React.Component {
 
     async stopService () {
         try {
-            const apiUrl = `http://${window.location.hostname}:3001/api/stop-service`;
+            const apiUrl = getApiUrl('/stop-service');
             const response = await fetch(apiUrl, {
                 method: 'POST',
                 headers: {
@@ -120,7 +120,7 @@ class ServiceButton extends React.Component {
         // Použijeme relativní URL pro WebSocket
         const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
         const wsHost = window.location.hostname;
-        this.ws = new WebSocket(`${wsProtocol}//${wsHost}:3002`);
+        this.ws = new WebSocket(getWebSocketUrl('/ws'));
         
         this.ws.onopen = () => {
             console.log('WebSocket připojen');
@@ -178,7 +178,7 @@ class ServiceButton extends React.Component {
 
     async checkServiceStatus () {
         try {
-            const apiUrl = `http://${window.location.hostname}:3001/api/status`;
+            const apiUrl = getApiUrl('/status');
             const response = await fetch(apiUrl);
             if (response.ok) {
                 const status = await response.json();

@@ -5,6 +5,7 @@ import {connect} from 'react-redux';
 import VM from '@scratch/scratch-vm';
 
 import LoadProjectButtonComponent from '../components/menu-bar/load-project-button.jsx';
+import {getApiUrl} from '../lib/api-config.js';
 
 class LoadProjectButton extends React.Component {
     constructor (props) {
@@ -25,7 +26,7 @@ class LoadProjectButton extends React.Component {
             this.setState({ isLoading: true });
             
             // Načti uložený projekt z backend API
-            const apiUrl = `${window.location.protocol}//${window.location.hostname}:3001/api/saved-project/load`;
+            const apiUrl = getApiUrl('/saved-project/load');
             const response = await fetch(apiUrl);
             
             if (!response.ok) {

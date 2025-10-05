@@ -4,6 +4,7 @@ import {connect} from 'react-redux';
 
 import AutoSaveManagerComponent from '../components/menu-bar/auto-save-manager.jsx';
 import {setProjectTitle} from '../reducers/project-title.js';
+import {getApiUrl} from '../lib/api-config.js';
 
 class AutoSaveManager extends React.Component {
     constructor(props) {
@@ -37,7 +38,7 @@ class AutoSaveManager extends React.Component {
         this.setState({ isLoading: true });
         
         try {
-            const apiUrl = `${window.location.protocol}//${window.location.hostname}:3001/api/saved-project/auto-save/list`;
+            const apiUrl = getApiUrl('/saved-project/auto-save/list');
             const response = await fetch(apiUrl);
             
             if (response.ok) {
@@ -62,7 +63,7 @@ class AutoSaveManager extends React.Component {
 
     handleLoadProject = async (projectName) => {
         try {
-            const apiUrl = `${window.location.protocol}//${window.location.hostname}:3001/api/saved-project/auto-save/load?projectName=${encodeURIComponent(projectName)}`;
+            const apiUrl = getApiUrl(`/saved-project/auto-save/load?projectName=${encodeURIComponent(projectName)}`);
             const response = await fetch(apiUrl);
             
             if (response.ok) {
@@ -92,7 +93,7 @@ class AutoSaveManager extends React.Component {
 
     handleDeleteProject = async (projectName) => {
         try {
-            const apiUrl = `${window.location.protocol}//${window.location.hostname}:3001/api/saved-project/auto-save?projectName=${encodeURIComponent(projectName)}`;
+            const apiUrl = getApiUrl(`/saved-project/auto-save?projectName=${encodeURIComponent(projectName)}`);
             const response = await fetch(apiUrl, {
                 method: 'DELETE'
             });
