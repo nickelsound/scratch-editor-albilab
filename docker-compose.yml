@@ -16,9 +16,6 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=8601
-      - ALBILAB_API_URL=https://albilab-scratch.lukes.cloud
-      - REACT_APP_API_BASE_URL=https://albilab-scratch.lukes.cloud
-      - REACT_APP_WS_BASE_URL=wss://albilab-scratch.lukes.cloud
     # Odstraněny development volumes pro produkční režim
     restart: unless-stopped
     # depends_on:
