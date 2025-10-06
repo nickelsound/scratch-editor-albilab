@@ -23,6 +23,7 @@ jobs:
       - name: Mark stale directories for removal
         run: |
           for dir in */; do
+            [ -L "${dir%/}" ] && continue  # skip symlinks (trim trailing slash for test)
             if [ -z "$(git log -n 1 --since "1 month ago" -- "$dir")" ]; then
               echo "Removing stale directory: $dir"
               git rm --quiet -r "$dir"
