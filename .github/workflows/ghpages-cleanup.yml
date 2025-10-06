@@ -21,14 +21,20 @@ jobs:
         run: |
           for dir in */; do
             if [ -z "$(git log -n 1 --since "1 month ago" -- "$dir")" ]; then
-              git rm -r "$dir"
+              echo "Removing stale directory: $dir"
+              git rm --quiet -r "$dir"
             fi
           done
-          git status
-      - name: Commit
+      - name: Configure git user
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email 'github-actions[bot]@users.noreply.github.com'
-          git commit -m 'chore: remove stale GitHub Pages branches'
+      - name: Commit
+        run: |
+          if diff --staged --quiet; then
+            echo 'No stale directories were found. Nothing to commit.'
+          else
+            git commit -m 'chore: remove stale GitHub Pages branches'
+          fi
       - name: Push
         run: "git push"
