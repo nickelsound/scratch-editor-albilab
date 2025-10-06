@@ -15,8 +15,11 @@ jobs:
         uses: actions/checkout@v4
         with:
           # replace `fetch-depth` with `shallow-since` if and when actions/checkout#619 (or an equivalent) gets merged
+          # then remove the "Fetch a bit more history" step below
           fetch-depth: 1
           ref: gh-pages
+      - name: Fetch a bit more history
+        run: git fetch --update-shallow --shallow-since="32 days ago" origin gh-pages
       - name: Mark stale directories for removal
         run: |
           for dir in */; do
