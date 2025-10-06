@@ -15,7 +15,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           # replace `fetch-depth` with `shallow-since` if and when actions/checkout#619 (or an equivalent) gets merged
-          fetch-depth: 0
+          fetch-depth: 1
           ref: gh-pages
       - name: Mark stale directories for removal
         run: |
@@ -31,7 +31,7 @@ jobs:
           git config user.email 'github-actions[bot]@users.noreply.github.com'
       - name: Commit
         run: |
-          if diff --cached --quiet; then
+          if git diff --staged --quiet; then
             echo 'No stale directories were found. Nothing to commit.'
           else
             git commit -m 'chore: remove stale GitHub Pages branches'
