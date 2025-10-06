@@ -31,7 +31,7 @@ jobs:
           git config user.email 'github-actions[bot]@users.noreply.github.com'
       - name: Commit
         run: |
-          if diff --staged --quiet; then
+          if diff --cached --quiet; then
             echo 'No stale directories were found. Nothing to commit.'
           else
             git commit -m 'chore: remove stale GitHub Pages branches'
