@@ -7,6 +7,8 @@ on:
 
 jobs:
   cleanup:
+    permissions:
+      contents: write
     runs-on: ubuntu-latest
     steps:
       - name: Check out GitHub Pages branch
