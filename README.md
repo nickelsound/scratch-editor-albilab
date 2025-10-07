@@ -1,6 +1,27 @@
 # Scratch Editor AlbiLAB
 
-Modified Scratch editor with integration into the AlbiLAB ecosystem. This project provides a web interface for creating and running Scratch projects with the ability to save and load them.
+**Program your AlbiLAB scientific station with Scratch!** 🧪🔬
+
+This project extends the innovative [AlbiLAB scientific station](https://www.albilab.cz) with programming capabilities through Scratch. AlbiLAB is a modular educational kit that combines electronics, construction blocks, and laboratory equipment to create a complete scientific workstation for children and families.
+
+## What is AlbiLAB?
+
+AlbiLAB is an innovative scientific station that includes:
+- **Electronics**: Control board, LED rings, color display, wires, power bank, adapter, USB cable
+- **Construction blocks**: Magnetic cubes, covers and reducers for internal equipment, metallized strips, cutter
+- **Laboratory equipment**: Test tubes, syringe, beaker, pipette, magnifying glass, Petri dishes, tweezers, pH papers
+- **Growing kit**: Growing containers and substrate, expanded clay, Arabidopsis thaliana seeds, scientific diary
+
+## What does this project add?
+
+This Scratch Editor AlbiLAB project allows you to:
+- **Program your AlbiLAB station** using the familiar Scratch visual programming language
+- **Control experiments** and scientific measurements through code
+- **Create interactive projects** that respond to sensors and control outputs
+- **Save and load projects** directly to/from your AlbiLAB station
+- **Learn programming** while conducting real scientific experiments
+
+Perfect for children, parents, and educators who want to combine hands-on science with programming education!
 
 **🇨🇿 [Česká verze / Czech version](README_cs.md)**
 
@@ -41,16 +62,24 @@ Modified Scratch editor with integration into the AlbiLAB ecosystem. This projec
 
 ### Core Features
 - **Scratch Editor**: Full-featured web editor for Scratch projects
-- **Project Saving**: Projects are automatically saved to AlbiLAB
-- **Project Loading**: Ability to load previously saved projects
+- **AlbiLAB Integration**: Direct connection to your AlbiLAB scientific station
+- **Project Saving**: Projects are automatically saved to AlbiLAB station
+- **Project Loading**: Ability to load previously saved projects from AlbiLAB
 - **Auto-save**: Automatic saving of changes every 30 seconds
+- **Real-time Control**: Control your AlbiLAB experiments through Scratch code
+
+### AlbiLAB-Specific Features
+- **Sensor Integration**: Read data from AlbiLAB sensors (temperature, light, pH, etc.)
+- **Output Control**: Control LED rings, displays, and other AlbiLAB components
+- **Experiment Automation**: Automate scientific experiments and data collection
+- **Data Logging**: Record and analyze experimental data over time
 
 ### Modified Menu
 - **Hidden buttons**: Share/Shared, Remix, See Project Page
 - **Hidden sections**: My Stuff, Scratch Cat
 - **New buttons**:
-  - "Upload to AlbiLAB" - upload and run project
-  - "Load from AlbiLAB" - load saved project
+  - "Upload to AlbiLAB" - upload and run project on your station
+  - "Load from AlbiLAB" - load saved project from your station
   - Auto-save indicator
 
 ## 🏗️ Architecture
@@ -410,4 +439,4 @@ This project is licensed under the [MIT License](LICENSE).
 
 ---
 
-**Note**: This project is a modification of the official Scratch editor and is intended for use in the AlbiLAB ecosystem.
+**Note**: This project is a modification of the official Scratch editor specifically designed to enable programming of AlbiLAB scientific stations. It bridges the gap between visual programming education and hands-on scientific experimentation, making it perfect for children, families, and educators who want to combine coding with real-world science.

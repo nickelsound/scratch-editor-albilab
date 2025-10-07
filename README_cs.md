@@ -1,6 +1,27 @@
 # Scratch Editor AlbiLAB
 
-Modifikovaný Scratch editor s integrací do AlbiLAB ekosystému. Tento projekt poskytuje webové rozhraní pro vytváření a spouštění Scratch projektů s možností jejich ukládání a načítání.
+**Programujte svou AlbiLAB vědeckou stanici pomocí Scratch!** 🧪🔬
+
+Tento projekt rozšiřuje inovativní [AlbiLAB vědeckou stanici](https://www.albilab.cz) o možnosti programování přes Scratch. AlbiLAB je modulární vzdělávací sada, která kombinuje elektroniku, stavební kostky a laboratorní vybavení pro vytvoření kompletní vědecké pracovní stanice pro děti a rodiny.
+
+## Co je AlbiLAB?
+
+AlbiLAB je inovativní vědecká stanice, která obsahuje:
+- **Elektroniku**: Řídící deska, LED kroužky, barevný displej, vodiče, powerbanka, adaptér, USB kabel
+- **Stavebnici**: Magnetické kostky, kryty a redukce pro vnitřní vybavení, pokovené pásky, řezáček
+- **Laboratoř**: Zkumavky, střička, kádinka, pipeta, lupa, Petriho misky, pinzeta, pH papírky
+- **Pěstování**: Pěstební nádoby a substrát, keramzit, semínka Huseníčku rolního, vědecký deník
+
+## Co tento projekt přidává?
+
+Projekt Scratch Editor AlbiLAB vám umožňuje:
+- **Programovat svou AlbiLAB stanici** pomocí známého vizuálního programovacího jazyka Scratch
+- **Ovládat experimenty** a vědecká měření pomocí kódu
+- **Vytvářet interaktivní projekty**, které reagují na senzory a ovládají výstupy
+- **Ukládat a načítat projekty** přímo do/z vaší AlbiLAB stanice
+- **Učit se programování** při provádění skutečných vědeckých experimentů
+
+Perfektní pro děti, rodiče a pedagogy, kteří chtějí spojit praktickou vědu s výukou programování!
 
 ## 🚀 Rychlý start
 
@@ -39,16 +60,24 @@ Modifikovaný Scratch editor s integrací do AlbiLAB ekosystému. Tento projekt 
 
 ### Základní funkce
 - **Scratch Editor**: Plnohodnotný webový editor Scratch projektů
-- **Ukládání projektů**: Projekty se automaticky ukládají do AlbiLAB
-- **Načítání projektů**: Možnost načíst dříve uložené projekty
+- **AlbiLAB integrace**: Přímé připojení k vaší AlbiLAB vědecké stanici
+- **Ukládání projektů**: Projekty se automaticky ukládají do AlbiLAB stanice
+- **Načítání projektů**: Možnost načíst dříve uložené projekty z AlbiLAB
 - **Průběžné ukládání**: Automatické ukládání změn každých 30 sekund
+- **Real-time ovládání**: Ovládání AlbiLAB experimentů pomocí Scratch kódu
+
+### AlbiLAB specifické funkce
+- **Integrace senzorů**: Čtení dat z AlbiLAB senzorů (teplota, světlo, pH, atd.)
+- **Ovládání výstupů**: Ovládání LED kroužků, displejů a dalších AlbiLAB komponent
+- **Automatizace experimentů**: Automatizace vědeckých experimentů a sběru dat
+- **Záznam dat**: Zaznamenávání a analýza experimentálních dat v čase
 
 ### Modifikované menu
 - **Skryté tlačítka**: Share/Shared, Remix, See Project Page
 - **Skryté sekce**: My Stuff, Scratch Cat
 - **Nové tlačítka**:
-  - "Nahrát do AlbiLAB" - nahrání a spuštění projektu
-  - "Načíst z AlbiLAB" - načtení uloženého projektu
+  - "Nahrát do AlbiLAB" - nahrání a spuštění projektu na vaší stanici
+  - "Načíst z AlbiLAB" - načtení uloženého projektu z vaší stanice
   - Indikátor průběžného ukládání
 
 ## 🏗️ Architektura
@@ -408,4 +437,4 @@ Tento projekt je licencován pod [MIT License](LICENSE).
 
 ---
 
-**Poznámka**: Tento projekt je modifikací oficiálního Scratch editoru a je určen pro použití v AlbiLAB ekosystému.
+**Poznámka**: Tento projekt je modifikací oficiálního Scratch editoru speciálně navrženou pro umožnění programování AlbiLAB vědeckých stanic. Spojuje vizuální programovací vzdělávání s praktickými vědeckými experimenty, což je ideální pro děti, rodiny a pedagogy, kteří chtějí spojit programování se skutečnou vědou.
