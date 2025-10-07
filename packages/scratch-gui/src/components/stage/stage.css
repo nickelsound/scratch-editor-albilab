@@ -116,7 +116,7 @@ body .stage-bottom-wrapper {
     animation-fill-mode: forwards; /* Leave at 0 opacity after animation */
 }
 
-.green-flag-overlay-wrapper {
+body .green-flag-overlay-wrapper {
     width: 100%;
     height: 100%;
     display: flex;
