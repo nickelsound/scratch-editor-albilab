@@ -1,80 +1,82 @@
 # Scratch Editor AlbiLAB
 
-Modifikovaný Scratch editor s integrací do AlbiLAB ekosystému. Tento projekt poskytuje webové rozhraní pro vytváření a spouštění Scratch projektů s možností jejich ukládání a načítání.
+Modified Scratch editor with integration into the AlbiLAB ecosystem. This project provides a web interface for creating and running Scratch projects with the ability to save and load them.
 
-## 🚀 Rychlý start
+**🇨🇿 [Česká verze / Czech version](README_cs.md)**
 
-### Předpoklady
+## 🚀 Quick Start
 
-- **Docker** nebo **Podman** nainstalovaný v systému
-- **Docker Compose** nebo **Podman Compose** nainstalovaný
-- Minimálně 2GB volného místa na disku
-- Porty 3000 a 3001 dostupné v systému
+### Prerequisites
 
-### Spuštění
+- **Docker** or **Podman** installed in the system
+- **Docker Compose** or **Podman Compose** installed
+- At least 2GB of free disk space
+- Ports 3000 and 3001 available in the system
 
-1. **Naklonujte repository:**
+### Running the Application
+
+1. **Clone the repository:**
    ```bash
    git clone <repository-url>
    cd scratch-editor-albilab
    ```
 
-2. **Spusťte aplikaci:**
+2. **Start the application:**
    
-   **S Docker Compose:**
+   **With Docker Compose:**
    ```bash
    docker-compose up --build
    ```
    
-   **S Podman Compose:**
+   **With Podman Compose:**
    ```bash
    podman-compose up --build
    ```
 
-3. **Otevřete aplikaci v prohlížeči:**
+3. **Open the application in your browser:**
    - Scratch Editor: http://localhost:3000
    - Backend API: http://localhost:3001
 
-## 📋 Funkce
+## 📋 Features
 
-### Základní funkce
-- **Scratch Editor**: Plnohodnotný webový editor Scratch projektů
-- **Ukládání projektů**: Projekty se automaticky ukládají do AlbiLAB
-- **Načítání projektů**: Možnost načíst dříve uložené projekty
-- **Průběžné ukládání**: Automatické ukládání změn každých 30 sekund
+### Core Features
+- **Scratch Editor**: Full-featured web editor for Scratch projects
+- **Project Saving**: Projects are automatically saved to AlbiLAB
+- **Project Loading**: Ability to load previously saved projects
+- **Auto-save**: Automatic saving of changes every 30 seconds
 
-### Modifikované menu
-- **Skryté tlačítka**: Share/Shared, Remix, See Project Page
-- **Skryté sekce**: My Stuff, Scratch Cat
-- **Nové tlačítka**:
-  - "Nahrát do AlbiLAB" - nahrání a spuštění projektu
-  - "Načíst z AlbiLAB" - načtení uloženého projektu
-  - Indikátor průběžného ukládání
+### Modified Menu
+- **Hidden buttons**: Share/Shared, Remix, See Project Page
+- **Hidden sections**: My Stuff, Scratch Cat
+- **New buttons**:
+  - "Upload to AlbiLAB" - upload and run project
+  - "Load from AlbiLAB" - load saved project
+  - Auto-save indicator
 
-## 🏗️ Architektura
+## 🏗️ Architecture
 
-### Služby
+### Services
 
 1. **scratch-gui-app** (Port 3000)
-   - React frontend aplikace
+   - React frontend application
    - Scratch editor interface
-   - WebSocket připojení k backendu
+   - WebSocket connection to backend
 
 2. **scratch-backend-app** (Port 3001)
    - Node.js/Express backend server
-   - REST API pro správu projektů
-   - WebSocket server pro real-time komunikaci
-   - Automatické spouštění uložených projektů
+   - REST API for project management
+   - WebSocket server for real-time communication
+   - Automatic execution of saved projects
 
-### Datové svazky (Volumes)
+### Data Volumes
 
-- **scratch-uploads**: Trvalé uložení projektů a konfigurace
-  - `saved-project.json` - aktuálně uložený projekt
-  - `uploads/` - složka pro nahrávané soubory
+- **scratch-uploads**: Persistent storage for projects and configuration
+  - `saved-project.json` - currently saved project
+  - `uploads/` - folder for uploaded files
 
-## 🔧 Konfigurace
+## 🔧 Configuration
 
-### Environment proměnné
+### Environment Variables
 
 **scratch-gui-app:**
 ```yaml
@@ -87,31 +89,31 @@ PORT: 3001
 WEBSOCKET_PORT: 3002
 ```
 
-### Porty
+### Ports
 
-- **3000**: Frontend aplikace (Scratch Editor)
+- **3000**: Frontend application (Scratch Editor)
 - **3001**: Backend API
-- **3002**: WebSocket server (interní komunikace)
+- **3002**: WebSocket server (internal communication)
 
 ## 📡 API Endpoints
 
-### Projekty
-- `POST /api/start` - Spuštění nového projektu
-- `POST /api/stop` - Zastavení běžícího projektu
-- `GET /api/status` - Stav služby
-- `GET /api/logs` - Logy služby
+### Projects
+- `POST /api/start` - Start new project
+- `POST /api/stop` - Stop running project
+- `GET /api/status` - Service status
+- `GET /api/logs` - Service logs
 
-### Uložené projekty
-- `GET /api/saved-project` - Informace o uloženém projektu
-- `GET /api/saved-project/load` - Načtení dat projektu
-- `POST /api/saved-project/auto-save` - Automatické uložení
-- `DELETE /api/saved-project` - Smazání uloženého projektu
+### Saved Projects
+- `GET /api/saved-project` - Information about saved project
+- `GET /api/saved-project/load` - Load project data
+- `POST /api/saved-project/auto-save` - Auto-save
+- `DELETE /api/saved-project` - Delete saved project
 
-## 🛠️ Vývoj
+## 🛠️ Development
 
-### Lokální vývoj
+### Local Development
 
-1. **Nainstalujte závislosti:**
+1. **Install dependencies:**
    ```bash
    # Frontend
    cd packages/scratch-gui
@@ -122,7 +124,7 @@ WEBSOCKET_PORT: 3002
    npm install
    ```
 
-2. **Spusťte v development módu:**
+2. **Run in development mode:**
    ```bash
    # Frontend (port 3000)
    cd packages/scratch-gui
@@ -133,7 +135,7 @@ WEBSOCKET_PORT: 3002
    npm run dev
    ```
 
-### Rebuild kontejnerů
+### Rebuild Containers
 
 ```bash
 # Docker Compose
@@ -145,111 +147,205 @@ podman-compose down
 podman-compose up --build
 ```
 
-## 📁 Struktura projektu
+## 📁 Project Structure
 
 ```
 scratch-editor-albilab/
 ├── packages/
-│   ├── scratch-gui/                 # Frontend aplikace
+│   ├── scratch-gui/                 # Frontend application
 │   │   ├── src/
 │   │   │   ├── components/
-│   │   │   │   └── menu-bar/        # Modifikované menu komponenty
-│   │   │   ├── containers/          # Redux kontejnery
-│   │   │   └── lib/                 # Utility funkce
+│   │   │   │   └── menu-bar/        # Modified menu components
+│   │   │   ├── containers/          # Redux containers
+│   │   │   └── lib/                 # Utility functions
 │   │   └── Dockerfile
-│   └── scratch-backend/             # Backend aplikace
+│   └── scratch-backend/             # Backend application
 │       ├── src/
-│       │   ├── server.js            # Hlavní server
-│       │   └── startup.js           # Startup skripty
+│       │   ├── server.js            # Main server
+│       │   └── startup.js           # Startup scripts
 │       └── Dockerfile.backend
-├── docker-compose.yml               # Orchestrace služeb
+├── docker-compose.yml               # Service orchestration
 └── README.md
 ```
 
 ## 🔍 Troubleshooting
 
-### Časté problémy
+### Common Issues
 
-1. **Porty jsou obsazené:**
+1. **Ports are occupied:**
    ```bash
-   # Zkontrolujte obsazené porty
+   # Check occupied ports
    netstat -tulpn | grep :3000
    netstat -tulpn | grep :3001
    
-   # Zastavte konflikující služby nebo změňte porty v docker-compose.yml
+   # Stop conflicting services or change ports in docker-compose.yml
    ```
 
-2. **Kontejnery se nespustí:**
+2. **Containers won't start:**
    ```bash
-   # Zkontrolujte logy
+   # Check logs
    docker-compose logs
-   # nebo
+   # or
    podman-compose logs
    
-   # Zkuste rebuild
+   # Try rebuild
    docker-compose up --build --force-recreate
    ```
 
-3. **Projekty se neukládají:**
+3. **Projects won't save:**
    ```bash
-   # Zkontrolujte volume mounty
+   # Check volume mounts
    docker volume ls
    
-   # Zkontrolujte oprávnění složky uploads
+   # Check uploads folder permissions
    ls -la uploads/
    ```
 
-4. **WebSocket připojení selhává:**
-   - Zkontrolujte, že backend běží na portu 3001
-   - Ověřte firewall nastavení
-   - Zkontrolujte logy backendu pro chyby
+4. **WebSocket connection fails:**
+   - Check that backend is running on port 3001
+   - Verify firewall settings
+   - Check backend logs for errors
 
-### Logy
+### Logs
 
 ```bash
-# Všechny služby
+# All services
 docker-compose logs -f
 
-# Konkrétní služba
+# Specific service
 docker-compose logs -f scratch-gui-app
 docker-compose logs -f scratch-backend-app
 
-# Posledních 50 řádků
+# Last 50 lines
 docker-compose logs --tail=50
 ```
 
-## 🔄 Aktualizace
+## 🔄 Updates
 
-### Aktualizace kódu
+### Code Updates
 
-1. **Zastavte služby:**
+1. **Stop services:**
    ```bash
    docker-compose down
    ```
 
-2. **Aktualizujte kód:**
+2. **Update code:**
    ```bash
    git pull origin main
    ```
 
-3. **Restartujte s rebuild:**
+3. **Restart with rebuild:**
    ```bash
    docker-compose up --build
    ```
 
-### Zálohování dat
+### Data Backup
 
 ```bash
-# Zálohování uploads složky
+# Backup uploads folder
 docker run --rm -v scratch-editor-albilab_scratch-uploads:/data -v $(pwd):/backup alpine tar czf /backup/uploads-backup.tar.gz -C /data .
 
-# Obnovení zálohy
+# Restore backup
 docker run --rm -v scratch-editor-albilab_scratch-uploads:/data -v $(pwd):/backup alpine tar xzf /backup/uploads-backup.tar.gz -C /data
 ```
 
-## 🚀 Produkční nasazení
+## 🍓 ARM Processors (Raspberry Pi)
 
-### Doporučené nastavení
+### Building for ARM64
+
+For deployment on Raspberry Pi or other ARM processors, you need to build special container versions.
+
+#### Prerequisites for ARM build
+
+- **Podman** installed in the system
+- **Docker Compose** or **Podman Compose**
+- At least 4GB RAM for build process
+- Sufficient disk space (build may require 10GB+)
+
+#### Building ARM versions
+
+1. **Run ARM build script:**
+   ```bash
+   chmod +x build-arm.sh
+   ./build-arm.sh
+   ```
+
+2. **Result:**
+   - `scratch-gui-arm64.tar` - GUI container for ARM64
+   - `scratch-backend-arm64.tar` - Backend container for ARM64
+
+#### Deployment on Raspberry Pi
+
+1. **Transfer tar archives to Raspberry Pi:**
+   ```bash
+   scp scratch-gui-arm64.tar scratch-backend-arm64.tar pi@raspberry-pi-ip:~/
+   ```
+
+2. **On Raspberry Pi load images:**
+   ```bash
+   podman load -i scratch-gui-arm64.tar
+   podman load -i scratch-backend-arm64.tar
+   
+   # Retag according to docker-compose.yml
+   podman tag localhost/scratch-gui-temp:latest scratch-gui
+   podman tag localhost/scratch-backend-temp:latest scratch-backend
+   ```
+
+3. **Start the application:**
+   ```bash
+   podman-compose up -d
+   ```
+
+#### ARM specific configurations
+
+**Ports for ARM version:**
+- **8601**: Frontend application (instead of 3000)
+- **3001**: Backend API
+- **3002**: WebSocket server
+
+**Environment variables for ARM:**
+```yaml
+# scratch-gui-app (ARM)
+REACT_APP_BACKEND_URL: http://localhost:3001
+PORT: 8601
+
+# scratch-backend-app (ARM)
+PORT: 3001
+WEBSOCKET_PORT: 3002
+```
+
+#### ARM build troubleshooting
+
+1. **Build fails due to memory:**
+   ```bash
+   # Increase swap
+   sudo fallocate -l 2G /swapfile
+   sudo chmod 600 /swapfile
+   sudo mkswap /swapfile
+   sudo swapon /swapfile
+   ```
+
+2. **NPM timeout errors:**
+   ```bash
+   # Increase timeout before build
+   npm config set fetch-timeout 300000
+   npm config set fetch-retry-mintimeout 20000
+   ```
+
+3. **Podman build errors:**
+   ```bash
+   # Clean cache
+   podman system prune -a -f
+   npm cache clean --force
+   ```
+
+#### Complete Raspberry Pi setup
+
+For complete setup on Raspberry Pi with touchscreen see [README-RPI.md](README-RPI.md).
+
+## 🚀 Production Deployment
+
+### Recommended Settings
 
 1. **Reverse Proxy** (nginx/Apache):
    ```nginx
@@ -271,12 +367,12 @@ docker run --rm -v scratch-editor-albilab_scratch-uploads:/data -v $(pwd):/backu
    }
    ```
 
-2. **SSL certifikát** (Let's Encrypt):
+2. **SSL Certificate** (Let's Encrypt):
    ```bash
    certbot --nginx -d your-domain.com
    ```
 
-3. **Automatický restart** (systemd):
+3. **Auto-restart** (systemd):
    ```ini
    [Unit]
    Description=Scratch Editor AlbiLAB
@@ -296,22 +392,22 @@ docker run --rm -v scratch-editor-albilab_scratch-uploads:/data -v $(pwd):/backu
 ## 📝 Changelog
 
 ### v1.0.0
-- Základní Scratch editor s AlbiLAB integrací
-- Ukládání a načítání projektů
-- Průběžné ukládání
-- Modifikované menu (skryté tlačítka)
-- Docker/Podman Compose podpora
+- Basic Scratch editor with AlbiLAB integration
+- Project saving and loading
+- Auto-save functionality
+- Modified menu (hidden buttons)
+- Docker/Podman Compose support
 
-## 🤝 Podpora
+## 🤝 Support
 
-Pro technickou podporu nebo hlášení problémů:
-- Vytvořte issue v repository
-- Kontaktujte vývojový tým AlbiLAB
+For technical support or issue reporting:
+- Create an issue in the repository
+- Contact the AlbiLAB development team
 
-## 📄 Licence
+## 📄 License
 
-Tento projekt je licencován pod [MIT License](LICENSE).
+This project is licensed under the [MIT License](LICENSE).
 
 ---
 
-**Poznámka**: Tento projekt je modifikací oficiálního Scratch editoru a je určen pro použití v AlbiLAB ekosystému.
+**Note**: This project is a modification of the official Scratch editor and is intended for use in the AlbiLAB ecosystem.
