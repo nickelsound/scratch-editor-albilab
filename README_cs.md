@@ -30,12 +30,12 @@ Perfektní pro děti, rodiče a pedagogy, kteří chtějí spojit praktickou vě
 
 ## ⚠️ Důležité: Vyžaduje trvalý provoz
 
-**Toto řešení musí běžet trvale**, protože vytvořené Scratch programy fungují samostatně a ovládají pouze AlbiLAB API. Jakmile nahrajete projekt do AlbiLAB, běží autonomně na stanici a komunikuje s tímto backend službou pro vykonávání naprogramované logiky.
+**Toto řešení musí běžet trvale**, protože vytvořené Scratch programy běží na tomto backend službě a ovládají AlbiLAB stanici přes její API. Jakmile nahrajete projekt, běží na tomto backendu a komunikuje s AlbiLAB stanicí pro vykonávání naprogramované logiky.
 
-- **Backend musí běžet nepřetržitě**: AlbiLAB stanice komunikuje s backend API pro vykonávání Scratch programů
-- **Autonomní provoz**: Nahrané programy běží samostatně na AlbiLAB stanici
-- **Pouze API ovládání**: Scratch programy ovládají AlbiLAB pouze přes API, ne přímý přístup k hardwaru
-- **Real-time komunikace**: Trvalé připojení mezi AlbiLAB a backendem je nutné pro vykonávání programů
+- **Backend musí běžet nepřetržitě**: Tento backend služba spouští Scratch programy a komunikuje s AlbiLAB API
+- **Programy běží na backendu**: Nahrané programy se vykonávají na tomto backend službě, ne na AlbiLAB stanici
+- **API komunikace**: Tento backend volá AlbiLAB API pro ovládání hardwaru stanice
+- **Real-time komunikace**: Trvalé připojení mezi tímto backendem a AlbiLAB je nutné pro vykonávání programů
 
 ## 🚀 Rychlý start
 

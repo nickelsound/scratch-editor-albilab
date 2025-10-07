@@ -32,12 +32,12 @@ Perfect for children, parents, and educators who want to combine hands-on scienc
 
 ## ⚠️ Important: Continuous Operation Required
 
-**This solution must run continuously** because the created Scratch programs operate independently and only control the AlbiLAB API. Once you upload a project to AlbiLAB, it runs autonomously on the station and communicates with this backend service to execute the programmed logic.
+**This solution must run continuously** because the created Scratch programs run on this backend service and control the AlbiLAB station through its API. Once you upload a project, it runs on this backend and communicates with the AlbiLAB station to execute the programmed logic.
 
-- **Backend must stay running**: The AlbiLAB station communicates with the backend API to execute Scratch programs
-- **Autonomous operation**: Uploaded programs run independently on the AlbiLAB station
-- **API-only control**: Scratch programs only control AlbiLAB through the API, not direct hardware access
-- **Real-time communication**: Continuous connection between AlbiLAB and backend is required for program execution
+- **Backend must stay running**: This backend service runs the Scratch programs and communicates with AlbiLAB API
+- **Programs run on backend**: Uploaded programs execute on this backend service, not on the AlbiLAB station
+- **API communication**: This backend calls AlbiLAB API to control the station's hardware
+- **Real-time communication**: Continuous connection between this backend and AlbiLAB is required for program execution
 
 ## 🚀 Quick Start
 
