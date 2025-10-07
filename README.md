@@ -30,6 +30,15 @@ Perfect for children, parents, and educators who want to combine hands-on scienc
 </a>
 *Screenshot of the Scratch Editor AlbiLAB interface showing the modified menu with AlbiLAB integration buttons (click to view full size)*
 
+## ⚠️ Important: Continuous Operation Required
+
+**This solution must run continuously** because the created Scratch programs operate independently and only control the AlbiLAB API. Once you upload a project to AlbiLAB, it runs autonomously on the station and communicates with this backend service to execute the programmed logic.
+
+- **Backend must stay running**: The AlbiLAB station communicates with the backend API to execute Scratch programs
+- **Autonomous operation**: Uploaded programs run independently on the AlbiLAB station
+- **API-only control**: Scratch programs only control AlbiLAB through the API, not direct hardware access
+- **Real-time communication**: Continuous connection between AlbiLAB and backend is required for program execution
+
 ## 🚀 Quick Start
 
 ### Prerequisites

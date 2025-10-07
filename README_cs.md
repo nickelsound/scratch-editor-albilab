@@ -28,6 +28,15 @@ Perfektní pro děti, rodiče a pedagogy, kteří chtějí spojit praktickou vě
 </a>
 *Screenshot rozhraní Scratch Editor AlbiLAB s modifikovaným menu a tlačítky pro integraci s AlbiLAB (klikněte pro plné rozlišení)*
 
+## ⚠️ Důležité: Vyžaduje trvalý provoz
+
+**Toto řešení musí běžet trvale**, protože vytvořené Scratch programy fungují samostatně a ovládají pouze AlbiLAB API. Jakmile nahrajete projekt do AlbiLAB, běží autonomně na stanici a komunikuje s tímto backend službou pro vykonávání naprogramované logiky.
+
+- **Backend musí běžet nepřetržitě**: AlbiLAB stanice komunikuje s backend API pro vykonávání Scratch programů
+- **Autonomní provoz**: Nahrané programy běží samostatně na AlbiLAB stanici
+- **Pouze API ovládání**: Scratch programy ovládají AlbiLAB pouze přes API, ne přímý přístup k hardwaru
+- **Real-time komunikace**: Trvalé připojení mezi AlbiLAB a backendem je nutné pro vykonávání programů
+
 ## 🚀 Rychlý start
 
 ### Předpoklady
