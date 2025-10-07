@@ -23,6 +23,11 @@ Projekt Scratch Editor AlbiLAB vám umožňuje:
 
 Perfektní pro děti, rodiče a pedagogy, kteří chtějí spojit praktickou vědu s výukou programování!
 
+<a href="docs/albilab-scratch.png" target="_blank">
+  <img src="docs/albilab-scratch.png" alt="AlbiLAB Scratch Editor" width="600" style="max-width: 100%; height: auto;">
+</a>
+*Screenshot rozhraní Scratch Editor AlbiLAB s modifikovaným menu a tlačítky pro integraci s AlbiLAB (klikněte pro plné rozlišení)*
+
 ## 🚀 Rychlý start
 
 ### Předpoklady

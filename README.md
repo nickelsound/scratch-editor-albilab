@@ -1,5 +1,7 @@
 # Scratch Editor AlbiLAB
 
+**🇨🇿 [Česká verze / Czech version](README_cs.md)**
+
 **Program your AlbiLAB scientific station with Scratch!** 🧪🔬
 
 This project extends the innovative [AlbiLAB scientific station](https://www.albilab.cz) with programming capabilities through Scratch. AlbiLAB is a modular educational kit that combines electronics, construction blocks, and laboratory equipment to create a complete scientific workstation for children and families.
@@ -23,7 +25,10 @@ This Scratch Editor AlbiLAB project allows you to:
 
 Perfect for children, parents, and educators who want to combine hands-on science with programming education!
 
-**🇨🇿 [Česká verze / Czech version](README_cs.md)**
+<a href="docs/albilab-scratch.png" target="_blank">
+  <img src="docs/albilab-scratch.png" alt="AlbiLAB Scratch Editor" width="600" style="max-width: 100%; height: auto;">
+</a>
+*Screenshot of the Scratch Editor AlbiLAB interface showing the modified menu with AlbiLAB integration buttons (click to view full size)*
 
 ## 🚀 Quick Start
 
