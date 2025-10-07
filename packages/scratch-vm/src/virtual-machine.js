@@ -34,6 +34,7 @@ const CORE_EXTENSIONS = [
     // 'control',
     // 'sensing',
     // 'operators',
+    'albilab',
     // 'variables',
     // 'myBlocks'
 ];

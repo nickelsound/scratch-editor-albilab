@@ -7,6 +7,7 @@ import VM from '@scratch/scratch-vm';
 import {injectIntl, intlShape} from 'react-intl';
 
 import ErrorBoundaryHOC from '../lib/error-boundary-hoc.jsx';
+import AutoLoadHOC from '../lib/auto-load-hoc.jsx';
 import {
     getIsError,
     getIsShowingProject
@@ -208,6 +209,7 @@ const WrappedGui = compose(
     FontLoaderHOC,
     QueryParserHOC,
     ProjectFetcherHOC,
+    AutoLoadHOC,
     TitledHOC,
     ProjectSaverHOC,
     vmListenerHOC,

@@ -1,51 +1,413 @@
-# scratch-editor: The Scratch Editor Monorepo
+# Scratch Editor AlbiLAB
 
-If you'd like to use Scratch, please visit the [Scratch website](https://scratch.mit.edu/). You can build your own
-Scratch project by pressing "Create" on that website or by visiting <https://scratch.mit.edu/projects/editor/>.
+Modified Scratch editor with integration into the AlbiLAB ecosystem. This project provides a web interface for creating and running Scratch projects with the ability to save and load them.
 
-This is a source code repository for the packages that make up the Scratch editor and a few additional support
-packages. Use this if you'd like to learn about how the Scratch editor works or to contribute to its development.
+**🇨🇿 [Česká verze / Czech version](README_cs.md)**
 
-## What's in this repository?
+## 🚀 Quick Start
 
-The `packages` directory in this repository contains:
+### Prerequisites
 
-- `scratch-gui` provides the buttons, menus, and other elements that you interact with when creating and editing a
-  project. It's also the "glue" that brings most of the other modules together at runtime.
-- `scratch-render` draws backdrops, sprites, and clones on the stage.
-- `scratch-svg-renderer` processes SVG (vector) images for use with Scratch projects.
-- `scratch-vm` is the virtual machine that runs Scratch projects.
+- **Docker** or **Podman** installed in the system
+- **Docker Compose** or **Podman Compose** installed
+- At least 2GB of free disk space
+- Ports 3000 and 3001 available in the system
 
-_Please add to this list as more packages are migrated to the monorepo._
+### Running the Application
 
-Each package has its own `README.md` file with more information about that package.
+1. **Clone the repository:**
+   ```bash
+   git clone <repository-url>
+   cd scratch-editor-albilab
+   ```
 
-## Monorepo migration
+2. **Start the application:**
+   
+   **With Docker Compose:**
+   ```bash
+   docker-compose up --build
+   ```
+   
+   **With Podman Compose:**
+   ```bash
+   podman-compose up --build
+   ```
 
-### What's going on?
+3. **Open the application in your browser:**
+   - Scratch Editor: http://localhost:3000
+   - Backend API: http://localhost:3001
 
-We're migrating the Scratch editor packages into this monorepo. This will allow us to manage all the packages that
-make up the Scratch editor in one place, making  it easier to manage dependencies and make changes that affect
-multiple packages.
+## 📋 Features
 
-### Why are there only a few packages in this repo?
+### Core Features
+- **Scratch Editor**: Full-featured web editor for Scratch projects
+- **Project Saving**: Projects are automatically saved to AlbiLAB
+- **Project Loading**: Ability to load previously saved projects
+- **Auto-save**: Automatic saving of changes every 30 seconds
 
-We're migrating packages in stages. The current plan, which is subject to change, has us migrating repositories in
-four batches. We plan to complete the migration within 2025.
+### Modified Menu
+- **Hidden buttons**: Share/Shared, Remix, See Project Page
+- **Hidden sections**: My Stuff, Scratch Cat
+- **New buttons**:
+  - "Upload to AlbiLAB" - upload and run project
+  - "Load from AlbiLAB" - load saved project
+  - Auto-save indicator
 
-### What will happen to the existing repositories?
+## 🏗️ Architecture
 
-The existing repositories will be archived and made read-only. Those repositories contain valuable work and
-information, including but not limited to issues and pull requests. We plan to keep that information available for
-reference, and to selectively migrate it to this new repository.
+### Services
 
-## Thank you!
+1. **scratch-gui-app** (Port 3000)
+   - React frontend application
+   - Scratch editor interface
+   - WebSocket connection to backend
 
-Scratch would not be what it is today without help from the global community of Scratchers and open-source
-contributors. Thank you for your contributions and support. _[Scratch on!](https://scratch.mit.edu/projects/65347738/fullscreen/)_
+2. **scratch-backend-app** (Port 3001)
+   - Node.js/Express backend server
+   - REST API for project management
+   - WebSocket server for real-time communication
+   - Automatic execution of saved projects
 
-## Donate
+### Data Volumes
 
-We provide [Scratch](https://scratch.mit.edu) free of charge, and want to keep it that way! Please consider making a
-[donation](https://secure.donationpay.org/scratchfoundation/) to support our continued engineering, design, community,
-and resource development efforts. Donations of any size are appreciated. Thank you!
+- **scratch-uploads**: Persistent storage for projects and configuration
+  - `saved-project.json` - currently saved project
+  - `uploads/` - folder for uploaded files
+
+## 🔧 Configuration
+
+### Environment Variables
+
+**scratch-gui-app:**
+```yaml
+REACT_APP_BACKEND_URL: http://localhost:3001
+```
+
+**scratch-backend-app:**
+```yaml
+PORT: 3001
+WEBSOCKET_PORT: 3002
+```
+
+### Ports
+
+- **3000**: Frontend application (Scratch Editor)
+- **3001**: Backend API
+- **3002**: WebSocket server (internal communication)
+
+## 📡 API Endpoints
+
+### Projects
+- `POST /api/start` - Start new project
+- `POST /api/stop` - Stop running project
+- `GET /api/status` - Service status
+- `GET /api/logs` - Service logs
+
+### Saved Projects
+- `GET /api/saved-project` - Information about saved project
+- `GET /api/saved-project/load` - Load project data
+- `POST /api/saved-project/auto-save` - Auto-save
+- `DELETE /api/saved-project` - Delete saved project
+
+## 🛠️ Development
+
+### Local Development
+
+1. **Install dependencies:**
+   ```bash
+   # Frontend
+   cd packages/scratch-gui
+   npm install
+   
+   # Backend
+   cd packages/scratch-backend
+   npm install
+   ```
+
+2. **Run in development mode:**
+   ```bash
+   # Frontend (port 3000)
+   cd packages/scratch-gui
+   npm start
+   
+   # Backend (port 3001)
+   cd packages/scratch-backend
+   npm run dev
+   ```
+
+### Rebuild Containers
+
+```bash
+# Docker Compose
+docker-compose down
+docker-compose up --build
+
+# Podman Compose
+podman-compose down
+podman-compose up --build
+```
+
+## 📁 Project Structure
+
+```
+scratch-editor-albilab/
+├── packages/
+│   ├── scratch-gui/                 # Frontend application
+│   │   ├── src/
+│   │   │   ├── components/
+│   │   │   │   └── menu-bar/        # Modified menu components
+│   │   │   ├── containers/          # Redux containers
+│   │   │   └── lib/                 # Utility functions
+│   │   └── Dockerfile
+│   └── scratch-backend/             # Backend application
+│       ├── src/
+│       │   ├── server.js            # Main server
+│       │   └── startup.js           # Startup scripts
+│       └── Dockerfile.backend
+├── docker-compose.yml               # Service orchestration
+└── README.md
+```
+
+## 🔍 Troubleshooting
+
+### Common Issues
+
+1. **Ports are occupied:**
+   ```bash
+   # Check occupied ports
+   netstat -tulpn | grep :3000
+   netstat -tulpn | grep :3001
+   
+   # Stop conflicting services or change ports in docker-compose.yml
+   ```
+
+2. **Containers won't start:**
+   ```bash
+   # Check logs
+   docker-compose logs
+   # or
+   podman-compose logs
+   
+   # Try rebuild
+   docker-compose up --build --force-recreate
+   ```
+
+3. **Projects won't save:**
+   ```bash
+   # Check volume mounts
+   docker volume ls
+   
+   # Check uploads folder permissions
+   ls -la uploads/
+   ```
+
+4. **WebSocket connection fails:**
+   - Check that backend is running on port 3001
+   - Verify firewall settings
+   - Check backend logs for errors
+
+### Logs
+
+```bash
+# All services
+docker-compose logs -f
+
+# Specific service
+docker-compose logs -f scratch-gui-app
+docker-compose logs -f scratch-backend-app
+
+# Last 50 lines
+docker-compose logs --tail=50
+```
+
+## 🔄 Updates
+
+### Code Updates
+
+1. **Stop services:**
+   ```bash
+   docker-compose down
+   ```
+
+2. **Update code:**
+   ```bash
+   git pull origin main
+   ```
+
+3. **Restart with rebuild:**
+   ```bash
+   docker-compose up --build
+   ```
+
+### Data Backup
+
+```bash
+# Backup uploads folder
+docker run --rm -v scratch-editor-albilab_scratch-uploads:/data -v $(pwd):/backup alpine tar czf /backup/uploads-backup.tar.gz -C /data .
+
+# Restore backup
+docker run --rm -v scratch-editor-albilab_scratch-uploads:/data -v $(pwd):/backup alpine tar xzf /backup/uploads-backup.tar.gz -C /data
+```
+
+## 🍓 ARM Processors (Raspberry Pi)
+
+### Building for ARM64
+
+For deployment on Raspberry Pi or other ARM processors, you need to build special container versions.
+
+#### Prerequisites for ARM build
+
+- **Podman** installed in the system
+- **Docker Compose** or **Podman Compose**
+- At least 4GB RAM for build process
+- Sufficient disk space (build may require 10GB+)
+
+#### Building ARM versions
+
+1. **Run ARM build script:**
+   ```bash
+   chmod +x build-arm.sh
+   ./build-arm.sh
+   ```
+
+2. **Result:**
+   - `scratch-gui-arm64.tar` - GUI container for ARM64
+   - `scratch-backend-arm64.tar` - Backend container for ARM64
+
+#### Deployment on Raspberry Pi
+
+1. **Transfer tar archives to Raspberry Pi:**
+   ```bash
+   scp scratch-gui-arm64.tar scratch-backend-arm64.tar pi@raspberry-pi-ip:~/
+   ```
+
+2. **On Raspberry Pi load images:**
+   ```bash
+   podman load -i scratch-gui-arm64.tar
+   podman load -i scratch-backend-arm64.tar
+   
+   # Retag according to docker-compose.yml
+   podman tag localhost/scratch-gui-temp:latest scratch-gui
+   podman tag localhost/scratch-backend-temp:latest scratch-backend
+   ```
+
+3. **Start the application:**
+   ```bash
+   podman-compose up -d
+   ```
+
+#### ARM specific configurations
+
+**Ports for ARM version:**
+- **8601**: Frontend application (instead of 3000)
+- **3001**: Backend API
+- **3002**: WebSocket server
+
+**Environment variables for ARM:**
+```yaml
+# scratch-gui-app (ARM)
+REACT_APP_BACKEND_URL: http://localhost:3001
+PORT: 8601
+
+# scratch-backend-app (ARM)
+PORT: 3001
+WEBSOCKET_PORT: 3002
+```
+
+#### ARM build troubleshooting
+
+1. **Build fails due to memory:**
+   ```bash
+   # Increase swap
+   sudo fallocate -l 2G /swapfile
+   sudo chmod 600 /swapfile
+   sudo mkswap /swapfile
+   sudo swapon /swapfile
+   ```
+
+2. **NPM timeout errors:**
+   ```bash
+   # Increase timeout before build
+   npm config set fetch-timeout 300000
+   npm config set fetch-retry-mintimeout 20000
+   ```
+
+3. **Podman build errors:**
+   ```bash
+   # Clean cache
+   podman system prune -a -f
+   npm cache clean --force
+   ```
+
+#### Complete Raspberry Pi setup
+
+For complete setup on Raspberry Pi with touchscreen see [README-RPI.md](README-RPI.md).
+
+## 🚀 Production Deployment
+
+### Recommended Settings
+
+1. **Reverse Proxy** (nginx/Apache):
+   ```nginx
+   server {
+       listen 80;
+       server_name your-domain.com;
+       
+       location / {
+           proxy_pass http://localhost:3000;
+           proxy_set_header Host $host;
+           proxy_set_header X-Real-IP $remote_addr;
+       }
+       
+       location /api/ {
+           proxy_pass http://localhost:3001;
+           proxy_set_header Host $host;
+           proxy_set_header X-Real-IP $remote_addr;
+       }
+   }
+   ```
+
+2. **SSL Certificate** (Let's Encrypt):
+   ```bash
+   certbot --nginx -d your-domain.com
+   ```
+
+3. **Auto-restart** (systemd):
+   ```ini
+   [Unit]
+   Description=Scratch Editor AlbiLAB
+   After=docker.service
+   
+   [Service]
+   Type=oneshot
+   RemainAfterExit=yes
+   WorkingDirectory=/path/to/scratch-editor-albilab
+   ExecStart=/usr/bin/docker-compose up -d
+   ExecStop=/usr/bin/docker-compose down
+   
+   [Install]
+   WantedBy=multi-user.target
+   ```
+
+## 📝 Changelog
+
+### v1.0.0
+- Basic Scratch editor with AlbiLAB integration
+- Project saving and loading
+- Auto-save functionality
+- Modified menu (hidden buttons)
+- Docker/Podman Compose support
+
+## 🤝 Support
+
+For technical support or issue reporting:
+- Create an issue in the repository
+- Contact the AlbiLAB development team
+
+## 📄 License
+
+This project is licensed under the [MIT License](LICENSE).
+
+---
+
+**Note**: This project is a modification of the official Scratch editor and is intended for use in the AlbiLAB ecosystem.

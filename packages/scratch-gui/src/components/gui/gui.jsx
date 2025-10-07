@@ -30,6 +30,7 @@ import Alerts from '../../containers/alerts.jsx';
 import DragLayer from '../../containers/drag-layer.jsx';
 import ConnectionModal from '../../containers/connection-modal.jsx';
 import TelemetryModal from '../telemetry-modal/telemetry-modal.jsx';
+import AutoSaveManager from '../../containers/auto-save-manager.jsx';
 
 import layout, {STAGE_SIZE_MODES} from '../../lib/layout-constants';
 import {resolveStageSize} from '../../lib/screen-utils';
@@ -419,6 +420,7 @@ const GUIComponent = props => {
                     </Box>
                 </Box>
                 <DragLayer />
+                <AutoSaveManager />
             </Box>
         );
     }}</MediaQuery>);

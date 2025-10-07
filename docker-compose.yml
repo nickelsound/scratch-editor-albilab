@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  # Scratch GUI aplikace
+  scratch-gui:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      platforms:
+        - linux/amd64
+        - linux/arm64
+    image: scratch-gui
+    container_name: scratch-gui-app
+    ports:
+      - "8601:8601"
+    environment:
+      - NODE_ENV=production
+      - PORT=8601
+    # Odstraněny development volumes pro produkční režim
+    restart: unless-stopped
+    # depends_on:
+    #   - scratch-backend-app
+
+  # Backend server pro trvalý běh projektů
+  scratch-backend-app:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+      platforms:
+        - linux/amd64
+        - linux/arm64
+    image: scratch-backend
+    container_name: scratch-backend-app
+    ports:
+      - "3001:3001"
+      - "3002:3002"
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+    volumes:
+      - ./packages/scratch-backend/src:/app/src
+      - ./uploads:/app/uploads
+    restart: unless-stopped
+volumes:
+  node_modules:
+    driver: local
