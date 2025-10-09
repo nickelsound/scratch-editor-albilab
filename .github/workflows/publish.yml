@@ -112,12 +112,7 @@ jobs:
 
       - name: Publish scratch-gui-standalone
         run: |
-          jq '
-            .name = "@scratch/scratch-gui-standalone" |
-            del(.peerDependencies) |
-            .exports."." = .exports."./standalone" |
-            del(.exports."./standalone")
-          ' ./packages/scratch-gui/package.json | npx sponge ./packages/scratch-gui/package.json
+          bash ./scripts/prepare-standalone-gui.sh
 
           npm --workspace=@scratch/scratch-gui-standalone run clean && npm --workspace=@scratch/scratch-gui-standalone run build:dist-standalone
           npm publish --access=public --tag="${{steps.npm_tag.outputs.npm_tag}}" --workspace=@scratch/scratch-gui-standalone
