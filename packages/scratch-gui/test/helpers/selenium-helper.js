@@ -153,15 +153,15 @@ class SeleniumHelper {
      */
     get scope () {
         return {
-            blocksTab: "*[@id='react-tabs-1']",
-            costumesTab: "*[@id='react-tabs-3']",
+            blocksTab: "*[@id='panel:r0:0']",
+            costumesTab: "*[@id='panel:r0:1']",
             modal: '*[contains(concat(" ", @class, " "), " ReactModalPortal ")]',
             reportedValue: '*[contains(concat(" ", @class, " "), " blocklyDropDownContent ")]',
-            soundsTab: "*[@id='react-tabs-5']",
-            spriteTile: '*[contains(concat(" ", @class, " "), " react-contextmenu-wrapper ")]',
+            soundsTab: "*[@id='panel:r0:2']",
+            spriteTile: '*[contains(concat(" ", @class), " sprite-selector-item")]',
             menuBar: '*[contains(concat(" ", @class), " menu-bar_menu-bar_")]',
             monitors: '*[contains(concat(" ", @class), " stage_monitor-wrapper_")]',
-            contextMenu: '*[contains(concat(" ", @class, " "), " react-contextmenu ")]'
+            contextMenu: '*[contains(concat(" ", @class), " context-menu")]'
         };
     }
 

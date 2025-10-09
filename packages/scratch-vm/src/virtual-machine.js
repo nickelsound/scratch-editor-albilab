@@ -147,6 +147,9 @@ class VirtualMachine extends EventEmitter {
         this.runtime.on(Runtime.MIC_LISTENING, listening => {
             this.emit(Runtime.MIC_LISTENING, listening);
         });
+        this.runtime.on(Runtime.EXTENSION_DATA_LOADING, loading => {
+            this.emit(Runtime.EXTENSION_DATA_LOADING, loading);
+        });
         this.runtime.on(Runtime.RUNTIME_STARTED, () => {
             this.emit(Runtime.RUNTIME_STARTED);
         });
@@ -794,7 +797,7 @@ class VirtualMachine extends EventEmitter {
      * @return {AudioBuffer} the sound's audio buffer.
      */
     getSoundBuffer (soundIndex) {
-        const id = this.editingTarget.sprite.sounds[soundIndex].soundId;
+        const id = this.editingTarget.sprite.sounds[soundIndex]?.soundId;
         if (id && this.runtime && this.runtime.audioEngine) {
             return this.editingTarget.sprite.soundBank.getSoundPlayer(id).buffer;
         }

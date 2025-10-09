@@ -766,6 +766,34 @@ class RenderedTarget extends Target {
     }
 
     /**
+     * Return whether drawable is touching a rectangle.
+     *
+     * @param {number} left - The left X coordinate of the rectangle.
+     * @param {number} top - The top Y coordinate of the rectangle.
+     * @param {number} right - The right X coordinate of the rectangle.
+     * @param {number} bottom - The bottom Y coordinate of the rectangle.
+     * @returns {boolean} True if the rendered target is touching the rectangle.
+     */
+    isTouchingRect (left, top, right, bottom) {
+        if (this.renderer) {
+            return this.renderer.drawableTouchingScratchRect(this.drawableID, left, top, right, bottom);
+        }
+        return false;
+    }
+
+    /** Return whether a drawable is touching a scratch point.
+     * @param {number} x - X coordinate of test point
+     * @param {number} y  - Y coordinate of test point
+     * @return {boolean} True if the rendered target is touching a scratch point.
+     */
+    isTouchingScratchPoint (x, y) {
+        if (this.renderer) {
+            return this.renderer.drawableTouchingScratchPoint(this.drawableID, x, y);
+        }
+        return false;
+    }
+
+    /**
      * Return whether touching a stage edge.
      * @return {boolean} True iff the rendered target is touching the stage edge.
      */
