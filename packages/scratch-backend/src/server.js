@@ -64,12 +64,11 @@ function getAllRunningServices() {
 // Kontrola, zda je služba nasazena (uložena v AlbiLAB)
 async function isProjectDeployed(projectName) {
     try {
-        // Zkontroluj, zda je projekt uložen v AlbiLAB (saved-project.json)
-        if (await fs.pathExists(SAVED_PROJECT_PATH)) {
-            const savedProject = await fs.readJson(SAVED_PROJECT_PATH);
-            return savedProject.projectName === projectName;
-        }
-        return false;
+        // Zkontroluj, zda je projekt uložen v AlbiLAB (deployed-projects adresář)
+        const deployedProjectsDir = path.join('/app', 'uploads', 'deployed-projects');
+        const safeFileName = projectName.replace(/[^a-zA-Z0-9_-]/g, '_') + '.json';
+        const deployedProjectPath = path.join(deployedProjectsDir, safeFileName);
+        return await fs.pathExists(deployedProjectPath);
     } catch (error) {
         log(`Chyba při kontrole nasazení projektu ${projectName}: ${error.message}`, 'error');
         return false;
@@ -94,8 +93,11 @@ async function saveProject(projectData, projectName, isAutoSave = false) {
             const safeFileName = projectName.replace(/[^a-zA-Z0-9_-]/g, '_') + '.json';
             filePath = path.join(AUTO_SAVE_DIR, safeFileName);
         } else {
-            // Pro AlbiLAB projekty použij původní soubor
-            filePath = SAVED_PROJECT_PATH;
+            // Pro nasazené projekty vytvoř adresář deployed-projects
+            const deployedProjectsDir = path.join('/app', 'uploads', 'deployed-projects');
+            await fs.ensureDir(deployedProjectsDir);
+            const safeFileName = projectName.replace(/[^a-zA-Z0-9_-]/g, '_') + '.json';
+            filePath = path.join(deployedProjectsDir, safeFileName);
         }
         
         await fs.writeFile(filePath, JSON.stringify(projectInfo, null, 2));
