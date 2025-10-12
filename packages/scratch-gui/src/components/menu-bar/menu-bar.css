@@ -376,6 +376,12 @@
     border-bottom: 1px solid $motion-primary;
 }
 
+.autoSaveManagerHeaderActions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
 .autoSaveManagerHeader h3 {
     margin: 0;
     font-size: 1.25rem;
@@ -452,6 +458,31 @@
 .autoSaveManagerItemTime {
     font-size: 0.875rem;
     color: $ui-black-transparent;
+}
+
+.autoSaveManagerItemStatus {
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.25rem 0.5rem;
+    border-radius: 12px;
+    margin-top: 0.25rem;
+    display: inline-block;
+}
+
+.autoSaveManagerStatusRunning {
+    background-color: $motion-primary;
+    color: $ui-white;
+}
+
+.autoSaveManagerStatusStopped {
+    background-color: $ui-black-transparent;
+    color: $ui-white;
+}
+
+.autoSaveManagerStatusNotDeployed {
+    background-color: $ui-tertiary;
+    color: $text-primary;
+    border: 1px solid $ui-black-transparent;
 }
 
 .autoSaveManagerItemActions {

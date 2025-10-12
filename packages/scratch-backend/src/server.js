@@ -21,14 +21,9 @@ const upload = multer({
     limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
 });
 
-// Globální stav služby
-let currentService = null;
-let serviceStatus = {
-    running: false,
-    projectName: null,
-    startTime: null,
-    logs: []
-};
+// Globální stav služeb - podpora pro více paralelních služeb
+let runningServices = new Map(); // Map<projectName, serviceInfo>
+let serviceLogs = [];
 
 // Cesta k uloženému projektu - ukládáme do uploads volume, které je trvalé
 // V Docker kontejneru je process.cwd() /app/packages/scratch-backend, ale uploads je mapováno na /app/uploads
@@ -45,6 +40,40 @@ function broadcast(data) {
             client.send(JSON.stringify(data));
         }
     });
+}
+
+// Získání informací o službě
+function getServiceInfo(projectName) {
+    return runningServices.get(projectName);
+}
+
+// Získání seznamu všech běžících služeb
+function getAllRunningServices() {
+    const services = [];
+    for (const [projectName, serviceInfo] of runningServices) {
+        services.push({
+            projectName,
+            isRunning: true,
+            startTime: serviceInfo.startTime,
+            uptime: Date.now() - serviceInfo.startTime.getTime()
+        });
+    }
+    return services;
+}
+
+// Kontrola, zda je služba nasazena (uložena v AlbiLAB)
+async function isProjectDeployed(projectName) {
+    try {
+        // Zkontroluj, zda je projekt uložen v AlbiLAB (saved-project.json)
+        if (await fs.pathExists(SAVED_PROJECT_PATH)) {
+            const savedProject = await fs.readJson(SAVED_PROJECT_PATH);
+            return savedProject.projectName === projectName;
+        }
+        return false;
+    } catch (error) {
+        log(`Chyba při kontrole nasazení projektu ${projectName}: ${error.message}`, 'error');
+        return false;
+    }
 }
 
 // Uložení projektu do trvalého úložiště
@@ -195,11 +224,11 @@ function log(message, type = 'info', details = null) {
     }
     
     const logEntry = { timestamp, message, type, details: safeDetails };
-    serviceStatus.logs.push(logEntry);
+    serviceLogs.push(logEntry);
     
     // Udržuj pouze posledních 100 logů
-    if (serviceStatus.logs.length > 100) {
-        serviceStatus.logs = serviceStatus.logs.slice(-100);
+    if (serviceLogs.length > 100) {
+        serviceLogs = serviceLogs.slice(-100);
     }
     
     console.log(`[${timestamp}] ${type.toUpperCase()}: ${message}`);
@@ -213,122 +242,126 @@ function log(message, type = 'info', details = null) {
     broadcast({ type: 'log', data: logEntry });
 }
 
-// Zastavení aktuální služby
-async function stopCurrentService() {
-    if (currentService) {
+// Zastavení konkrétní služby
+async function stopService(projectName) {
+    const serviceInfo = runningServices.get(projectName);
+    if (serviceInfo) {
         try {
-            log('Zastavuji aktuální službu...', 'info');
-            currentService.vm.stopAll();
-            currentService.vm.quit();
-            currentService = null;
+            log(`Zastavuji službu: ${projectName}`, 'info');
+            serviceInfo.vm.stopAll();
+            serviceInfo.vm.quit();
+            runningServices.delete(projectName);
             
-            serviceStatus.running = false;
-            serviceStatus.projectName = null;
-            serviceStatus.startTime = null;
-            
-            log('Služba byla zastavena', 'success');
-            broadcast({ type: 'serviceStopped' });
+            log(`Služba ${projectName} byla zastavena`, 'success');
+            broadcast({ type: 'serviceStopped', data: { projectName } });
+            return true;
         } catch (error) {
-            log(`Chyba při zastavování služby: ${error.message}`, 'error');
+            log(`Chyba při zastavování služby ${projectName}: ${error.message}`, 'error');
+            return false;
         }
+    }
+    return false;
+}
+
+// Zastavení všech služeb
+async function stopAllServices() {
+    const projectNames = Array.from(runningServices.keys());
+    for (const projectName of projectNames) {
+        await stopService(projectName);
     }
 }
 
 // Spuštění nové služby
 async function startService(projectData, projectName) {
     try {
-        // Zastav aktuální službu
-        await stopCurrentService();
+        // Pokud služba už běží, zastav ji
+        if (runningServices.has(projectName)) {
+            await stopService(projectName);
+        }
         
-        log(`Spouštím novou službu: ${projectName}`, 'info', { 
+        log(`Spouštím službu: ${projectName}`, 'info', { 
             projectName, 
             projectDataSize: JSON.stringify(projectData).length,
-            spritesCount: projectData.targets ? projectData.targets.length : 0
+            spritesCount: projectData.targets ? projectData.targets.length : 0,
+            runningServicesCount: runningServices.size
         });
         
         // Vytvoř novou VM instanci
         const vm = new VirtualMachine();
-        log('Virtual Machine instance vytvořena', 'info');
+        log(`Virtual Machine instance vytvořena pro ${projectName}`, 'info');
         
         // Připoj AlbiLAB extension
-        log('Načítám AlbiLAB extension...', 'info');
+        log(`Načítám AlbiLAB extension pro ${projectName}...`, 'info');
         await vm.extensionManager.loadExtensionURL('albilab');
-        log('AlbiLAB extension úspěšně načtena', 'success');
+        log(`AlbiLAB extension úspěšně načtena pro ${projectName}`, 'success');
         
         // Spusť VM
         vm.start();
-        log('Virtual Machine spuštěna', 'info');
+        log(`Virtual Machine spuštěna pro ${projectName}`, 'info');
         
         // Načti projekt
-        log('Načítám projekt do VM...', 'info');
+        log(`Načítám projekt do VM pro ${projectName}...`, 'info');
         await vm.loadProject(projectData);
-        log('Projekt úspěšně načten do VM', 'success');
+        log(`Projekt úspěšně načten do VM pro ${projectName}`, 'success');
         
         // Spusť projekt
-        log('Spouštím projekt (green flag)...', 'info');
+        log(`Spouštím projekt (green flag) pro ${projectName}...`, 'info');
         vm.greenFlag();
-        log('Projekt spuštěn', 'success');
+        log(`Projekt spuštěn pro ${projectName}`, 'success');
         
         // Ulož referenci na službu
-        currentService = {
+        const serviceInfo = {
             vm: vm,
             projectName: projectName,
             startTime: new Date()
         };
-        
-        // Aktualizuj stav
-        serviceStatus.running = true;
-        serviceStatus.projectName = projectName;
-        serviceStatus.startTime = currentService.startTime;
+        runningServices.set(projectName, serviceInfo);
         
         log(`Služba ${projectName} byla úspěšně spuštěna`, 'success', {
-            startTime: currentService.startTime.toISOString(),
-            vmState: 'running'
+            startTime: serviceInfo.startTime.toISOString(),
+            vmState: 'running',
+            totalRunningServices: runningServices.size
         });
-        broadcast({ type: 'serviceStarted', data: { projectName, startTime: currentService.startTime } });
-        
-        // Ulož projekt do trvalého úložiště (nahrání do AlbiLAB)
-        await saveProject(projectData, projectName, false);
+        broadcast({ type: 'serviceStarted', data: { projectName, startTime: serviceInfo.startTime } });
         
         // Sleduj chyby VM
         vm.on('error', (error) => {
-            log(`VM chyba: ${error.message}`, 'error', {
+            log(`VM chyba pro ${projectName}: ${error.message}`, 'error', {
                 errorName: error.name,
                 errorStack: error.stack,
-                vmState: vm.runtime ? 'running' : 'stopped'
+                vmState: vm.runtime ? 'running' : 'stopped',
+                projectName
             });
         });
         
         // Sleduj ukončení VM
         vm.on('quit', () => {
-            log('VM byla ukončena', 'info', {
+            log(`VM byla ukončena pro ${projectName}`, 'info', {
                 quitTime: new Date().toISOString(),
-                uptime: currentService ? Date.now() - currentService.startTime.getTime() : 0
+                uptime: serviceInfo ? Date.now() - serviceInfo.startTime.getTime() : 0,
+                projectName
             });
-            currentService = null;
-            serviceStatus.running = false;
-            serviceStatus.projectName = null;
-            serviceStatus.startTime = null;
-            broadcast({ type: 'serviceStopped' });
+            runningServices.delete(projectName);
+            broadcast({ type: 'serviceStopped', data: { projectName } });
         });
         
         // Sleduj runtime události
         if (vm.runtime) {
             vm.runtime.on('PROJECT_LOADED', () => {
-                log('Projekt byl načten do runtime', 'info');
+                log(`Projekt byl načten do runtime pro ${projectName}`, 'info');
             });
             
             vm.runtime.on('PROJECT_RUN_START', () => {
-                log('Projekt začal běžet', 'info');
+                log(`Projekt začal běžet pro ${projectName}`, 'info');
             });
             
             vm.runtime.on('PROJECT_RUN_STOP', () => {
-                log('Projekt byl zastaven', 'info');
+                log(`Projekt byl zastaven pro ${projectName}`, 'info');
             });
         }
         
     } catch (error) {
-        log(`Chyba při spouštění služby: ${error.message}`, 'error', {
+        log(`Chyba při spouštění služby ${projectName}: ${error.message}`, 'error', {
             errorName: error.name,
             errorStack: error.stack,
             projectName
@@ -339,18 +372,19 @@ async function startService(projectData, projectName) {
 
 // API Routes
 
-// Stav služby
+// Stav služeb
 app.get('/api/status', (req, res) => {
+    const runningServicesList = getAllRunningServices();
     const statusData = {
-        ...serviceStatus,
-        uptime: serviceStatus.startTime ? Date.now() - serviceStatus.startTime.getTime() : 0
+        runningServices: runningServicesList,
+        totalRunningServices: runningServices.size,
+        logsCount: serviceLogs.length
     };
     
     log('API: Status requested', 'info', {
-        serviceRunning: serviceStatus.running,
-        projectName: serviceStatus.projectName,
-        uptime: statusData.uptime,
-        logsCount: serviceStatus.logs.length
+        totalRunningServices: runningServices.size,
+        runningServices: runningServicesList.map(s => s.projectName),
+        logsCount: serviceLogs.length
     });
     
     res.json(statusData);
@@ -364,7 +398,7 @@ app.post('/api/start-service', upload.single('project'), async (req, res) => {
             fileName: req.file ? req.file.originalname : null,
             fileSize: req.file ? req.file.size : null,
             projectName: req.body.projectName,
-            currentService: currentService ? currentService.projectName : null
+            runningServicesCount: runningServices.size
         });
         
         if (!req.file) {
@@ -464,43 +498,41 @@ app.post('/api/start-service-json', async (req, res) => {
     }
 });
 
-// Zastavení služby
+// Zastavení všech služeb
 app.post('/api/stop-service', async (req, res) => {
     try {
-        log('API: Stop service called', 'info', {
-            currentService: currentService ? currentService.projectName : null,
-            serviceRunning: serviceStatus.running,
-            uptime: currentService ? Date.now() - currentService.startTime.getTime() : 0
+        log('API: Stop all services called', 'info', {
+            runningServicesCount: runningServices.size,
+            runningServices: Array.from(runningServices.keys())
         });
         
-        await stopCurrentService();
+        await stopAllServices();
         
-        const response = { success: true, message: 'Služba byla zastavena' };
-        log('API: Service stopped successfully', 'success', response);
+        const response = { success: true, message: 'Všechny služby byly zastaveny' };
+        log('API: All services stopped successfully', 'success', response);
         res.json(response);
         
     } catch (error) {
-        log(`API: Error stopping service: ${error.message}`, 'error', {
+        log(`API: Error stopping services: ${error.message}`, 'error', {
             errorName: error.name,
             errorStack: error.stack,
-            currentService: currentService ? currentService.projectName : null
+            runningServicesCount: runningServices.size
         });
         res.status(500).json({ 
-            error: 'Chyba při zastavování služby', 
+            error: 'Chyba při zastavování služeb', 
             details: error.message 
         });
     }
 });
 
-// Logy služby
+// Logy služeb
 app.get('/api/logs', (req, res) => {
     log('API: Logs requested', 'info', {
-        logsCount: serviceStatus.logs.length,
-        oldestLog: serviceStatus.logs.length > 0 ? serviceStatus.logs[0].timestamp : null,
-        newestLog: serviceStatus.logs.length > 0 ? serviceStatus.logs[serviceStatus.logs.length - 1].timestamp : null
+        logsCount: serviceLogs.length,
+        runningServicesCount: runningServices.size
     });
     
-    res.json(serviceStatus.logs);
+    res.json(serviceLogs);
 });
 
 // Informace o uloženém projektu
@@ -771,6 +803,249 @@ app.get('/api/saved-project/auto-save/list', async (req, res) => {
     }
 });
 
+// Nasazení projektu (uložení do AlbiLAB)
+app.post('/api/deploy-project', async (req, res) => {
+    try {
+        const { projectName } = req.body;
+        
+        if (!projectName) {
+            return res.status(400).json({ 
+                success: false,
+                error: 'Chybí název projektu' 
+            });
+        }
+        
+        log(`API: Deploy project called for ${projectName}`, 'info', {
+            projectName,
+            runningServicesCount: runningServices.size
+        });
+        
+        // Načti projekt z auto-save
+        const projectData = await loadAutoSaveProject(projectName);
+        if (!projectData) {
+            return res.status(404).json({ 
+                success: false,
+                error: `Projekt ${projectName} nebyl nalezen v auto-save` 
+            });
+        }
+        
+        // Ulož projekt do AlbiLAB (nasadit)
+        const saved = await saveProject(projectData.projectData, projectName, false);
+        
+        if (saved) {
+            const response = { 
+                success: true, 
+                message: `Projekt ${projectName} byl nasazen do AlbiLAB`,
+                projectName: projectName
+            };
+            
+            log(`API: Project deployed successfully`, 'success', response);
+            res.json(response);
+        } else {
+            res.status(500).json({ 
+                success: false,
+                error: 'Chyba při nasazování projektu' 
+            });
+        }
+        
+    } catch (error) {
+        log(`API: Error deploying project: ${error.message}`, 'error', {
+            errorName: error.name,
+            errorStack: error.stack,
+            projectName: req.body.projectName
+        });
+        res.status(500).json({ 
+            success: false,
+            error: 'Chyba při nasazování projektu', 
+            details: error.message 
+        });
+    }
+});
+
+// Spuštění nasazeného projektu
+app.post('/api/start-project', async (req, res) => {
+    try {
+        const { projectName } = req.body;
+        
+        if (!projectName) {
+            return res.status(400).json({ 
+                success: false,
+                error: 'Chybí název projektu' 
+            });
+        }
+        
+        log(`API: Start project called for ${projectName}`, 'info', {
+            projectName,
+            runningServicesCount: runningServices.size
+        });
+        
+        // Zkontroluj, zda je projekt nasazen
+        const isDeployed = await isProjectDeployed(projectName);
+        if (!isDeployed) {
+            return res.status(404).json({ 
+                success: false,
+                error: `Projekt ${projectName} není nasazen. Nejdříve ho nasaďte.` 
+            });
+        }
+        
+        // Zkontroluj, zda už neběží
+        if (runningServices.has(projectName)) {
+            return res.status(409).json({ 
+                success: false,
+                error: `Projekt ${projectName} už běží` 
+            });
+        }
+        
+        // Načti projekt z auto-save
+        const projectData = await loadAutoSaveProject(projectName);
+        if (!projectData) {
+            return res.status(404).json({ 
+                success: false,
+                error: `Projekt ${projectName} nebyl nalezen` 
+            });
+        }
+        
+        // Spusť službu
+        await startService(projectData.projectData, projectName);
+        
+        const response = { 
+            success: true, 
+            message: `Projekt ${projectName} byl spuštěn`,
+            projectName: projectName
+        };
+        
+        log(`API: Project started successfully`, 'success', response);
+        res.json(response);
+        
+    } catch (error) {
+        log(`API: Error starting project: ${error.message}`, 'error', {
+            errorName: error.name,
+            errorStack: error.stack,
+            projectName: req.body.projectName
+        });
+        res.status(500).json({ 
+            success: false,
+            error: 'Chyba při spouštění projektu', 
+            details: error.message 
+        });
+    }
+});
+
+// Zastavení konkrétního projektu
+app.post('/api/stop-project', async (req, res) => {
+    try {
+        const { projectName } = req.body;
+        
+        if (!projectName) {
+            return res.status(400).json({ 
+                success: false,
+                error: 'Chybí název projektu' 
+            });
+        }
+        
+        log(`API: Stop project called for ${projectName}`, 'info', {
+            projectName,
+            runningServicesCount: runningServices.size
+        });
+        
+        // Zkontroluj, zda projekt běží
+        if (!runningServices.has(projectName)) {
+            return res.status(404).json({ 
+                success: false,
+                error: `Projekt ${projectName} neběží` 
+            });
+        }
+        
+        // Zastav službu
+        const stopped = await stopService(projectName);
+        
+        if (stopped) {
+            const response = { 
+                success: true, 
+                message: `Projekt ${projectName} byl zastaven`,
+                projectName: projectName
+            };
+            
+            log(`API: Project stopped successfully`, 'success', response);
+            res.json(response);
+        } else {
+            res.status(500).json({ 
+                success: false,
+                error: 'Chyba při zastavování projektu' 
+            });
+        }
+        
+    } catch (error) {
+        log(`API: Error stopping project: ${error.message}`, 'error', {
+            errorName: error.name,
+            errorStack: error.stack,
+            projectName: req.body.projectName
+        });
+        res.status(500).json({ 
+            success: false,
+            error: 'Chyba při zastavování projektu', 
+            details: error.message 
+        });
+    }
+});
+
+// Seznam projektů s jejich stavem
+app.get('/api/projects-status', async (req, res) => {
+    try {
+        log('API: Projects status requested', 'info');
+        
+        if (!await fs.pathExists(AUTO_SAVE_DIR)) {
+            return res.json({
+                success: true,
+                projects: []
+            });
+        }
+        
+        const files = await fs.readdir(AUTO_SAVE_DIR);
+        const projects = [];
+        
+        for (const file of files) {
+            if (file.endsWith('.json')) {
+                try {
+                    const filePath = path.join(AUTO_SAVE_DIR, file);
+                    const projectInfo = await fs.readJson(filePath);
+                    
+                    const projectName = projectInfo.projectName;
+                    const isRunning = runningServices.has(projectName);
+                    const isDeployed = await isProjectDeployed(projectName);
+                    
+                    projects.push({
+                        fileName: file,
+                        projectName: projectName,
+                        savedAt: projectInfo.savedAt,
+                        version: projectInfo.version,
+                        isRunning: isRunning,
+                        isDeployed: isDeployed
+                    });
+                } catch (error) {
+                    log(`Chyba při načítání souboru ${file}: ${error.message}`, 'error');
+                }
+            }
+        }
+        
+        // Seřaď podle času uložení (nejnovější první)
+        projects.sort((a, b) => new Date(b.savedAt) - new Date(a.savedAt));
+        
+        res.json({
+            success: true,
+            projects: projects
+        });
+        
+    } catch (error) {
+        log(`API: Error getting projects status: ${error.message}`, 'error');
+        res.status(500).json({ 
+            success: false,
+            error: 'Chyba při získávání stavu projektů', 
+            details: error.message 
+        });
+    }
+});
+
 // WebSocket připojení
 wss.on('connection', (ws) => {
     const clientId = Math.random().toString(36).substr(2, 9);
@@ -781,11 +1056,13 @@ wss.on('connection', (ws) => {
     });
     
     // Pošli aktuální stav
+    const runningServicesList = getAllRunningServices();
     const statusData = {
         type: 'status', 
         data: {
-            ...serviceStatus,
-            uptime: serviceStatus.startTime ? Date.now() - serviceStatus.startTime.getTime() : 0
+            runningServices: runningServicesList,
+            totalRunningServices: runningServices.size,
+            logsCount: serviceLogs.length
         }
     };
     

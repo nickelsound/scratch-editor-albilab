@@ -26,6 +26,26 @@ const messages = defineMessages({
         defaultMessage: 'Načíst',
         description: 'Load project button'
     },
+    deployProject: {
+        id: 'gui.menuBar.autoSaveManager.deployProject',
+        defaultMessage: 'Nasadit',
+        description: 'Deploy project button'
+    },
+    deployCurrentProject: {
+        id: 'gui.menuBar.autoSaveManager.deployCurrentProject',
+        defaultMessage: 'Nasadit aktuální projekt',
+        description: 'Deploy current project button'
+    },
+    startProject: {
+        id: 'gui.menuBar.autoSaveManager.startProject',
+        defaultMessage: 'Spustit',
+        description: 'Start project button'
+    },
+    stopProject: {
+        id: 'gui.menuBar.autoSaveManager.stopProject',
+        defaultMessage: 'Zastavit',
+        description: 'Stop project button'
+    },
     deleteProject: {
         id: 'gui.menuBar.autoSaveManager.deleteProject',
         defaultMessage: 'Smazat',
@@ -45,6 +65,21 @@ const messages = defineMessages({
         id: 'gui.menuBar.autoSaveManager.confirmDelete',
         defaultMessage: 'Opravdu chcete smazat projekt "{name}"?',
         description: 'Delete confirmation'
+    },
+    statusRunning: {
+        id: 'gui.menuBar.autoSaveManager.statusRunning',
+        defaultMessage: 'Běží',
+        description: 'Running status'
+    },
+    statusStopped: {
+        id: 'gui.menuBar.autoSaveManager.statusStopped',
+        defaultMessage: 'Zastaveno',
+        description: 'Stopped status'
+    },
+    statusNotDeployed: {
+        id: 'gui.menuBar.autoSaveManager.statusNotDeployed',
+        defaultMessage: 'Nenasazeno',
+        description: 'Not deployed status'
     }
 });
 
@@ -57,6 +92,10 @@ const AutoSaveManager = function (props) {
         isLoading,
         onClose,
         onLoadProject,
+        onDeployProject,
+        onDeployCurrentProject,
+        onStartProject,
+        onStopProject,
         onDeleteProject,
         ...componentProps
     } = props;
@@ -75,6 +114,26 @@ const AutoSaveManager = function (props) {
         });
     };
 
+    const getProjectStatus = (project) => {
+        if (project.isRunning) {
+            return intl.formatMessage(messages.statusRunning);
+        } else if (project.isDeployed) {
+            return intl.formatMessage(messages.statusStopped);
+        } else {
+            return intl.formatMessage(messages.statusNotDeployed);
+        }
+    };
+
+    const getStatusClass = (project) => {
+        if (project.isRunning) {
+            return styles.autoSaveManagerStatusRunning;
+        } else if (project.isDeployed) {
+            return styles.autoSaveManagerStatusStopped;
+        } else {
+            return styles.autoSaveManagerStatusNotDeployed;
+        }
+    };
+
     const handleDeleteProject = (project) => {
         const confirmed = window.confirm(
             intl.formatMessage(messages.confirmDelete, { name: project.projectName })
@@ -91,12 +150,20 @@ const AutoSaveManager = function (props) {
             <div className={styles.autoSaveManagerDialog}>
                 <div className={styles.autoSaveManagerHeader}>
                     <h3>{intl.formatMessage(messages.title)}</h3>
-                    <button 
-                        className={styles.autoSaveManagerClose}
-                        onClick={onClose}
-                    >
-                        ×
-                    </button>
+                    <div className={styles.autoSaveManagerHeaderActions}>
+                        <button
+                            className={styles.autoSaveManagerButton}
+                            onClick={onDeployCurrentProject}
+                        >
+                            {intl.formatMessage(messages.deployCurrentProject)}
+                        </button>
+                        <button 
+                            className={styles.autoSaveManagerClose}
+                            onClick={onClose}
+                        >
+                            ×
+                        </button>
+                    </div>
                 </div>
                 
                 <div className={styles.autoSaveManagerContent}>
@@ -121,6 +188,9 @@ const AutoSaveManager = function (props) {
                                                 time: formatLastSaveTime(project.savedAt)
                                             })}
                                         </div>
+                                        <div className={classNames(styles.autoSaveManagerItemStatus, getStatusClass(project))}>
+                                            {getProjectStatus(project)}
+                                        </div>
                                     </div>
                                     <div className={styles.autoSaveManagerItemActions}>
                                         <button
@@ -129,6 +199,30 @@ const AutoSaveManager = function (props) {
                                         >
                                             {intl.formatMessage(messages.loadProject)}
                                         </button>
+                                        {!project.isDeployed && (
+                                            <button
+                                                className={styles.autoSaveManagerButton}
+                                                onClick={() => onDeployProject(project.projectName)}
+                                            >
+                                                {intl.formatMessage(messages.deployProject)}
+                                            </button>
+                                        )}
+                                        {project.isDeployed && !project.isRunning && (
+                                            <button
+                                                className={styles.autoSaveManagerButton}
+                                                onClick={() => onStartProject(project.projectName)}
+                                            >
+                                                {intl.formatMessage(messages.startProject)}
+                                            </button>
+                                        )}
+                                        {project.isRunning && (
+                                            <button
+                                                className={styles.autoSaveManagerButton}
+                                                onClick={() => onStopProject(project.projectName)}
+                                            >
+                                                {intl.formatMessage(messages.stopProject)}
+                                            </button>
+                                        )}
                                         <button
                                             className={classNames(
                                                 styles.autoSaveManagerButton,
@@ -165,11 +259,17 @@ AutoSaveManager.propTypes = {
     projects: PropTypes.arrayOf(PropTypes.shape({
         projectName: PropTypes.string,
         savedAt: PropTypes.string,
-        version: PropTypes.string
+        version: PropTypes.string,
+        isDeployed: PropTypes.bool,
+        isRunning: PropTypes.bool
     })),
     isLoading: PropTypes.bool,
     onClose: PropTypes.func,
     onLoadProject: PropTypes.func,
+    onDeployProject: PropTypes.func,
+    onDeployCurrentProject: PropTypes.func,
+    onStartProject: PropTypes.func,
+    onStopProject: PropTypes.func,
     onDeleteProject: PropTypes.func
 };
 
@@ -179,6 +279,10 @@ AutoSaveManager.defaultProps = {
     isLoading: false,
     onClose: () => {},
     onLoadProject: () => {},
+    onDeployProject: () => {},
+    onDeployCurrentProject: () => {},
+    onStartProject: () => {},
+    onStopProject: () => {},
     onDeleteProject: () => {}
 };
 

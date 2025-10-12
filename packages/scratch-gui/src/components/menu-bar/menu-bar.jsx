@@ -13,8 +13,6 @@ import Box from '../box/box.jsx';
 import Button from '../button/button.jsx';
 import CommunityButton from './community-button.jsx';
 import ShareButton from './share-button.jsx';
-import ServiceButton from '../../containers/service-button.jsx';
-import LoadProjectButton from '../../containers/load-project-button.jsx';
 import AutoSaveIndicator from '../../containers/auto-save-indicator.jsx';
 import {ComingSoonTooltip} from '../coming-soon/coming-soon.jsx';
 import Divider from '../divider/divider.jsx';
@@ -653,12 +651,6 @@ class MenuBar extends React.Component {
                         />
                     ) : null)}
                     <div className={classNames(styles.menuBarItem)}>
-                        {/* LoadProjectButton - načtení uloženého projektu */}
-                        <LoadProjectButton />
-                        
-                        {/* ServiceButton (Nahrát do AlbiLAB) */}
-                        <ServiceButton />
-                        
                         {/* AutoSaveIndicator - indikátor průběžného ukládání */}
                         <AutoSaveIndicator />
                     </div>
