@@ -3,6 +3,7 @@ import localesReducer, {initLocale, localesInitialState} from '../reducers/local
 import locales from 'scratch-l10n';
 import {detectLocale} from './detect-locale';
 import {GUIConfig} from '../gui-config';
+import log from './log.js';
 
 interface WindowWithDevtools {
     __REDUX_DEVTOOLS_EXTENSION_COMPOSE__?: typeof compose;
@@ -47,7 +48,7 @@ export class EditorState {
             if (Object.keys(locales).includes(params.locale)) {
                 locale = params.locale;
             } else {
-                console.warn(`Unsupported locale ${params.locale}, falling back to en`);
+                log.warn(`Unsupported locale ${params.locale}, falling back to en`);
             }
         } else {
             locale = detectLocale(Object.keys(locales));

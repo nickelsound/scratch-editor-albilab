@@ -1,4 +1,6 @@
-var ExampleExtension = function () {
+/* global Scratch */
+
+const ExampleExtension = function () {
 };
 
 /**
