@@ -65,15 +65,16 @@ describe('ProjectFetcherHOC', () => {
                 />
             </IntlProvider>
         );
-        
+
         expect(storage.load).toHaveBeenLastCalledWith(
             storage.AssetType.Project, '100', storage.DataFormat.JSON
         );
         storage.load = originalLoad;
-        // nextTick needed since storage.load is async, and onFetchedProject is called in its then()
-        process.nextTick(
+        // delay needed since storage.load is async, and onFetchedProject is called in its then()
+        setTimeout(
             () => expect(mockedOnFetchedProject)
-                .toHaveBeenLastCalledWith('100', LoadingState.FETCHING_WITH_ID)
+                .toHaveBeenLastCalledWith('100', LoadingState.FETCHING_WITH_ID),
+            1
         );
     });
 });
