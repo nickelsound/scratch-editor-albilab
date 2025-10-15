@@ -52,7 +52,7 @@ const TILT = {
 /**
  * Class for the Face sensing blocks in Scratch 3.0
  * @param {Runtime} runtime - the runtime instantiating this block package.
- * @constructor
+ * @class
  */
 class Scratch3FaceSensingBlocks {
     constructor (runtime) {
@@ -452,7 +452,6 @@ class Scratch3FaceSensingBlocks {
 
     /**
      * Center point of a line between the eyes
-     *
      * @returns {{x: number, y: number}} Coordinates of the detected point between eyes.
      * @private
      */
@@ -470,7 +469,6 @@ class Scratch3FaceSensingBlocks {
      * Make a line perpendicular to the line between the eyes, through
      * its center, and move upward along it the distance from the point
      * between the eyes to the mouth.
-     *
      * @returns {{x: number, y: number}} Coordinates of the detected top of head position.
      * @private
      */
@@ -494,7 +492,6 @@ class Scratch3FaceSensingBlocks {
     /**
      * Get the position of a given facial keypoint.
      * Returns {0,0} if no face or keypoints are available.
-     *
      * @param {string} part - Part of the face to be detected
      * @returns {{x: number, y: number}} Coordinates of the detected keypoint.
      * @private
@@ -523,7 +520,6 @@ class Scratch3FaceSensingBlocks {
     /**
      * A scratch hat block handle that reports whether
      * a target sprite is touching a given facial keypoint
-     *
      * @param {object} args - the block arguments
      * @param {BlockUtility} util - the block utility
      * @returns {boolean} - true if the sprite is touching the given point
@@ -539,7 +535,6 @@ class Scratch3FaceSensingBlocks {
     /**
      * A scratch hat block handle that reports whether
      * a face is detected
-     *
      * @returns {boolean} - true a face was detected
      */
     whenFaceDetected () {
@@ -549,7 +544,6 @@ class Scratch3FaceSensingBlocks {
     /**
      * A scratch boolean block handle that reports whether
      * a face is detected
-     *
      * @returns {boolean} - true a face was detected
      */
     faceIsDetected () {
@@ -558,7 +552,6 @@ class Scratch3FaceSensingBlocks {
 
     /**
      * A scratch reporter block handle that calculates the face size and caches it.
-     *
      * @returns {number} the face size
      */
     faceSize () {
@@ -571,7 +564,6 @@ class Scratch3FaceSensingBlocks {
 
     /**
      * A scratch command block handle that sets the size of a target to the current face size
-     *
      * @param {object} args - the block arguments
      * @param {BlockUtility} util - the block utility
      */
@@ -583,7 +575,6 @@ class Scratch3FaceSensingBlocks {
 
     /**
      * A scratch reporter block handle that calculates the face tilt and caches it.
-     *
      * @returns {number} the face tilt
      */
     faceTilt () {
@@ -604,7 +595,6 @@ class Scratch3FaceSensingBlocks {
     /**
      * A scratch hat block handle that reports whether
      * a detected face is tilted
-     *
      * @param {object} args - the block arguments
      * @returns {boolean} - true if the face is tilted
      */
@@ -620,7 +610,6 @@ class Scratch3FaceSensingBlocks {
 
     /**
      * A scratch command block handle that points a target to the current face tilt direction
-     *
      * @param {object} args - the block arguments
      * @param {BlockUtility} util - the block utility
      */
@@ -632,7 +621,6 @@ class Scratch3FaceSensingBlocks {
 
     /**
      * A scratch command block handle that moves a target to a given facial keypoint
-     *
      * @param {object} args - the block arguments
      * @param {BlockUtility} util - the block utility
      */
