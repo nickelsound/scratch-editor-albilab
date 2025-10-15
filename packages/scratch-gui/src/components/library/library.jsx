@@ -468,7 +468,7 @@ class LibraryComponent extends React.Component {
 
 LibraryComponent.propTypes = {
     data: PropTypes.arrayOf(
-        /* eslint-disable react/no-unused-prop-types, lines-around-comment */
+         
         // An item in the library
         PropTypes.shape({
             // @todo remove md5/rawURL prop from library, refactor to use storage
@@ -479,7 +479,7 @@ LibraryComponent.propTypes = {
             ]),
             rawURL: PropTypes.string
         })
-        /* eslint-enable react/no-unused-prop-types, lines-around-comment */
+         
     ),
     filterable: PropTypes.bool,
     withCategories: PropTypes.bool,

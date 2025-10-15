@@ -11,14 +11,14 @@ describe('Monitor Component', () => {
 
     const defaultProps = {
         category: 'motion',
-        // eslint-disable-next-line react/jsx-no-bind
+         
         componentRef: noop,
         draggable: false,
         label: 'My label',
         mode: 'default',
-        // eslint-disable-next-line react/jsx-no-bind
+         
         onDragEnd: noop,
-        // eslint-disable-next-line react/jsx-no-bind
+         
         onNextMode: noop
     };
 

@@ -99,7 +99,7 @@ const ProjectFetcherHOC = function (WrappedComponent) {
         }
         render () {
             const {
-                /* eslint-disable no-unused-vars */
+                 
                 assetHost,
                 intl,
                 isLoadingProject: isLoadingProjectProp,
@@ -113,7 +113,7 @@ const ProjectFetcherHOC = function (WrappedComponent) {
                 projectToken,
                 reduxProjectId,
                 setProjectId: setProjectIdProp,
-                /* eslint-enable no-unused-vars */
+                 
                 isFetchingWithId: isFetchingWithIdProp,
                 ...componentProps
             } = this.props;

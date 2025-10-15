@@ -106,7 +106,7 @@ describe('Sound Editor Component', () => {
             );
 
             const buttons = [...container.querySelectorAll('div[role="button"]')];
-            getButtonByText = (text) => buttons.find(div => div.textContent.trim() === text);
+            getButtonByText = text => buttons.find(div => div.textContent.trim() === text);
         });
 
         test('clicking reverse button calls correct callback', () => {

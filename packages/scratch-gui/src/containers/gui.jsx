@@ -78,7 +78,7 @@ class GUI extends React.Component {
                 `Error in Scratch GUI [location=${window.location}]: ${this.props.error}`);
         }
         const {
-            /* eslint-disable no-unused-vars */
+             
             assetHost,
             cloudHost,
             error,
@@ -90,7 +90,7 @@ class GUI extends React.Component {
             onVmInit,
             projectHost,
             projectId,
-            /* eslint-enable no-unused-vars */
+             
             children,
             fetchingProject,
             isLoading,

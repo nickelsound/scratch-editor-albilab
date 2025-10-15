@@ -15,7 +15,7 @@ import internetConnectionIconURL from './internet-connection.svg';
 
 import {PLATFORM} from '../../lib/platform.js';
 
-/* eslint-disable react/prefer-stateless-function */
+ 
 class LibraryItemComponent extends React.PureComponent {
     constructor (props) {
         super(props);
@@ -178,7 +178,6 @@ class LibraryItemComponent extends React.PureComponent {
         );
     }
 }
-/* eslint-enable react/prefer-stateless-function */
 
 
 LibraryItemComponent.propTypes = {

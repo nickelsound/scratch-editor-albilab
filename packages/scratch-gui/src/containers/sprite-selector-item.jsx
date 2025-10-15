@@ -131,7 +131,7 @@ class SpriteSelectorItem extends React.PureComponent {
     }
     render () {
         const {
-            /* eslint-disable no-unused-vars */
+             
             asset,
             id,
             index,
@@ -144,7 +144,7 @@ class SpriteSelectorItem extends React.PureComponent {
             costumeURL,
             vm,
             deleteConfirmationModalPosition,
-            /* eslint-enable no-unused-vars */
+             
             ...props
         } = this.props;
         return (<>
