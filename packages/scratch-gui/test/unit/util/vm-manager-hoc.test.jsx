@@ -6,7 +6,7 @@ WebAudioTestAPI.setState({
 
 import React from 'react';
 import configureStore from 'redux-mock-store';
-import {render} from '@testing-library/react'
+import {render} from '@testing-library/react';
 import VM from '@scratch/scratch-vm';
 import {LoadingState} from '../../../src/reducers/project-state';
 
@@ -96,7 +96,7 @@ describe('VMManagerHOC', () => {
         const Component = () => <div />;
         const WrappedComponent = vmManagerHOC(Component);
         vm.initialized = true;
-        const { rerender } = render(
+        const {rerender} = render(
             <WrappedComponent
                 isPlayerOnly
                 isStarted={false}
@@ -119,7 +119,7 @@ describe('VMManagerHOC', () => {
         const Component = () => <div />;
         const WrappedComponent = vmManagerHOC(Component);
         vm.initialized = true;
-        const { rerender } = render(
+        const {rerender} = render(
             <WrappedComponent
                 isPlayerOnly
                 isStarted
@@ -143,7 +143,7 @@ describe('VMManagerHOC', () => {
         const mockedOnLoadedProject = jest.fn();
         const Component = () => <div />;
         const WrappedComponent = vmManagerHOC(Component);
-        const { rerender } = render(
+        const {rerender} = render(
             <WrappedComponent
                 fontsLoaded
                 isLoadingWithId={false}
@@ -155,13 +155,13 @@ describe('VMManagerHOC', () => {
         rerender(
             <WrappedComponent
                 fontsLoaded
-                isLoadingWithId={true}
+                isLoadingWithId
                 store={store}
                 vm={vm}
                 onLoadedProject={mockedOnLoadedProject}
-                canSave={true}
+                canSave
                 loadingState={LoadingState.LOADING_VM_WITH_ID}
-                projectData='100'
+                projectData="100"
             />
         );
         expect(vm.loadProject).toHaveBeenLastCalledWith('100');
@@ -175,7 +175,7 @@ describe('VMManagerHOC', () => {
         const mockedOnLoadedProject = jest.fn();
         const Component = () => <div />;
         const WrappedComponent = vmManagerHOC(Component);
-        const { rerender } = render(
+        const {rerender} = render(
             <WrappedComponent
                 isLoadingWithId
                 store={store}
@@ -190,9 +190,9 @@ describe('VMManagerHOC', () => {
                 vm={vm}
                 onLoadedProject={mockedOnLoadedProject}
                 canSave={false}
-                fontsLoaded={true}
+                fontsLoaded
                 loadingState={LoadingState.LOADING_VM_WITH_ID}
-                projectData='100'
+                projectData="100"
             />
         );
         expect(vm.loadProject).toHaveBeenLastCalledWith('100');
@@ -206,7 +206,7 @@ describe('VMManagerHOC', () => {
         const mockedOnLoadedProject = jest.fn();
         const Component = () => <div />;
         const WrappedComponent = vmManagerHOC(Component);
-        const { rerender } = render(
+        const {rerender} = render(
             <WrappedComponent
                 isLoadingWithId
                 store={store}
@@ -221,7 +221,7 @@ describe('VMManagerHOC', () => {
                 vm={vm}
                 onLoadedProject={mockedOnLoadedProject}
                 loadingState={LoadingState.LOADING_VM_WITH_ID}
-                projectData='100'
+                projectData="100"
             />
         );
         expect(vm.loadProject).toHaveBeenCalledTimes(0);

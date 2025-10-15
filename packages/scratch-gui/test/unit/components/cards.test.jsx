@@ -1,5 +1,5 @@
 import React from 'react';
-import { renderWithIntl } from '../../helpers/intl-helpers.jsx';
+import {renderWithIntl} from '../../helpers/intl-helpers.jsx';
 import '@testing-library/jest-dom';
 import {PLATFORM} from '../../../src/lib/platform.js';
 
@@ -15,7 +15,7 @@ describe('Cards component', () => {
             id1: {
                 name: 'id1 - name',
                 img: 'id1 - img',
-                steps: [{ video: 'videoUrl' }]
+                steps: [{video: 'videoUrl'}]
             }
         },
         dragging: false,
@@ -38,13 +38,20 @@ describe('Cards component', () => {
     });
 
     test('showVideos=true shows the video step', () => {
-        const { container } = renderWithIntl(<Cards {...defaultProps()} platform={PLATFORM.WEB} showVideos />);
+        const {container} = renderWithIntl(<Cards
+            {...defaultProps()}
+            platform={PLATFORM.WEB}
+            showVideos
+        />);
 
         expect(container.firstChild).toMatchSnapshot();
     });
 
     test('showVideos=false shows the title image/name instead of video step', () => {
-        const { container } = renderWithIntl(<Cards {...defaultProps()} showVideos={false} />);
+        const {container} = renderWithIntl(<Cards
+            {...defaultProps()}
+            showVideos={false}
+        />);
 
         expect(container.firstChild).toMatchSnapshot();
     });
