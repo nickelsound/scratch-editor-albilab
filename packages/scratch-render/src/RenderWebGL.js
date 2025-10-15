@@ -99,7 +99,7 @@ class RenderWebGL extends EventEmitter {
         try {
             // Create the context the same way that the constructor will: attributes may make the difference.
             return !!RenderWebGL._getContext(optCanvas || document.createElement('canvas'));
-        } catch (e) {
+        } catch (e) { // eslint-disable-line no-unused-vars
             return false;
         }
     }
