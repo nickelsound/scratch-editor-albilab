@@ -21,7 +21,7 @@ import {getLocalStorageValue, setLocalStorageValue} from '../../lib/local-storag
 import styles from './library.css';
 
 const localStorageAvailable =
-  'localStorage' in window && window.localStorage !== null;
+    'localStorage' in window && window.localStorage !== null;
 
 const messages = defineMessages({
     filterPlaceholder: {
@@ -211,7 +211,7 @@ class LibraryComponent extends React.Component {
             this.driver.destroy();
             this.driver = null;
         }
-        
+
         if (this.animationFrameId) {
             window.cancelAnimationFrame(this.animationFrameId);
         }
@@ -225,18 +225,18 @@ class LibraryComponent extends React.Component {
             if (this.driver) {
                 this.driver.refresh();
             }
-            
+
             this.animationFrameId = null;
         });
     }
     handleSelect (id) {
         const selectedItem = this.getFilteredData().find(item => this.constructKey(item) === id);
-        
+
         if (this.state.shouldShowFaceSensingCallout && selectedItem.extensionId === 'faceSensing') {
             if (!this.driver) {
                 return;
             }
-       
+
             setHasUsedFaceSensing(this.props.username);
             this.setState({
                 shouldShowFaceSensingCallout: false
@@ -468,7 +468,7 @@ class LibraryComponent extends React.Component {
 
 LibraryComponent.propTypes = {
     data: PropTypes.arrayOf(
-        /* eslint-disable react/no-unused-prop-types, lines-around-comment */
+         
         // An item in the library
         PropTypes.shape({
             // @todo remove md5/rawURL prop from library, refactor to use storage
@@ -479,7 +479,7 @@ LibraryComponent.propTypes = {
             ]),
             rawURL: PropTypes.string
         })
-        /* eslint-enable react/no-unused-prop-types, lines-around-comment */
+         
     ),
     filterable: PropTypes.bool,
     withCategories: PropTypes.bool,

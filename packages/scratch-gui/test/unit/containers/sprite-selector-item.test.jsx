@@ -1,18 +1,17 @@
 import React from 'react';
-import { renderWithIntl } from '../../helpers/intl-helpers.jsx';
+import {renderWithIntl} from '../../helpers/intl-helpers.jsx';
 import configureStore from 'redux-mock-store';
-import { Provider } from 'react-redux';
+import {Provider} from 'react-redux';
 import VM from '@scratch/scratch-vm';
 
 import SpriteSelectorItemContainer from '../../../src/containers/sprite-selector-item';
-import { legacyConfig } from '../../../src/legacy-config';
+import {legacyConfig} from '../../../src/legacy-config';
 import DeleteConfirmationPrompt from '../../../src/components/delete-confirmation-prompt/delete-confirmation-prompt.jsx';
-import { screen, fireEvent, waitFor } from '@testing-library/react';
+import {screen, fireEvent, waitFor} from '@testing-library/react';
 
 global.MutationObserver = class {
-    constructor() { }
-    disconnect() { }
-    observe() { }
+    disconnect () { }
+    observe () { }
 };
 
 jest.mock('../../../src/components/delete-confirmation-prompt/delete-confirmation-prompt.jsx', () => jest.fn(() => null));
@@ -61,19 +60,19 @@ describe('SpriteSelectorItem Container', () => {
         store = mockStore({
             scratchGui: {
                 config: legacyConfig,
-                hoveredTarget: { receivedBlocks: false, sprite: null },
-                assetDrag: { dragging: false },
+                hoveredTarget: {receivedBlocks: false, sprite: null},
+                assetDrag: {dragging: false},
                 vm
             }
         });
     });
 
-    test('should delete the sprite, when called without `withDeleteConfirmation`', async () => {
+    test('should delete the sprite, when called without `withDeleteConfirmation`', () => {
         onDeleteButtonClick = jest.fn();
 
         renderWithIntl(getContainer());
 
-        const deleteButton = screen.getByRole('button', { name: /delete/i });
+        const deleteButton = screen.getByRole('button', {name: /delete/i});
         fireEvent.click(deleteButton);
         expect(onDeleteButtonClick).toHaveBeenCalledWith(1337);
         expect(DeleteConfirmationPrompt).not.toHaveBeenCalled();
@@ -86,7 +85,7 @@ describe('SpriteSelectorItem Container', () => {
         renderWithIntl(getContainer(true));
 
         expect(DeleteConfirmationPrompt).not.toHaveBeenCalled();
-        const deleteButton = screen.getByRole('button', { name: /delete/i });
+        const deleteButton = screen.getByRole('button', {name: /delete/i});
         fireEvent.click(deleteButton);
         await waitFor(() => expect(DeleteConfirmationPrompt).toHaveBeenCalled());
     });

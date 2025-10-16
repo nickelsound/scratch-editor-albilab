@@ -3,6 +3,7 @@
 exports[`Monitor Component it selects the correct colors based on dark mode theme 1`] = `
 <div
   class="react-draggable"
+  style="transform: translate(0px,0px);"
 >
   <span
     class="ContextMenuTrigger"
@@ -25,6 +26,7 @@ exports[`Monitor Component it selects the correct colors based on dark mode them
 exports[`Monitor Component it selects the correct colors based on default theme 1`] = `
 <div
   class="react-draggable"
+  style="transform: translate(0px,0px);"
 >
   <span
     class="ContextMenuTrigger"

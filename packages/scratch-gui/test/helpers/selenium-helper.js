@@ -1,6 +1,6 @@
 // some server-side things don't fully fail until a 90-second timeout
 // allow time for that so we get a more specific error message
-jest.setTimeout(95000); // eslint-disable-line no-undef
+jest.setTimeout(95000);
 
 import {promises as fs} from 'fs';
 import path from 'path';

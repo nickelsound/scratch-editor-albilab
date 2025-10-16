@@ -60,8 +60,8 @@ class RecordingStep extends React.Component {
     }
     render () {
         const {
-            onRecord, // eslint-disable-line no-unused-vars
-            onStopRecording, // eslint-disable-line no-unused-vars
+            onRecord,
+            onStopRecording,
             ...componentProps
         } = this.props;
         return (

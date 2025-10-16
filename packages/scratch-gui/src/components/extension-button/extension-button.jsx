@@ -33,7 +33,7 @@ const messages = defineMessages({
 });
 
 const localStorageAvailable =
-  'localStorage' in window && window.localStorage !== null;
+    'localStorage' in window && window.localStorage !== null;
 
 // Default to true to make sure we don't end up showing the feature
 // callouts multiple times if localStorage isn't available.

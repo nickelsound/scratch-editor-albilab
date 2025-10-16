@@ -260,7 +260,7 @@ class CostumeTab extends React.Component {
     }
     render () {
         const {
-            dispatchUpdateRestore, // eslint-disable-line no-unused-vars
+            dispatchUpdateRestore,
             intl,
             isRtl,
             vm

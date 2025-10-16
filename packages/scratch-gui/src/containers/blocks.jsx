@@ -558,7 +558,7 @@ class Blocks extends React.Component {
             });
     }
     render () {
-        /* eslint-disable no-unused-vars */
+         
         const {
             anyModalVisible,
             canUseCloud,
@@ -582,7 +582,7 @@ class Blocks extends React.Component {
             workspaceMetrics,
             ...props
         } = this.props;
-        /* eslint-enable no-unused-vars */
+         
         return (
             <React.Fragment>
                 <DroppableBlocks

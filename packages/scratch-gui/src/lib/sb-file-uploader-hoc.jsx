@@ -174,7 +174,7 @@ const SBFileUploaderHOC = function (WrappedComponent) {
         }
         render () {
             const {
-                /* eslint-disable no-unused-vars */
+                 
                 cancelFileUpload,
                 closeFileMenu: closeFileMenuProp,
                 isLoadingUpload,
@@ -185,7 +185,7 @@ const SBFileUploaderHOC = function (WrappedComponent) {
                 onSetProjectTitle,
                 projectChanged,
                 requestProjectUpload: requestProjectUploadProp,
-                /* eslint-enable no-unused-vars */
+                 
 
                 // Intentionally propagating this one as well, since it's used in MenuBar
                 // userOwnsProject,

@@ -6,6 +6,7 @@ exports[`Cards component showVideos=false shows the title image/name instead of 
 >
   <div
     class="react-draggable"
+    style="transform: translate(692px,340px);"
   >
     <div>
       <div>
@@ -53,6 +54,7 @@ exports[`Cards component showVideos=true shows the video step 1`] = `
 >
   <div
     class="react-draggable"
+    style="transform: translate(692px,340px);"
   >
     <div>
       <div>

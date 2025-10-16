@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, fireEvent } from '@testing-library/react';
+import {render, fireEvent} from '@testing-library/react';
 import '@testing-library/jest-dom';
 import IconButton from '../../../src/components/icon-button/icon-button';
 
@@ -7,12 +7,12 @@ describe('IconButtonComponent', () => {
     const defaultProps = {
         img: 'imgSrc',
         title: <div>Text</div>,
-        onClick: ()=>{},
+        onClick: () => {},
         className: 'custom-class-name'
     };
 
     test('renders with all props correctly', () => {
-        const { container } = render(<IconButton {...defaultProps} />);
+        const {container} = render(<IconButton {...defaultProps} />);
 
         expect(container.firstChild).toMatchSnapshot();
     });
@@ -20,8 +20,11 @@ describe('IconButtonComponent', () => {
     test('triggers callback when clicked', () => {
         const onClick = jest.fn();
 
-        const { container } = render(
-            <IconButton {...defaultProps} onClick={onClick} />
+        const {container} = render(
+            <IconButton
+                {...defaultProps}
+                onClick={onClick}
+            />
         );
 
         const button = container.querySelector('div[role="button"]');
@@ -34,7 +37,10 @@ describe('IconButtonComponent', () => {
     test('does not trigger callback when not clicked', () => {
         const onClick = jest.fn();
 
-        render(<IconButton {...defaultProps} onClick={onClick} />);
+        render(<IconButton
+            {...defaultProps}
+            onClick={onClick}
+        />);
         
         expect(onClick).toHaveBeenCalledTimes(0);
     });

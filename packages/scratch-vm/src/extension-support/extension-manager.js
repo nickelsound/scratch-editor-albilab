@@ -70,7 +70,6 @@ class ExtensionManager {
         /**
          * FIFO queue of extensions which have been requested but not yet loaded in a worker,
          * along with promise resolution functions to call once the worker is ready or failed.
-         *
          * @type {Array.<PendingExtensionWorker>}
          */
         this.pendingExtensions = [];

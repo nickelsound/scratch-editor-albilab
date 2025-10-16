@@ -111,14 +111,14 @@ const cloudManagerHOC = function (WrappedComponent) {
         }
         render () {
             const {
-                /* eslint-disable no-unused-vars */
+                 
                 canModifyCloudData,
                 cloudHost,
                 projectId,
                 hasCloudPermission,
                 isShowingWithId,
                 onShowCloudInfo,
-                /* eslint-enable no-unused-vars */
+                 
 
                 vm,
 
