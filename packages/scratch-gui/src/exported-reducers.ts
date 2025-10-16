@@ -8,6 +8,7 @@ import {
     onFetchedProjectData,
     onLoadedProject,
     defaultProjectId,
+    manualUpdateProject,
     remixProject,
     requestNewProject,
     requestProjectUpload,
@@ -18,6 +19,7 @@ import {
     closeLoadingProject,
     openTelemetryModal
 } from './reducers/modals.js';
+import {setStageSize} from './reducers/stage-size';
 
 export const guiReducers = {
     locales: LocalesReducer,
@@ -30,10 +32,12 @@ export {
     onFetchedProjectData,
     onLoadedProject,
     defaultProjectId,
+    manualUpdateProject,
     remixProject,
     requestNewProject,
     requestProjectUpload,
     setProjectId,
+    setStageSize,
 
     openLoadingProject,
     closeLoadingProject,

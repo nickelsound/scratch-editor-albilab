@@ -94,6 +94,7 @@ const GUIComponent = props => {
         loading,
         logo,
         manuallySaveThumbnails,
+        menuBarHidden,
         renderLogin,
         onClickAbout,
         onClickAccountNav,
@@ -169,6 +170,9 @@ const GUIComponent = props => {
 
     return (<MediaQuery minWidth={layout.fullSizeMinWidth}>{isFullSize => {
         const stageSize = resolveStageSize(stageSizeMode, isFullSize);
+        const boxStyles = classNames(styles.bodyWrapper, {
+            [styles.bodyWrapperWithoutMenuBar]: menuBarHidden
+        });
 
         return isPlayerOnly ? (
             <StageWrapper
@@ -248,7 +252,7 @@ const GUIComponent = props => {
                         onRequestClose={onRequestCloseBackdropLibrary}
                     />
                 ) : null}
-                <MenuBar
+                {!menuBarHidden && <MenuBar
                     accountNavOpen={accountNavOpen}
                     authorId={authorId}
                     authorThumbnailUrl={authorThumbnailUrl}
@@ -283,8 +287,8 @@ const GUIComponent = props => {
                     userOwnsProject={userOwnsProject}
                     username={username}
                     accountMenuOptions={accountMenuOptions}
-                />
-                <Box className={styles.bodyWrapper}>
+                />}
+                <Box className={boxStyles}>
                     <Box className={styles.flexWrapper}>
                         <Box className={styles.editorWrapper}>
                             <Tabs
@@ -453,6 +457,7 @@ GUIComponent.propTypes = {
     loading: PropTypes.bool,
     logo: PropTypes.string,
     manuallySaveThumbnails: PropTypes.bool,
+    menuBarHidden: PropTypes.bool,
     onActivateCostumesTab: PropTypes.func,
     onActivateSoundsTab: PropTypes.func,
     onActivateTab: PropTypes.func,
@@ -516,6 +521,7 @@ GUIComponent.defaultProps = {
     isShared: false,
     isTotallyNormal: false,
     loading: false,
+    menuBarHidden: false,
     showComingSoon: false,
     showNewFeatureCallouts: false,
     stageSizeMode: STAGE_SIZE_MODES.large,
