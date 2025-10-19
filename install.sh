@@ -96,11 +96,7 @@ install_podman() {
         return
     fi
     
-    # Přidání repozitáře
-    echo "deb https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/Debian_11/ /" | sudo tee /etc/apt/sources.list.d/devel:kubic:libcontainers:stable.list
-    curl -L https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/Debian_11/Release.key | sudo apt-key add -
-    
-    sudo apt update
+    # Instalace z oficiální distribuce
     sudo apt install -y podman
     
     print_success "Podman nainstalován"
@@ -116,13 +112,8 @@ install_podman_compose() {
         return
     fi
     
-    # Instalace pip pokud není
-    if ! command -v pip3 &> /dev/null; then
-        sudo apt install -y python3-pip
-    fi
-    
-    # Instalace podman-compose
-    sudo pip3 install podman-compose
+    # Instalace z oficiální distribuce
+    sudo apt install -y podman-compose
     
     print_success "podman-compose nainstalován"
 }
