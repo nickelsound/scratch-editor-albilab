@@ -139,15 +139,39 @@ create_install_directory() {
 download_containers() {
     print_step "6" "Stažení ARM64 kontejnerů..."
     
+    # Funkce pro kontrolu a stažení souboru
+    download_if_needed() {
+        local filename="$1"
+        local url="$2"
+        
+        if [ -f "$filename" ]; then
+            print_info "Kontrola $filename..."
+            
+            # Získání velikosti souboru na serveru
+            local remote_size=$(curl -sI "$url" | grep -i content-length | awk '{print $2}' | tr -d '\r')
+            local local_size=$(stat -c%s "$filename" 2>/dev/null || echo "0")
+            
+            if [ "$remote_size" = "$local_size" ] && [ "$remote_size" != "" ]; then
+                print_info "$filename již existuje a má správnou velikost ($local_size bytes), přeskakujeme stahování"
+                return 0
+            else
+                print_info "$filename má jinou velikost (lokální: $local_size, vzdálený: $remote_size), stahujeme novou verzi"
+            fi
+        else
+            print_info "$filename neexistuje, stahujeme..."
+        fi
+        
+        # Stažení souboru
+        wget --progress=bar:force "$url" -O "$filename"
+    }
+    
     # Stažení GUI kontejneru
-    print_info "Stahování scratch-gui-arm64.tar..."
-    wget --progress=bar:force "$RELEASE_URL/scratch-gui-arm64.tar" -O scratch-gui-arm64.tar
+    download_if_needed "scratch-gui-arm64.tar" "$RELEASE_URL/scratch-gui-arm64.tar"
     
     # Stažení backend kontejneru
-    print_info "Stahování scratch-backend-arm64.tar..."
-    wget --progress=bar:force "$RELEASE_URL/scratch-backend-arm64.tar" -O scratch-backend-arm64.tar
+    download_if_needed "scratch-backend-arm64.tar" "$RELEASE_URL/scratch-backend-arm64.tar"
     
-    print_success "Kontejnery staženy"
+    print_success "Kontejnery připraveny"
 }
 
 # Načtení kontejnerů
@@ -247,6 +271,16 @@ EOF
 create_systemd_service() {
     print_step "10" "Vytvoření systemd služby..."
     
+    # Zjištění cesty k podman-compose
+    PODMAN_COMPOSE_PATH=$(which podman-compose)
+    
+    if [ -z "$PODMAN_COMPOSE_PATH" ]; then
+        print_error "podman-compose nebyl nalezen v PATH"
+        exit 1
+    fi
+    
+    print_info "Používá se podman-compose z: $PODMAN_COMPOSE_PATH"
+    
     sudo tee /etc/systemd/system/scratch-albilab.service > /dev/null << EOF
 [Unit]
 Description=Scratch Editor AlbiLAB
@@ -257,8 +291,8 @@ Wants=network.target
 Type=oneshot
 RemainAfterExit=yes
 WorkingDirectory=$INSTALL_DIR
-ExecStart=/usr/local/bin/podman-compose up -d
-ExecStop=/usr/local/bin/podman-compose down
+ExecStart=$PODMAN_COMPOSE_PATH up -d
+ExecStop=$PODMAN_COMPOSE_PATH down
 User=$USER
 Group=$USER
 
@@ -307,6 +341,12 @@ start_service() {
     else
         print_error "Služba se nepodařilo spustit"
         print_info "Zkontrolujte logy: sudo journalctl -u scratch-albilab.service"
+        print_info "Zkontrolujte stav: sudo systemctl status scratch-albilab.service"
+        
+        # Zobrazení posledních logů
+        print_info "Poslední logy:"
+        sudo journalctl -u scratch-albilab.service --no-pager -n 10
+        
         exit 1
     fi
 }
