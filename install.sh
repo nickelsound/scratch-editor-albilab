@@ -79,13 +79,7 @@ check_system() {
 # Aktualizace systému
 update_system() {
     print_step "2" "Aktualizace systému..."
-    
-    # Vyčištění starých repozitářů (pokud existují)
-    if [ -f "/etc/apt/sources.list.d/devel:kubic:libcontainers:stable.list" ]; then
-        print_info "Odstraňování starých repozitářů..."
-        sudo rm -f /etc/apt/sources.list.d/devel:kubic:libcontainers:stable.list
-    fi
-    
+        
     sudo apt update -y
     sudo apt upgrade -y
     
@@ -145,17 +139,23 @@ download_containers() {
         local url="$2"
         
         if [ -f "$filename" ]; then
-            print_info "Kontrola $filename..."
+            print_info "Kontrola aktualizace $filename..."
             
-            # Získání velikosti souboru na serveru
-            local remote_size=$(curl -sI "$url" | grep -i content-length | awk '{print $2}' | tr -d '\r')
+            # Získání velikosti lokálního souboru
             local local_size=$(stat -c%s "$filename" 2>/dev/null || echo "0")
             
-            if [ "$remote_size" = "$local_size" ] && [ "$remote_size" != "" ]; then
-                print_info "$filename již existuje a má správnou velikost ($local_size bytes), přeskakujeme stahování"
-                return 0
+            # Získání velikosti souboru na serveru pomocí wget --spider
+            local remote_size=$(wget --spider --server-response "$url" 2>&1 | grep -i content-length | awk '{print $2}' | tail -1)
+            
+            if [ -n "$remote_size" ] && [ "$remote_size" != "0" ]; then
+                if [ "$local_size" = "$remote_size" ]; then
+                    print_info "$filename je aktuální (velikost: $(($local_size / 1024 / 1024))MB), přeskakujeme stahování"
+                    return 0
+                else
+                    print_info "$filename má jinou velikost (lokální: $(($local_size / 1024 / 1024))MB, server: $(($remote_size / 1024 / 1024))MB), stahujeme aktualizaci"
+                fi
             else
-                print_info "$filename má jinou velikost (lokální: $local_size, vzdálený: $remote_size), stahujeme novou verzi"
+                print_info "$filename - nelze zjistit velikost na serveru, stahujeme pro jistotu"
             fi
         else
             print_info "$filename neexistuje, stahujeme..."
