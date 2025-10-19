@@ -82,6 +82,8 @@ Perfect for children, parents, and educators who want to combine hands-on scienc
 - **Output Control**: Control LED rings, displays, and other AlbiLAB components
 - **Experiment Automation**: Automate scientific experiments and data collection
 - **Data Logging**: Record and analyze experimental data over time
+- **IP Configuration**: Set AlbiLAB device IP address using Scratch blocks
+- **Validation**: Automatic validation of required IP configuration component
 
 ### Modified Menu
 - **Hidden buttons**: Share/Shared, Remix, See Project Page
@@ -113,6 +115,10 @@ Perfect for children, parents, and educators who want to combine hands-on scienc
   - `uploads/` - folder for uploaded files
 
 ## 🔧 Configuration
+
+### AlbiLAB IP Address Configuration
+
+**IMPORTANT**: The AlbiLAB device IP address is configured **only** using the Scratch block "set AlbiLAB IP address to [IP]" in each project. This component is **mandatory** for any project using AlbiLAB functions.
 
 ### Environment Variables
 
@@ -243,6 +249,11 @@ scratch-editor-albilab/
    - Check that backend is running on port 3001
    - Verify firewall settings
    - Check backend logs for errors
+
+5. **AlbiLAB communication issues:**
+   - Ensure project contains "set AlbiLAB IP address to [IP]" block with filled IP address
+   - Check network connection to AlbiLAB device
+   - Verify IP address in the block is correct
 
 ### Logs
 
@@ -425,6 +436,7 @@ sudo systemctl start scratch-albilab
 sudo systemctl restart scratch-albilab
 
 # View logs
+cd /opt/scratch-albilab
 podman-compose logs -f
 ```
 

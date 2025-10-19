@@ -81,6 +81,8 @@ Perfektní pro děti, rodiče a pedagogy, kteří chtějí spojit praktickou vě
 - **Ovládání výstupů**: Ovládání LED kroužků, displejů a dalších AlbiLAB komponent
 - **Automatizace experimentů**: Automatizace vědeckých experimentů a sběru dat
 - **Záznam dat**: Zaznamenávání a analýza experimentálních dat v čase
+- **Konfigurace IP**: Nastavení IP adresy AlbiLAB zařízení pomocí Scratch bloků
+- **Validace**: Automatická kontrola povinné IP konfigurační komponenty
 
 ### Modifikované menu
 - **Skryté tlačítka**: Share/Shared, Remix, See Project Page
@@ -112,6 +114,10 @@ Perfektní pro děti, rodiče a pedagogy, kteří chtějí spojit praktickou vě
   - `uploads/` - složka pro nahrávané soubory
 
 ## 🔧 Konfigurace
+
+### Nastavení IP adresy AlbiLAB
+
+**DŮLEŽITÉ**: IP adresa AlbiLAB zařízení se nastavuje **pouze** pomocí Scratch bloku "nastavit IP adresu AlbiLAB na [IP]" v každém projektu. Tato komponenta je **povinná** pro jakýkoliv projekt používající AlbiLAB funkce.
 
 ### Environment proměnné
 
@@ -242,6 +248,11 @@ scratch-editor-albilab/
    - Zkontrolujte, že backend běží na portu 3001
    - Ověřte firewall nastavení
    - Zkontrolujte logy backendu pro chyby
+
+5. **Problémy s komunikací AlbiLAB:**
+   - Zkontrolujte, že projekt obsahuje blok "nastavit IP adresu AlbiLAB na [IP]" s vyplněnou IP adresou
+   - Zkontrolujte síťové připojení k AlbiLAB zařízení
+   - Ověřte, že IP adresa v bloku je správná
 
 ### Logy
 
@@ -424,6 +435,7 @@ sudo systemctl start scratch-albilab
 sudo systemctl restart scratch-albilab
 
 # Zobrazit logy
+cd /opt/scratch-albilab
 podman-compose logs -f
 ```
 
