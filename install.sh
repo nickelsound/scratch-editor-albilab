@@ -141,11 +141,11 @@ download_containers() {
     
     # Stažení GUI kontejneru
     print_info "Stahování scratch-gui-arm64.tar..."
-    wget -q "$RELEASE_URL/scratch-gui-arm64.tar" -O scratch-gui-arm64.tar
+    wget --progress=bar:force "$RELEASE_URL/scratch-gui-arm64.tar" -O scratch-gui-arm64.tar
     
     # Stažení backend kontejneru
     print_info "Stahování scratch-backend-arm64.tar..."
-    wget -q "$RELEASE_URL/scratch-backend-arm64.tar" -O scratch-backend-arm64.tar
+    wget --progress=bar:force "$RELEASE_URL/scratch-backend-arm64.tar" -O scratch-backend-arm64.tar
     
     print_success "Kontejnery staženy"
 }
