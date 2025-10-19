@@ -288,9 +288,35 @@ docker run --rm -v scratch-editor-albilab_scratch-uploads:/data -v $(pwd):/backu
 
 ## 🍓 ARM procesory (Raspberry Pi)
 
-### Sestavení pro ARM64
+### 🚀 Jednopříkazová instalace
 
-Pro nasazení na Raspberry Pi nebo jiné ARM procesory je potřeba sestavit speciální verze kontejnerů.
+Pro Raspberry Pi OS Lite můžete nainstalovat vše jedním příkazem:
+
+```bash
+curl -sSL https://raw.githubusercontent.com/nickelsound/scratch-editor-albilab/main/install.sh | bash
+```
+
+**Nebo manuálně:**
+```bash
+wget https://raw.githubusercontent.com/nickelsound/scratch-editor-albilab/main/install.sh
+chmod +x install.sh
+./install.sh
+```
+
+Instalační skript provede:
+- ✅ Kontrolu kompatibility systému (Raspberry Pi OS, ARM64)
+- ✅ Instalaci Podman a podman-compose
+- ✅ Stažení ARM64 kontejnerů z GitHub releases
+- ✅ Načtení kontejnerů do Podman
+- ✅ Vytvoření systemd služby pro automatický start
+- ✅ Spuštění aplikace na pozadí
+- ✅ Zobrazení IP adresy pro síťový přístup
+
+Po instalaci přistupte k aplikaci na `http://[RASPBERRY_PI_IP]:8601`
+
+### Manuální instalace
+
+Pokud preferujete manuální instalaci nebo potřebujete sestavit kontejnery sami:
 
 #### Předpoklady pro ARM build
 
@@ -311,7 +337,7 @@ Pro nasazení na Raspberry Pi nebo jiné ARM procesory je potřeba sestavit spec
    - `scratch-gui-arm64.tar` - GUI kontejner pro ARM64
    - `scratch-backend-arm64.tar` - Backend kontejner pro ARM64
 
-#### Nasazení na Raspberry Pi
+#### Manuální nasazení na Raspberry Pi
 
 1. **Přeneste tar archivy na Raspberry Pi:**
    ```bash
@@ -379,6 +405,29 @@ WEBSOCKET_PORT: 3002
 #### Kompletní Raspberry Pi setup
 
 Pro kompletní nastavení na Raspberry Pi s dotykovým displejem viz [README-RPI.md](README-RPI.md).
+
+#### Správa služby
+
+Po instalaci můžete spravovat službu pomocí:
+
+```bash
+# Zkontrolovat stav služby
+sudo systemctl status scratch-albilab
+
+# Zastavit službu
+sudo systemctl stop scratch-albilab
+
+# Spustit službu
+sudo systemctl start scratch-albilab
+
+# Restart služby
+sudo systemctl restart scratch-albilab
+
+# Zobrazit logy
+podman-compose logs -f
+```
+
+Pro podrobné instalační instrukce viz [README-INSTALL.md](README-INSTALL.md).
 
 ## 🚀 Produkční nasazení
 

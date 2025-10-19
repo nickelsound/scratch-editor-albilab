@@ -289,9 +289,35 @@ docker run --rm -v scratch-editor-albilab_scratch-uploads:/data -v $(pwd):/backu
 
 ## 🍓 ARM Processors (Raspberry Pi)
 
-### Building for ARM64
+### 🚀 One-Command Installation
 
-For deployment on Raspberry Pi or other ARM processors, you need to build special container versions.
+For Raspberry Pi OS Lite, you can install everything with a single command:
+
+```bash
+curl -sSL https://raw.githubusercontent.com/nickelsound/scratch-editor-albilab/main/install.sh | bash
+```
+
+**Or manually:**
+```bash
+wget https://raw.githubusercontent.com/nickelsound/scratch-editor-albilab/main/install.sh
+chmod +x install.sh
+./install.sh
+```
+
+The installation script will:
+- ✅ Check system compatibility (Raspberry Pi OS, ARM64)
+- ✅ Install Podman and podman-compose
+- ✅ Download ARM64 containers from GitHub releases
+- ✅ Load containers into Podman
+- ✅ Create systemd service for auto-start
+- ✅ Start the application in background
+- ✅ Display IP address for network access
+
+After installation, access the application at `http://[RASPBERRY_PI_IP]:8601`
+
+### Manual Installation
+
+If you prefer manual installation or need to build containers yourself:
 
 #### Prerequisites for ARM build
 
@@ -312,7 +338,7 @@ For deployment on Raspberry Pi or other ARM processors, you need to build specia
    - `scratch-gui-arm64.tar` - GUI container for ARM64
    - `scratch-backend-arm64.tar` - Backend container for ARM64
 
-#### Deployment on Raspberry Pi
+#### Manual Deployment on Raspberry Pi
 
 1. **Transfer tar archives to Raspberry Pi:**
    ```bash
@@ -380,6 +406,29 @@ WEBSOCKET_PORT: 3002
 #### Complete Raspberry Pi setup
 
 For complete setup on Raspberry Pi with touchscreen see [README-RPI.md](README-RPI.md).
+
+#### Service Management
+
+After installation, you can manage the service with:
+
+```bash
+# Check service status
+sudo systemctl status scratch-albilab
+
+# Stop service
+sudo systemctl stop scratch-albilab
+
+# Start service
+sudo systemctl start scratch-albilab
+
+# Restart service
+sudo systemctl restart scratch-albilab
+
+# View logs
+podman-compose logs -f
+```
+
+For detailed installation instructions, see [README-INSTALL.md](README-INSTALL.md).
 
 ## 🚀 Production Deployment
 
