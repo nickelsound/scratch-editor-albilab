@@ -80,6 +80,12 @@ check_system() {
 update_system() {
     print_step "2" "Aktualizace systému..."
     
+    # Vyčištění starých repozitářů (pokud existují)
+    if [ -f "/etc/apt/sources.list.d/devel:kubic:libcontainers:stable.list" ]; then
+        print_info "Odstraňování starých repozitářů..."
+        sudo rm -f /etc/apt/sources.list.d/devel:kubic:libcontainers:stable.list
+    fi
+    
     sudo apt update -y
     sudo apt upgrade -y
     
