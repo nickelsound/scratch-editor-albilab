@@ -11,12 +11,12 @@
     "url": "https://github.com/scratchfoundation/scratch-editor.git"
   },
   "scripts": {
-    "refresh-gh-workflow": "ts-node scripts/build-gha-workflows.ts",
-    "build-monorepo": "cross-env-shell ./scripts/build-monorepo.sh",
-    "prepare": "husky install",
     "build": "cross-env NODE_ENV=production npm run --workspaces build",
+    "build-monorepo": "cross-env-shell ./scripts/build-monorepo.sh",
     "clean": "npm run --workspaces clean",
+    "prepare": "husky install",
     "test": "npm test --workspaces",
+    "refresh-gh-workflow": "ts-node scripts/build-gha-workflows.ts",
     "version": "cross-env-shell ./scripts/npm-version.sh"
   },
   "config": {
