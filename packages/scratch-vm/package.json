@@ -12,10 +12,13 @@
   "main": "./dist/node/scratch-vm.js",
   "browser": "./dist/web/scratch-vm.js",
   "exports": {
-    "webpack": "./src/index.js",
-    "browser": "./dist/web/scratch-vm.js",
-    "node": "./dist/node/scratch-vm.js",
-    "default": "./src/index.js"
+    ".": {
+      "webpack": "./src/index.js",
+      "browser": "./dist/web/scratch-vm.js",
+      "node": "./dist/node/scratch-vm.js",
+      "default": "./src/index.js"
+    },
+    "./src/extension-support/block-type": "./src/extension-support/block-type"
   },
   "files": [
     "dist",
