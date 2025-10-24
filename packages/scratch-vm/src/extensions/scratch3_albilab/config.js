@@ -3,8 +3,8 @@
  * @type {object}
  */
 const AlbiLABConfig = {
-    // Default AlbiLAB device IP address
-    baseURL: 'http://10.0.0.108',
+    // IP address will be set dynamically via Scratch component
+    baseURL: null,
     
     // API endpoints
     endpoints: {

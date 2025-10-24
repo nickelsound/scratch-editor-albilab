@@ -421,6 +421,16 @@ app.post('/api/start-service', upload.single('project'), async (req, res) => {
             spritesCount: projectJson.targets ? projectJson.targets.length : 0
         });
         
+        // Validace přítomnosti IP komponenty
+        if (!validateAlbiLABIPComponent(projectJson)) {
+            // Smaž dočasný soubor
+            await fs.remove(req.file.path);
+            return res.status(400).json({ 
+                success: false,
+                error: 'Chybí komponenta určující IP adresu AlbiLAB. Přidejte blok "nastavit IP adresu AlbiLAB na [IP]" do vašeho projektu.' 
+            });
+        }
+        
         // Spusť službu
         await startService(projectJson, projectName);
         
@@ -474,6 +484,14 @@ app.post('/api/start-service-json', async (req, res) => {
             projectDataSize: JSON.stringify(projectData).length,
             spritesCount: projectData.targets ? projectData.targets.length : 0
         });
+        
+        // Validace přítomnosti IP komponenty
+        if (!validateAlbiLABIPComponent(projectData)) {
+            return res.status(400).json({ 
+                success: false,
+                error: 'Chybí komponenta určující IP adresu AlbiLAB. Přidejte blok "nastavit IP adresu AlbiLAB na [IP]" do vašeho projektu.' 
+            });
+        }
         
         // Spusť službu
         await startService(projectData, name);
@@ -805,6 +823,38 @@ app.get('/api/saved-project/auto-save/list', async (req, res) => {
     }
 });
 
+// Funkce pro kontrolu přítomnosti IP komponenty v projektu
+function validateAlbiLABIPComponent(projectData) {
+    try {
+        if (!projectData || !projectData.targets) {
+            return false;
+        }
+        
+        // Projdi všechny sprites a stage
+        for (const target of projectData.targets) {
+            if (target.blocks) {
+                // Projdi všechny bloky
+                for (const blockId in target.blocks) {
+                    const block = target.blocks[blockId];
+                    // Zkontroluj, zda je to AlbiLAB blok pro nastavení IP
+                    if (block.opcode === 'setDeviceIP' && block.inputs && block.inputs.IP) {
+                        const ipValue = block.inputs.IP[1];
+                        // Zkontroluj, zda má IP hodnotu (není prázdná)
+                        if (ipValue && ipValue.trim() !== '') {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        
+        return false;
+    } catch (error) {
+        log(`Error validating AlbiLAB IP component: ${error.message}`, 'error');
+        return false;
+    }
+}
+
 // Nasazení projektu (uložení do AlbiLAB)
 app.post('/api/deploy-project', async (req, res) => {
     try {
@@ -828,6 +878,14 @@ app.post('/api/deploy-project', async (req, res) => {
             return res.status(404).json({ 
                 success: false,
                 error: `Projekt ${projectName} nebyl nalezen v auto-save` 
+            });
+        }
+        
+        // Validace přítomnosti IP komponenty
+        if (!validateAlbiLABIPComponent(projectData.projectData)) {
+            return res.status(400).json({ 
+                success: false,
+                error: 'Chybí komponenta určující IP adresu AlbiLAB. Přidejte blok "nastavit IP adresu AlbiLAB na [IP]" do vašeho projektu.' 
             });
         }
         

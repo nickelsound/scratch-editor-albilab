@@ -1,41 +1,44 @@
-import PropTypes from 'prop-types';
 import React from 'react';
 import {connect} from 'react-redux';
-
 import AutoSaveManagerComponent from '../components/menu-bar/auto-save-manager.jsx';
 import {setProjectTitle} from '../reducers/project-title.js';
 import {getApiUrl} from '../lib/api-config.js';
+import notificationService from '../lib/notification-service.js';
 
-class AutoSaveManager extends React.Component {
-    constructor(props) {
-        super(props);
-        this.state = {
-            isOpen: false,
-            projects: [],
-            isLoading: false
-        };
-    }
+const AutoSaveManager = (props) => {
+    const [isOpen, setIsOpen] = React.useState(false);
+    const [projects, setProjects] = React.useState([]);
+    const [isLoading, setIsLoading] = React.useState(false);
+    // Použij globální notification službu
+    const showSuccess = notificationService.showSuccess.bind(notificationService);
+    const showError = notificationService.showError.bind(notificationService);
+    const showWarning = notificationService.showWarning.bind(notificationService);
+    const showInfo = notificationService.showInfo.bind(notificationService);
 
-    componentDidMount() {
+    React.useEffect(() => {
         // Přidej event listener pro otevření manageru
-        window.addEventListener('openAutoSaveManager', this.handleOpen);
-    }
+        const handleOpenEvent = () => {
+            setIsOpen(true);
+            loadProjects();
+        };
+        window.addEventListener('openAutoSaveManager', handleOpenEvent);
+        
+        return () => {
+            window.removeEventListener('openAutoSaveManager', handleOpenEvent);
+        };
+    }, []);
 
-    componentWillUnmount() {
-        window.removeEventListener('openAutoSaveManager', this.handleOpen);
-    }
-
-    handleOpen = () => {
-        this.setState({ isOpen: true });
-        this.loadProjects();
+    const handleOpen = () => {
+        setIsOpen(true);
+        loadProjects();
     };
 
-    handleClose = () => {
-        this.setState({ isOpen: false });
+    const handleClose = () => {
+        setIsOpen(false);
     };
 
-    loadProjects = async () => {
-        this.setState({ isLoading: true });
+    const loadProjects = async () => {
+        setIsLoading(true);
         
         try {
             const apiUrl = getApiUrl('projects-status');
@@ -47,24 +50,27 @@ class AutoSaveManager extends React.Component {
                 console.log('API odpověď:', data);
                 if (data.success) {
                     console.log('Načteno projektů:', data.projects.length);
-                    this.setState({ projects: data.projects });
+                    setProjects(data.projects);
                 } else {
                     console.error('Chyba při načítání seznamu projektů:', data.error);
-                    this.setState({ projects: [] });
+                    setProjects([]);
+                    showError(data.error || 'Chyba při načítání projektů');
                 }
             } else {
                 console.error('Chyba při načítání seznamu projektů:', response.statusText);
-                this.setState({ projects: [] });
+                setProjects([]);
+                showError('Chyba při načítání projektů: ' + response.statusText);
             }
         } catch (error) {
             console.error('Chyba při načítání seznamu projektů:', error);
-            this.setState({ projects: [] });
+            setProjects([]);
+            showError('Chyba při načítání projektů: ' + error.message);
         } finally {
-            this.setState({ isLoading: false });
+            setIsLoading(false);
         }
     };
 
-    handleLoadProject = async (projectName) => {
+    const handleLoadProject = async (projectName) => {
         try {
             const apiUrl = getApiUrl(`/saved-project/auto-save/load?projectName=${encodeURIComponent(projectName)}`);
             const response = await fetch(apiUrl);
@@ -73,28 +79,34 @@ class AutoSaveManager extends React.Component {
                 const data = await response.json();
                 if (data.success && data.projectData) {
                     // Načti projekt do VM
-                    await this.props.vm.loadProject(data.projectData);
+                    await props.vm.loadProject(data.projectData);
                     
                     // Aktualizuj název projektu
-                    this.props.setProjectTitle(data.projectName);
+                    props.setProjectTitle(data.projectName);
                     
                     // Zavři manager
-                    this.handleClose();
+                    handleClose();
                     
-                    alert(`Projekt "${data.projectName}" byl úspěšně načten!`);
+                    showSuccess(`Projekt "${data.projectName}" byl úspěšně načten!`);
                 } else {
-                    alert('Chyba při načítání projektu: ' + (data.error || 'Neznámá chyba'));
+                    showError(data.error || 'Neznámá chyba', 'Chyba při načítání projektu');
                 }
             } else {
-                alert('Chyba při načítání projektu: ' + response.statusText);
+                // Pokus se načíst chybovou zprávu z response body
+                try {
+                    const errorData = await response.json();
+                    showError(errorData.error || response.statusText, 'Chyba při načítání projektu');
+                } catch (parseError) {
+                    showError(response.statusText, 'Chyba při načítání projektu');
+                }
             }
         } catch (error) {
             console.error('Chyba při načítání projektu:', error);
-            alert('Chyba při načítání projektu: ' + error.message);
+            showError(error.message, 'Chyba při načítání projektu');
         }
     };
 
-    handleDeployProject = async (projectName) => {
+    const handleDeployProject = async (projectName) => {
         try {
             const apiUrl = getApiUrl('deploy-project');
             const response = await fetch(apiUrl, {
@@ -109,30 +121,36 @@ class AutoSaveManager extends React.Component {
                 const data = await response.json();
                 if (data.success) {
                     // Aktualizuj seznam projektů
-                    this.loadProjects();
-                    alert(`Projekt "${projectName}" byl nasazen.`);
+                    loadProjects();
+                    showSuccess(`Projekt "${projectName}" byl nasazen.`);
                 } else {
-                    alert('Chyba při nasazování projektu: ' + (data.error || 'Neznámá chyba'));
+                    showError(data.error || 'Neznámá chyba', 'Chyba při nasazování projektu');
                 }
             } else {
-                alert('Chyba při nasazování projektu: ' + response.statusText);
+                // Pokus se načíst chybovou zprávu z response body
+                try {
+                    const errorData = await response.json();
+                    showError(errorData.error || response.statusText, 'Chyba při nasazování projektu');
+                } catch (parseError) {
+                    showError(response.statusText, 'Chyba při nasazování projektu');
+                }
             }
         } catch (error) {
             console.error('Chyba při nasazování projektu:', error);
-            alert('Chyba při nasazování projektu: ' + error.message);
+            showError(error.message, 'Chyba při nasazování projektu');
         }
     };
 
-    handleDeployCurrentProject = async () => {
+    const handleDeployCurrentProject = async () => {
         try {
-            if (!this.props.vm) {
-                alert('Žádný projekt není načten v editoru');
+            if (!props.vm) {
+                showWarning('Žádný projekt není načten v editoru');
                 return;
             }
 
             // Získej aktuální data projektu z VM
-            const projectData = this.props.vm.toJSON();
-            const projectName = this.props.projectTitle || 'Neznámý projekt';
+            const projectData = props.vm.toJSON();
+            const projectName = props.projectTitle || 'Neznámý projekt';
 
             // Nejdříve ulož projekt do auto-save
             const autoSaveUrl = getApiUrl('/saved-project/auto-save');
@@ -148,7 +166,7 @@ class AutoSaveManager extends React.Component {
             });
 
             if (!autoSaveResponse.ok) {
-                alert('Chyba při ukládání projektu: ' + autoSaveResponse.statusText);
+                showError('Chyba při ukládání projektu: ' + autoSaveResponse.statusText);
                 return;
             }
 
@@ -166,21 +184,27 @@ class AutoSaveManager extends React.Component {
                 const data = await deployResponse.json();
                 if (data.success) {
                     // Aktualizuj seznam projektů
-                    this.loadProjects();
-                    alert(`Aktuální projekt "${projectName}" byl nasazen do AlbiLAB.`);
+                    loadProjects();
+                    showSuccess(`Aktuální projekt "${projectName}" byl nasazen do AlbiLAB.`);
                 } else {
-                    alert('Chyba při nasazování projektu: ' + (data.error || 'Neznámá chyba'));
+                    showError(data.error || 'Neznámá chyba', 'Chyba při nasazování projektu');
                 }
             } else {
-                alert('Chyba při nasazování projektu: ' + deployResponse.statusText);
+                // Pokus se načíst chybovou zprávu z response body
+                try {
+                    const errorData = await deployResponse.json();
+                    showError(errorData.error || deployResponse.statusText, 'Chyba při nasazování projektu');
+                } catch (parseError) {
+                    showError(deployResponse.statusText, 'Chyba při nasazování projektu');
+                }
             }
         } catch (error) {
             console.error('Chyba při nasazování aktuálního projektu:', error);
-            alert('Chyba při nasazování aktuálního projektu: ' + error.message);
+            showError(error.message, 'Chyba při nasazování aktuálního projektu');
         }
     };
 
-    handleStartProject = async (projectName) => {
+    const handleStartProject = async (projectName) => {
         try {
             const apiUrl = getApiUrl('start-project');
             const response = await fetch(apiUrl, {
@@ -195,21 +219,27 @@ class AutoSaveManager extends React.Component {
                 const data = await response.json();
                 if (data.success) {
                     // Aktualizuj seznam projektů
-                    this.loadProjects();
-                    alert(`Projekt "${projectName}" byl spuštěn.`);
+                    loadProjects();
+                    showSuccess(`Projekt "${projectName}" byl spuštěn.`);
                 } else {
-                    alert('Chyba při spouštění projektu: ' + (data.error || 'Neznámá chyba'));
+                    showError(data.error || 'Neznámá chyba', 'Chyba při spouštění projektu');
                 }
             } else {
-                alert('Chyba při spouštění projektu: ' + response.statusText);
+                // Pokus se načíst chybovou zprávu z response body
+                try {
+                    const errorData = await response.json();
+                    showError(errorData.error || response.statusText, 'Chyba při spouštění projektu');
+                } catch (parseError) {
+                    showError(response.statusText, 'Chyba při spouštění projektu');
+                }
             }
         } catch (error) {
             console.error('Chyba při spouštění projektu:', error);
-            alert('Chyba při spouštění projektu: ' + error.message);
+            showError(error.message, 'Chyba při spouštění projektu');
         }
     };
 
-    handleStopProject = async (projectName) => {
+    const handleStopProject = async (projectName) => {
         try {
             const apiUrl = getApiUrl('stop-project');
             const response = await fetch(apiUrl, {
@@ -224,21 +254,27 @@ class AutoSaveManager extends React.Component {
                 const data = await response.json();
                 if (data.success) {
                     // Aktualizuj seznam projektů
-                    this.loadProjects();
-                    alert(`Projekt "${projectName}" byl zastaven.`);
+                    loadProjects();
+                    showSuccess(`Projekt "${projectName}" byl zastaven.`);
                 } else {
-                    alert('Chyba při zastavování projektu: ' + (data.error || 'Neznámá chyba'));
+                    showError(data.error || 'Neznámá chyba', 'Chyba při zastavování projektu');
                 }
             } else {
-                alert('Chyba při zastavování projektu: ' + response.statusText);
+                // Pokus se načíst chybovou zprávu z response body
+                try {
+                    const errorData = await response.json();
+                    showError(errorData.error || response.statusText, 'Chyba při zastavování projektu');
+                } catch (parseError) {
+                    showError(response.statusText, 'Chyba při zastavování projektu');
+                }
             }
         } catch (error) {
             console.error('Chyba při zastavování projektu:', error);
-            alert('Chyba při zastavování projektu: ' + error.message);
+            showError(error.message, 'Chyba při zastavování projektu');
         }
     };
 
-    handleDeleteProject = async (projectName) => {
+    const handleDeleteProject = async (projectName) => {
         try {
             const apiUrl = getApiUrl(`/saved-project/auto-save?projectName=${encodeURIComponent(projectName)}`);
             const response = await fetch(apiUrl, {
@@ -249,42 +285,40 @@ class AutoSaveManager extends React.Component {
                 const data = await response.json();
                 if (data.success) {
                     // Aktualizuj seznam projektů
-                    this.loadProjects();
-                    alert(`Projekt "${projectName}" byl smazán.`);
+                    loadProjects();
+                    showSuccess(`Projekt "${projectName}" byl smazán.`);
                 } else {
-                    alert('Chyba při mazání projektu: ' + (data.error || 'Neznámá chyba'));
+                    showError(data.error || 'Neznámá chyba', 'Chyba při mazání projektu');
                 }
             } else {
-                alert('Chyba při mazání projektu: ' + response.statusText);
+                // Pokus se načíst chybovou zprávu z response body
+                try {
+                    const errorData = await response.json();
+                    showError(errorData.error || response.statusText, 'Chyba při mazání projektu');
+                } catch (parseError) {
+                    showError(response.statusText, 'Chyba při mazání projektu');
+                }
             }
         } catch (error) {
             console.error('Chyba při mazání projektu:', error);
-            alert('Chyba při mazání projektu: ' + error.message);
+            showError(error.message, 'Chyba při mazání projektu');
         }
     };
 
-    render() {
-        return (
-            <AutoSaveManagerComponent
-                isOpen={this.state.isOpen}
-                projects={this.state.projects}
-                isLoading={this.state.isLoading}
-                onClose={this.handleClose}
-                onLoadProject={this.handleLoadProject}
-                onDeployProject={this.handleDeployProject}
-                onDeployCurrentProject={this.handleDeployCurrentProject}
-                onStartProject={this.handleStartProject}
-                onStopProject={this.handleStopProject}
-                onDeleteProject={this.handleDeleteProject}
-            />
-        );
-    }
-}
-
-AutoSaveManager.propTypes = {
-    vm: PropTypes.object,
-    projectTitle: PropTypes.string,
-    setProjectTitle: PropTypes.func
+    return (
+        <AutoSaveManagerComponent
+            isOpen={isOpen}
+            projects={projects}
+            isLoading={isLoading}
+            onClose={handleClose}
+            onLoadProject={handleLoadProject}
+            onDeployProject={handleDeployProject}
+            onDeployCurrentProject={handleDeployCurrentProject}
+            onStartProject={handleStartProject}
+            onStopProject={handleStopProject}
+            onDeleteProject={handleDeleteProject}
+        />
+    );
 };
 
 const mapStateToProps = state => ({
@@ -293,7 +327,7 @@ const mapStateToProps = state => ({
 });
 
 const mapDispatchToProps = dispatch => ({
-    setProjectTitle: (title) => dispatch(setProjectTitle(title))
+    setProjectTitle: title => dispatch(setProjectTitle(title))
 });
 
 export default connect(mapStateToProps, mapDispatchToProps)(AutoSaveManager);

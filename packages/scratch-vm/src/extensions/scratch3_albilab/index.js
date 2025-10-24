@@ -244,7 +244,7 @@ class Scratch3AlbiLABBlocks {
                             arguments: {
                                 IP: {
                                     type: ArgumentType.STRING,
-                                    defaultValue: '10.0.0.108'
+                                    defaultValue: ''
                                 }
                             }
                         }
