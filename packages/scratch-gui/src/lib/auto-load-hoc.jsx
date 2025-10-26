@@ -17,8 +17,8 @@ const AutoLoadHOC = function (WrappedComponent) {
         }
 
         async componentDidMount () {
-            // Zkontroluj, jestli existuje uložený projekt
-            await this.checkForSavedProject();
+            // Automatické načítání uloženého projektu je zakázáno
+            // await this.checkForSavedProject();
         }
 
         async checkForSavedProject () {

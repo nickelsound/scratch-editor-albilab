@@ -25,6 +25,11 @@ const messages = defineMessages({
         id: 'gui.menuBar.autoSave.lastSaved',
         defaultMessage: 'Naposledy uloženo: {time}',
         description: 'Auto-save indicator with last save time'
+    },
+    unsaved: {
+        id: 'gui.menuBar.autoSave.unsaved',
+        defaultMessage: 'Neuložený projekt',
+        description: 'Auto-save indicator when project is not saved'
     }
 });
 
@@ -48,7 +53,7 @@ const AutoSaveIndicator = function (props) {
                 time: formatLastSaveTime(lastSaveTime)
             });
         } else {
-            return '';
+            return intl.formatMessage(messages.unsaved);
         }
     };
 
@@ -65,7 +70,7 @@ const AutoSaveIndicator = function (props) {
         } else if (lastSaveTime) {
             return '✅';
         } else {
-            return '';
+            return '💾';
         }
     };
 
@@ -88,18 +93,19 @@ const AutoSaveIndicator = function (props) {
                 {
                     [styles.autoSaveIndicatorSaving]: isSaving,
                     [styles.autoSaveIndicatorSaved]: lastSaveTime && !isSaving && !saveError,
-                    [styles.autoSaveIndicatorError]: saveError
+                    [styles.autoSaveIndicatorError]: saveError,
+                    [styles.autoSaveIndicatorUnsaved]: !lastSaveTime && !isSaving && !saveError
                 }
             )}
             title={lastSaveTime ? intl.formatMessage(messages.lastSaved, {
                 time: formatLastSaveTime(lastSaveTime)
-            }) : ''}
+            }) : intl.formatMessage(messages.unsaved)}
             {...componentProps}
         >
             <span className={styles.autoSaveIcon}>
                 {getStatusIcon()}
             </span>
-            {lastSaveTime && !isSaving && !saveError ? (
+            {!isSaving && !saveError ? (
                 <button
                     className={styles.autoSaveTimeButton}
                     onClick={handleForceSave}

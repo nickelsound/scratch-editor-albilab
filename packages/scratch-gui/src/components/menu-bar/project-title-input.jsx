@@ -4,6 +4,8 @@ import PropTypes from 'prop-types';
 import React from 'react';
 import {defineMessages, intlShape, injectIntl} from 'react-intl';
 import {setProjectTitle} from '../../reducers/project-title';
+import {getApiUrl} from '../../lib/api-config.js';
+import notificationService from '../../lib/notification-service.js';
 
 import BufferedInputHOC from '../forms/buffered-input-hoc.jsx';
 import Input from '../forms/input.jsx';
@@ -16,6 +18,11 @@ const messages = defineMessages({
         id: 'gui.gui.projectTitlePlaceholder',
         description: 'Placeholder for project title when blank',
         defaultMessage: 'Project title here'
+    },
+    deployCurrentProject: {
+        id: 'gui.gui.deployCurrentProject',
+        description: 'Deploy current project button',
+        defaultMessage: 'Nasadit aktuální projekt'
     }
 });
 
@@ -23,11 +30,72 @@ const ProjectTitleInput = ({
     className,
     intl,
     onSubmit,
-    projectTitle
+    projectTitle,
+    vm
 }) => {
     const handleManageClick = () => {
         // Vyvolej event pro otevření manageru
         window.dispatchEvent(new CustomEvent('openAutoSaveManager'));
+    };
+
+    const handleDeployClick = async () => {
+        try {
+            if (!vm) {
+                notificationService.showWarning('Žádný projekt není načten v editoru');
+                return;
+            }
+
+            // Získej aktuální data projektu z VM
+            const projectData = vm.toJSON();
+            const projectName = projectTitle || 'Neznámý projekt';
+
+            // Nejdříve ulož projekt do auto-save
+            const autoSaveUrl = getApiUrl('/saved-project/auto-save');
+            const autoSaveResponse = await fetch(autoSaveUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    projectData: projectData,
+                    projectName: projectName
+                })
+            });
+
+            if (!autoSaveResponse.ok) {
+                notificationService.showError('Chyba při ukládání projektu: ' + autoSaveResponse.statusText);
+                return;
+            }
+
+            // Pak nasaď projekt
+            const deployUrl = getApiUrl('deploy-project');
+            const deployResponse = await fetch(deployUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ projectName })
+            });
+            
+            if (deployResponse.ok) {
+                const data = await deployResponse.json();
+                if (data.success) {
+                    notificationService.showSuccess(`Aktuální projekt "${projectName}" byl nasazen do AlbiLAB.`);
+                } else {
+                    notificationService.showError(data.error || 'Neznámá chyba', 'Chyba při nasazování projektu');
+                }
+            } else {
+                try {
+                    const errorData = await deployResponse.json();
+                    notificationService.showError(errorData.error || deployResponse.statusText, 'Chyba při nasazování projektu');
+                } catch (parseError) {
+                    notificationService.showError(deployResponse.statusText, 'Chyba při nasazování projektu');
+                }
+            }
+        } catch (error) {
+            console.error('Chyba při nasazování aktuálního projektu:', error);
+            notificationService.showError(error.message, 'Chyba při nasazování aktuálního projektu');
+        }
     };
 
     return (
@@ -42,9 +110,16 @@ const ProjectTitleInput = ({
                 onSubmit={onSubmit}
             />
             <button
+                className={styles.deployButton}
+                onClick={handleDeployClick}
+                title={intl.formatMessage(messages.deployCurrentProject)}
+            >
+                🚀
+            </button>
+            <button
                 className={styles.manageButton}
                 onClick={handleManageClick}
-                title="Spravovat automaticky uložené projekty"
+                title="Správa projektů"
             >
                 📁
             </button>
@@ -56,11 +131,13 @@ ProjectTitleInput.propTypes = {
     className: PropTypes.string,
     intl: intlShape.isRequired,
     onSubmit: PropTypes.func,
-    projectTitle: PropTypes.string
+    projectTitle: PropTypes.string,
+    vm: PropTypes.object
 };
 
 const mapStateToProps = state => ({
-    projectTitle: state.scratchGui.projectTitle
+    projectTitle: state.scratchGui.projectTitle,
+    vm: state.scratchGui.vm
 });
 
 const mapDispatchToProps = dispatch => ({

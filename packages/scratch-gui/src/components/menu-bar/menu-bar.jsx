@@ -650,13 +650,6 @@ class MenuBar extends React.Component {
                             username={this.props.authorUsername}
                         />
                     ) : null)}
-                    <div className={classNames(styles.menuBarItem)}>
-                        {/* AutoSaveIndicator - indikátor průběžného ukládání */}
-                        <AutoSaveIndicator />
-                    </div>
-                    <div className={classNames(styles.menuBarItem, styles.communityButtonWrapper)}>
-                        {/* See Project Page tlačítko - skryto */}
-                    </div>
                     <Divider className={classNames(styles.divider)} />
                     <div className={styles.fileGroup}>
                         <div
@@ -686,6 +679,10 @@ class MenuBar extends React.Component {
                             <span className={styles.debugLabel}>
                                 <FormattedMessage {...ariaMessages.debug} />
                             </span>
+                        </div>
+                        <div className={classNames(styles.menuBarItem)}>
+                            {/* AutoSaveIndicator - indikátor průběžného ukládání */}
+                            <AutoSaveIndicator />
                         </div>
                     </div>
                 </div>
