@@ -24,11 +24,20 @@ ulimit -n 65536
 ulimit -Hn 65536
 echo "✅ Limity nastaveny: $(ulimit -n)"
 
-# Vyčištění cache
+# Vyčištění cache a starých images
 echo "🧹 Čistím npm cache..."
 npm cache clean --force 2>/dev/null || true
 rm -rf ~/.npm/_cacache 2>/dev/null || true
-echo "✅ Cache vyčištěna"
+echo "✅ NPM cache vyčištěna"
+
+echo "🧹 Čistím staré Podman images..."
+# Smažeme dangling images (ty s <none> tagem)
+podman image prune -f 2>/dev/null || true
+# Smažeme nepoužívané images (starší než 1 den)
+podman image prune -a --filter "until=24h" -f 2>/dev/null || true
+# Smažeme build cache
+podman system prune -f 2>/dev/null || true
+echo "✅ Podman cache vyčištěna"
 
 echo ""
 
@@ -56,6 +65,12 @@ podman save -o scratch-backend-arm64.tar scratch-backend-temp
 echo "🧹 Čistím dočasné images..."
 podman rmi scratch-gui-temp scratch-backend-temp 2>/dev/null || true
 
+# Finální čištění - smažeme všechny nepoužívané images a cache
+echo "🧹 Finální čištění Podman cache..."
+podman image prune -f 2>/dev/null || true
+podman system prune -f 2>/dev/null || true
+echo "✅ Finální čištění dokončeno"
+
 echo ""
 echo "✅ ARM64 tar archivy byly úspěšně vytvořeny!"
 
@@ -66,5 +81,10 @@ echo "  - scratch-backend-arm64.tar"
 echo ""
 echo "📊 Velikosti souborů:"
 ls -lh *.tar
+echo ""
+echo "💾 Úspora místa:"
+echo "  - Dangling images smazány"
+echo "  - Build cache vyčištěna"
+echo "  - Staré images odstraněny"
 echo ""
 echo "🚀 Images jsou připraveny pro nasazení na Raspberry Pi"

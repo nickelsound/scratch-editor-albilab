@@ -826,21 +826,31 @@ app.get('/api/saved-project/auto-save/list', async (req, res) => {
 // Funkce pro kontrolu přítomnosti IP komponenty v projektu
 function validateAlbiLABIPComponent(projectData) {
     try {
+        log(`Validating AlbiLAB IP component`, 'info', {
+            hasProjectData: !!projectData,
+            hasTargets: projectData && projectData.targets ? projectData.targets.length : 0
+        });
+        
         if (!projectData || !projectData.targets) {
+            log(`Validation failed: No project data or targets`, 'error');
             return false;
         }
         
         // Projdi všechny sprites a stage
         for (const target of projectData.targets) {
             if (target.blocks) {
+                log(`Checking target ${target.name} with ${Object.keys(target.blocks).length} blocks`, 'info');
                 // Projdi všechny bloky
                 for (const blockId in target.blocks) {
                     const block = target.blocks[blockId];
+                    log(`Checking block ${blockId}: opcode=${block.opcode}`, 'info');
                     // Zkontroluj, zda je to AlbiLAB blok pro nastavení IP
-                    if (block.opcode === 'setDeviceIP' && block.inputs && block.inputs.IP) {
-                        const ipValue = block.inputs.IP[1];
+                    if (block.opcode === 'albilab_setDeviceIP' && block.inputs && block.inputs.IP) {
+                        const ipValue = block.inputs.IP[1][1]; // [1][1] pro získání skutečné hodnoty
+                        log(`Found AlbiLAB IP block with IP: ${ipValue}`, 'info');
                         // Zkontroluj, zda má IP hodnotu (není prázdná)
                         if (ipValue && ipValue.trim() !== '') {
+                            log(`Validation successful: IP component found with value: ${ipValue}`, 'success');
                             return true;
                         }
                     }
@@ -848,6 +858,7 @@ function validateAlbiLABIPComponent(projectData) {
             }
         }
         
+        log(`Validation failed: No AlbiLAB IP component found`, 'error');
         return false;
     } catch (error) {
         log(`Error validating AlbiLAB IP component: ${error.message}`, 'error');
@@ -882,7 +893,12 @@ app.post('/api/deploy-project', async (req, res) => {
         }
         
         // Validace přítomnosti IP komponenty
-        if (!validateAlbiLABIPComponent(projectData.projectData)) {
+        // Pokud je projectData string, parsuj ho
+        const actualProjectData = typeof projectData.projectData === 'string' 
+            ? JSON.parse(projectData.projectData) 
+            : projectData.projectData;
+        
+        if (!validateAlbiLABIPComponent(actualProjectData)) {
             return res.status(400).json({ 
                 success: false,
                 error: 'Chybí komponenta určující IP adresu AlbiLAB. Přidejte blok "nastavit IP adresu AlbiLAB na [IP]" do vašeho projektu.' 
@@ -890,7 +906,7 @@ app.post('/api/deploy-project', async (req, res) => {
         }
         
         // Ulož projekt do AlbiLAB (nasadit)
-        const saved = await saveProject(projectData.projectData, projectName, false);
+        const saved = await saveProject(actualProjectData, projectName, false);
         
         if (saved) {
             const response = { 
@@ -965,8 +981,21 @@ app.post('/api/start-project', async (req, res) => {
             });
         }
         
+        // Validace přítomnosti IP komponenty
+        // Pokud je projectData.projectData string, parsuj ho
+        const actualProjectData = typeof projectData.projectData === 'string' 
+            ? JSON.parse(projectData.projectData) 
+            : projectData.projectData;
+        
+        if (!validateAlbiLABIPComponent(actualProjectData)) {
+            return res.status(400).json({ 
+                success: false,
+                error: 'Chybí komponenta určující IP adresu AlbiLAB. Přidejte blok "nastavit IP adresu AlbiLAB na [IP]" do vašeho projektu.' 
+            });
+        }
+        
         // Spusť službu
-        await startService(projectData.projectData, projectName);
+        await startService(actualProjectData, projectName);
         
         const response = { 
             success: true, 
@@ -1173,13 +1202,13 @@ wss.on('connection', (ws) => {
 // Graceful shutdown
 process.on('SIGINT', async () => {
     log('Přijat SIGINT, ukončuji server...', 'info');
-    await stopCurrentService();
+    await stopAllServices();
     process.exit(0);
 });
 
 process.on('SIGTERM', async () => {
     log('Přijat SIGTERM, ukončuji server...', 'info');
-    await stopCurrentService();
+    await stopAllServices();
     process.exit(0);
 });
 
@@ -1194,8 +1223,8 @@ async function runServerStartupScript() {
         // Počkej chvilku, aby se server stabilizoval
         await new Promise(resolve => setTimeout(resolve, 2000));
         
-        // Automaticky spusť uložený projekt
-        await autoStartSavedProject();
+        // Automatické spuštění uloženého projektu je zakázáno
+        // await autoStartSavedProject();
         
         log('Startup script dokončen', 'success');
     } catch (error) {
