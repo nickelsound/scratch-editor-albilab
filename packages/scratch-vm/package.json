@@ -94,7 +94,7 @@
     "scratch-blocks": "1.1.226",
     "scratch-l10n": "6.0.72",
     "scratch-render-fonts": "1.0.245",
-    "scratch-semantic-release-config": "3.0.0",
+    "scratch-semantic-release-config": "4.0.0",
     "scratch-webpack-configuration": "3.1.0",
     "script-loader": "0.7.2",
     "semantic-release": "19.0.5",
