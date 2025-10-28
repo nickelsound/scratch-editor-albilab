@@ -1,0 +1,71 @@
+# Multi-stage ARM64 Dockerfile pro Scratch Backend (Raspberry Pi)
+# Optimalizováno pro menší finální image
+
+# Stage 1: Build stage - sestavíme potřebné balíčky
+FROM --platform=linux/arm64 node:22-alpine AS builder
+
+# Nastavíme systemové limity pro ARM64
+RUN echo "* soft nofile 65536" >> /etc/security/limits.conf 2>/dev/null || true && \
+    echo "* hard nofile 65536" >> /etc/security/limits.conf 2>/dev/null || true
+
+WORKDIR /app
+
+# Zkopírujeme pouze package.json soubory pro lepší cache
+COPY package*.json ./
+COPY packages/scratch-backend/package*.json ./packages/scratch-backend/
+COPY packages/scratch-vm/package*.json ./packages/scratch-vm/
+COPY packages/scratch-render/package*.json ./packages/scratch-render/
+COPY packages/scratch-svg-renderer/package*.json ./packages/scratch-svg-renderer/
+
+# Nainstalujeme pouze production závislosti
+RUN npm config set fetch-timeout 300000 && \
+    npm config set fetch-retry-mintimeout 20000 && \
+    npm config set fetch-retry-maxtimeout 120000 && \
+    npm ci --only=production --ignore-scripts --no-audit --no-fund
+
+# Zkopírujeme pouze potřebné zdrojové soubory
+COPY packages/scratch-svg-renderer/ ./packages/scratch-svg-renderer/
+COPY packages/scratch-render/ ./packages/scratch-render/
+COPY packages/scratch-vm/ ./packages/scratch-vm/
+COPY packages/scratch-backend/ ./packages/scratch-backend/
+
+# Sestavíme pouze závislé balíčky (ne GUI)
+RUN npm run build --workspace=packages/scratch-svg-renderer
+RUN npm run build --workspace=packages/scratch-render
+RUN npm run build --workspace=packages/scratch-vm
+
+# Stage 2: Production stage - pouze backend aplikace
+FROM --platform=linux/arm64 node:22-alpine AS production
+
+# Nastavíme systemové limity
+RUN echo "* soft nofile 65536" >> /etc/security/limits.conf 2>/dev/null || true && \
+    echo "* hard nofile 65536" >> /etc/security/limits.conf 2>/dev/null || true
+
+WORKDIR /app
+
+# Zkopírujeme pouze production závislosti z builder stage
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/packages/scratch-backend/node_modules ./packages/scratch-backend/node_modules
+COPY --from=builder /app/packages/scratch-vm/node_modules ./packages/scratch-vm/node_modules
+COPY --from=builder /app/packages/scratch-render/node_modules ./packages/scratch-render/node_modules
+COPY --from=builder /app/packages/scratch-svg-renderer/node_modules ./packages/scratch-svg-renderer/node_modules
+
+# Zkopírujeme pouze build výstupy a backend zdrojové soubory
+COPY --from=builder /app/packages/scratch-svg-renderer/dist ./packages/scratch-svg-renderer/dist
+COPY --from=builder /app/packages/scratch-render/dist ./packages/scratch-render/dist
+COPY --from=builder /app/packages/scratch-vm/dist ./packages/scratch-vm/dist
+COPY --from=builder /app/packages/scratch-backend/src ./packages/scratch-backend/src
+COPY --from=builder /app/packages/scratch-backend/package.json ./packages/scratch-backend/
+
+# Vytvoříme uploads adresář
+RUN mkdir -p uploads
+
+# Exponujeme porty
+EXPOSE 3001 3002
+
+# Nastavíme environment proměnné
+ENV NODE_ENV=production
+ENV PORT=3001
+
+# Spustíme backend server
+CMD ["npm", "start", "--workspace=packages/scratch-backend"]
