@@ -10,7 +10,7 @@ RUN echo "* soft nofile 65536" >> /etc/security/limits.conf 2>/dev/null || true 
 
 WORKDIR /app
 
-# Zkopírujeme pouze package.json soubory pro lepší cache
+# Zkopírujeme package.json a package-lock.json soubory pro lepší cache
 COPY package*.json ./
 COPY packages/scratch-backend/package*.json ./packages/scratch-backend/
 COPY packages/scratch-vm/package*.json ./packages/scratch-vm/
@@ -21,7 +21,7 @@ COPY packages/scratch-svg-renderer/package*.json ./packages/scratch-svg-renderer
 RUN npm config set fetch-timeout 300000 && \
     npm config set fetch-retry-mintimeout 20000 && \
     npm config set fetch-retry-maxtimeout 120000 && \
-    npm ci --only=production --ignore-scripts --no-audit --no-fund
+    npm install --omit=dev --ignore-scripts --no-audit --no-fund
 
 # Zkopírujeme pouze potřebné zdrojové soubory
 COPY packages/scratch-svg-renderer/ ./packages/scratch-svg-renderer/

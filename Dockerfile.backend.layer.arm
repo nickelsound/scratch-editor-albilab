@@ -1,0 +1,14 @@
+# Backend nástavba nad společnou base image
+FROM scratch-base-arm:latest AS backend
+
+# Nainstalujeme serve pro statické soubory (pokud je potřeba)
+RUN npm install -g serve
+
+# Exponujeme porty
+EXPOSE 3001 3002
+
+# Nastavíme environment proměnné
+ENV PORT=3001
+
+# Spustíme backend server
+CMD ["npm", "start", "--workspace=packages/scratch-backend"]
