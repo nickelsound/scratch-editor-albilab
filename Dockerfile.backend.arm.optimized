@@ -17,7 +17,7 @@ COPY packages/scratch-vm/package*.json ./packages/scratch-vm/
 COPY packages/scratch-render/package*.json ./packages/scratch-render/
 COPY packages/scratch-svg-renderer/package*.json ./packages/scratch-svg-renderer/
 
-# Nainstalujeme pouze production závislosti
+# Nainstalujeme pouze production závislosti (backend nepotřebuje prepare script)
 RUN npm config set fetch-timeout 300000 && \
     npm config set fetch-retry-mintimeout 20000 && \
     npm config set fetch-retry-maxtimeout 120000 && \
