@@ -1,0 +1,20 @@
+# Backend aplikace tar (ARM64)
+# Obsahuje: backend + všechny potřebné závislosti
+
+FROM scratch-base-split:latest AS backend-app
+
+WORKDIR /app
+
+# Zkopírujeme pouze backend zdrojové soubory
+COPY packages/scratch-backend/src ./packages/scratch-backend/src/
+COPY packages/scratch-backend/package.json ./packages/scratch-backend/
+
+# Exponujeme porty
+EXPOSE 3001 3002
+
+# Nastavíme environment proměnné
+ENV NODE_ENV=production
+ENV PORT=3001
+
+# Spustíme backend server
+CMD ["npm", "start", "--workspace=packages/scratch-backend"]
