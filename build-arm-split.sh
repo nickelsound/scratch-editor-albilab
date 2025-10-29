@@ -73,14 +73,27 @@ if [ "$SKIP_BASE" = "false" ]; then
         -f Dockerfile.base.split.arm \
         -t scratch-base-split:latest .
 
+    # Base tar je potřebný - backend/frontend dědí od base/build image
     echo "📦 Ukládám base image do tar archivu..."
+    echo "💡 Base tar je potřebný - backend/frontend tary dědí od base (jsou malé)"
     podman save -o scratch-base-split-arm64.tar scratch-base-split:latest
 else
-    echo "📦 Načítám existující base image..."
-    podman load -i scratch-base-split-arm64.tar
+    if [ -f "scratch-base-split-arm64.tar" ]; then
+        echo "📦 Načítám existující base image z tar archivu..."
+        podman load -i scratch-base-split-arm64.tar
+    else
+        echo "⚠️  Base tar neexistuje - budu muset rebuildit base image"
+        SKIP_BASE=false
+        # Přepneme na build
+        echo "🔨 Sestavuji base image (závislosti + build tools)..."
+        podman build --platform linux/arm64 \
+            --ulimit nofile=65536:65536 \
+            -f Dockerfile.base.split.arm \
+            -t scratch-base-split:latest .
+    fi
 fi
 
-# Stage 2: Build všech balíčků pomocí base image
+# Stage 2: Build všech balíčků pomocí base image a přidání do base
 echo "🔨 Sestavuji všechny balíčky pomocí base image..."
 
 # Vytvoříme dočasný Dockerfile pro build
@@ -104,8 +117,16 @@ podman build --platform linux/arm64 \
     -f Dockerfile.build.temp \
     -t scratch-build-temp:latest .
 
-# Zkopírujeme build výstup z kontejneru
-echo "📦 Kopíruji build výstupy..."
+# Přidáme build výstupy do base image (aby backend/frontend mohly dědit přímo)
+echo "📦 Přidávám build výstupy do base image..."
+podman tag scratch-build-temp:latest scratch-base-split:latest
+
+# Aktualizujeme base tar s build výstupy (vždy - build výstupy jsou nové)
+echo "📦 Aktualizuji base tar s build výstupy..."
+podman save -o scratch-base-split-arm64.tar scratch-base-split:latest
+
+# Zkopírujeme frontend build výstup
+echo "📦 Kopíruji frontend build výstup..."
 mkdir -p frontend-build
 podman create --name temp-container scratch-build-temp:latest
 podman cp temp-container:/app/packages/scratch-gui/build ./frontend-build/
@@ -203,7 +224,12 @@ echo "  - Base image obsahuje všechny závislosti"
 echo "  - Backend/Frontend jsou malé aplikace"
 echo ""
 echo "🚀 Nasazení:"
-echo "  1. Načtěte base: podman load -i scratch-base-split-arm64.tar"
-echo "  2. Načtěte backend: podman load -i scratch-backend-split-arm64.tar"
-echo "  3. Načtěte frontend: podman load -i scratch-frontend-split-arm64.tar"
+echo "  1. Načtěte base: podman load -i scratch-base-split-arm64.tar (1x - obsahuje všechny závislosti + build výstupy)"
+echo "  2. Načtěte backend: podman load -i scratch-backend-split-arm64.tar (RYCHLÉ - jen backend kód)"
+echo "  3. Načtěte frontend: podman load -i scratch-frontend-split-arm64.tar (RYCHLÉ - jen frontend build)"
 echo "  4. Spusťte kontejnery podle potřeby"
+echo ""
+echo "💡 POZNÁMKA:"
+echo "    ✅ Base tar se buildí jen jednou (obsahuje vše)"
+echo "    ✅ Backend/frontend tary jsou MALÉ a buildí se RYCHLE"
+echo "    ✅ Při změně kódu stačí rebuildit jen backend/frontend (pár minut vs. půl dne)"

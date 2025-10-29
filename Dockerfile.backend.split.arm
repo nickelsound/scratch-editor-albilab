@@ -1,5 +1,5 @@
 # Backend aplikace tar (ARM64)
-# Obsahuje: backend + všechny potřebné závislosti
+# Dědí od build image - obsahuje jen backend kód (zbytek je v parent)
 
 FROM scratch-base-split:latest AS backend-app
 
@@ -8,6 +8,9 @@ WORKDIR /app
 # Zkopírujeme pouze backend zdrojové soubory
 COPY packages/scratch-backend/src ./packages/scratch-backend/src/
 COPY packages/scratch-backend/package.json ./packages/scratch-backend/
+
+# Vytvoříme uploads adresář
+RUN mkdir -p uploads
 
 # Exponujeme porty
 EXPOSE 3001 3002

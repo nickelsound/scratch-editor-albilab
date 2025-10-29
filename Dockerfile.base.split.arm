@@ -36,3 +36,5 @@ RUN mkdir -p uploads
 ENV NODE_ENV=production
 
 # Tato base image obsahuje všechny závislosti a build tools
+
+

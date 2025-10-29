@@ -1,9 +1,11 @@
 # Frontend aplikace tar (ARM64)
-# Obsahuje: frontend build výstup + serve
+# Minimal image - obsahuje jen build výstup + serve
 
 FROM scratch-base-split:latest AS frontend-app
 
 WORKDIR /app
+
+# Serve je už v base image
 
 # Zkopírujeme build výstup (bude přidán při buildu)
 # COPY build/ ./build/
