@@ -106,6 +106,7 @@ podman build --platform linux/arm64 \
 
 # Zkopírujeme build výstup z kontejneru
 echo "📦 Kopíruji build výstupy..."
+mkdir -p frontend-build
 podman create --name temp-container scratch-build-temp:latest
 podman cp temp-container:/app/packages/scratch-gui/build ./frontend-build/
 podman rm temp-container
