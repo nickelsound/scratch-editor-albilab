@@ -123,6 +123,8 @@ podman tag scratch-build-temp:latest scratch-base-split:latest
 
 # Aktualizujeme base tar s build výstupy (vždy - build výstupy jsou nové)
 echo "📦 Aktualizuji base tar s build výstupy..."
+# Smažeme starý tar archiv, pokud existuje
+rm -f scratch-base-split-arm64.tar
 podman save -o scratch-base-split-arm64.tar scratch-base-split:latest
 
 # Zkopírujeme frontend build výstup
@@ -141,6 +143,7 @@ if [ "$SKIP_BACKEND" = "false" ]; then
         -t scratch-backend-split:latest .
 
     echo "📦 Ukládám backend aplikaci do tar archivu..."
+    rm -f scratch-backend-split-arm64.tar
     podman save -o scratch-backend-split-arm64.tar scratch-backend-split:latest
 else
     echo "📦 Načítám existující backend aplikaci..."
@@ -176,6 +179,7 @@ EOF
         -t scratch-frontend-split:latest .
 
     echo "📦 Ukládám frontend aplikaci do tar archivu..."
+    rm -f scratch-frontend-split-arm64.tar
     podman save -o scratch-frontend-split-arm64.tar scratch-frontend-split:latest
 else
     echo "📦 Načítám existující frontend aplikaci..."
