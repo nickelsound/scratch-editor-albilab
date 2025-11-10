@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { TaskHerder, CancelReason } from '../src'
+import { waitTicks } from './test-utilities'
 
 describe('basics', () => {
   beforeEach(() => {
@@ -16,6 +17,25 @@ describe('basics', () => {
       queueCostLimit: 20,
     })
     expect(bucket).toBeInstanceOf(TaskHerder)
+  })
+  it('should pass through task results', async () => {
+    const bucket = new TaskHerder({
+      burstLimit: 10,
+      sustainRate: 1,
+    })
+    const task = () => 'sync done'
+    const task2 = () => Promise.resolve('async done')
+    const task3 = () => {
+      throw new Error('task error')
+    }
+    const task4 = () => Promise.reject(new Error('async task error'))
+
+    await waitTicks(1000)
+
+    await expect(bucket.do(task)).resolves.toBe('sync done')
+    await expect(bucket.do(task2)).resolves.toBe('async done')
+    await expect(bucket.do(task3)).rejects.toThrow('task error')
+    await expect(bucket.do(task4)).rejects.toThrow('async task error')
   })
   it('should reject a task that exceeds the burst limit', async () => {
     const bucket = new TaskHerder({
@@ -52,5 +72,28 @@ describe('basics', () => {
     // This task fits
     void bucket.do(task, { cost: 1 })
     expect(bucket.length).toBe(3)
+  })
+  it('should reject a task even if there are cost limit shenanigans', async () => {
+    const bucket = new TaskHerder({
+      startingTokens: 0,
+      burstLimit: 100,
+      sustainRate: 1000,
+      queueCostLimit: 1000,
+    })
+    const task = () => Promise.resolve('done')
+
+    // The task is below the burst limit right now
+    const taskPromise = bucket.do(task, { cost: 10 })
+
+    // Don't try this at home
+    ;(bucket as unknown as Record<string, number>).burstLimit = 1
+
+    // Now let things settle
+    vi.advanceTimersByTime(10)
+    await waitTicks(1000)
+
+    // The task became too expensive due to the burst limit change after being queued but before running
+    // Right now this is "impossible" but could be relevant if we ever allow changes to the burst limit or task cost
+    await expect(taskPromise).rejects.toThrow(CancelReason.TaskTooExpensive)
   })
 })
