@@ -39,6 +39,9 @@ export default defineConfig({
     },
   },
   test: {
+    coverage: {
+      exclude: ['dist/**', 'node_modules/**', 'test/**', 'vite.config.js'],
+    },
     reporters: [
       'default',
 

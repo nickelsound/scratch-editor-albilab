@@ -33,9 +33,10 @@
     "format": "prettier --write . && eslint --fix",
     "lint": "eslint && prettier --check .",
     "preview": "vite preview",
-    "test": "vitest"
+    "test": "vitest run --coverage"
   },
   "devDependencies": {
+    "@vitest/coverage-v8": "4.0.7",
     "eslint": "9.39.1",
     "eslint-config-scratch": "12.0.24",
     "prettier": "3.6.2",

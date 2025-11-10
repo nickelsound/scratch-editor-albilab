@@ -19,5 +19,5 @@ export default eslintConfigScratch.defineConfig(
       globals: globals.node,
     },
   },
-  globalIgnores(['dist/**', 'node_modules/**']),
+  globalIgnores(['coverage/**', 'dist/**', 'node_modules/**']),
 )
