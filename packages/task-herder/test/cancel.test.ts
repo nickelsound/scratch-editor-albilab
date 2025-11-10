@@ -161,7 +161,7 @@ describe('abortSignal option', () => {
     const states: Record<string, string> = {}
     const controller = new AbortController()
     const p1 = bucket.do(makeTask(states, 'task1', 5), { cost: 1 })
-    const p2 = bucket.do(makeTask(states, 'task2', 5), { cost: 2, abortSignal: controller.signal })
+    const p2 = bucket.do(makeTask(states, 'task2', 5), { cost: 2, signal: controller.signal })
 
     await waitTicks(1000)
     expect(states.task1).toEqual('started')

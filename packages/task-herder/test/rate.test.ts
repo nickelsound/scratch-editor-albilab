@@ -52,7 +52,7 @@ describe('rate limit', () => {
     vi.advanceTimersByTime(1)
     await waitTicks(1000)
 
-    // After 30ms, all tasks should be done.
+    // After 3ms, all tasks should be done.
     expect(taskStates.task1).toEqual('finished')
     expect(taskStates.task2).toEqual('finished')
     expect(taskStates.task3).toEqual('finished')

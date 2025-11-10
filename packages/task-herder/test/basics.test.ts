@@ -65,7 +65,7 @@ describe('basics', () => {
     void bucket.do(task, { cost: 4 })
     expect(bucket.length).toBe(2)
 
-    // This task is small enough to fit  too big to ever fit in the queue
+    // This task is small enough to fit in the burst limit but too big to fit in the queue with the other tasks
     await expect(bucket.do(task, { cost: 2 })).rejects.toThrow(CancelReason.QueueCostLimitExceeded)
     expect(bucket.length).toBe(2)
 

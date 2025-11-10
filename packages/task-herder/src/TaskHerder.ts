@@ -12,7 +12,7 @@ interface TaskOptions {
   /** Cost of the task in tokens (default: 1) */
   cost?: number
   /** If set, the task will be aborted if this signal is triggered */
-  abortSignal?: AbortSignal
+  signal?: AbortSignal
 }
 
 class TaskRecord<T> {
@@ -120,7 +120,7 @@ export class TaskHerder {
 
     this.pendingTaskRecords.push(taskRecord)
 
-    taskOptions.abortSignal?.addEventListener('abort', () => {
+    taskOptions.signal?.addEventListener('abort', () => {
       this.cancel(taskRecord.promise, new Error(CancelReason.Aborted))
     })
 
