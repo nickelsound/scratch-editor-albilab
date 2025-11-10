@@ -1,4 +1,5 @@
 /// <reference types="vitest/config" />
+import dts from 'unplugin-dts/vite'
 import { defineConfig } from 'vite'
 import packageJson from './package.json'
 
@@ -38,6 +39,13 @@ export default defineConfig({
       },
     },
   },
+  plugins: [
+    // Generate TypeScript declaration files
+    dts({
+      insertTypesEntry: true,
+      tsconfigPath: 'tsconfig.build.json',
+    }),
+  ],
   test: {
     coverage: {
       exclude: ['dist/**', 'node_modules/**', 'test/**', 'vite.config.js'],
