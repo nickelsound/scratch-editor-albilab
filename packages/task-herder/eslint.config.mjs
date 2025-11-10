@@ -1,5 +1,6 @@
 import { eslintConfigScratch } from 'eslint-config-scratch'
 import { globalIgnores } from 'eslint/config'
+import globals from 'globals'
 
 export default eslintConfigScratch.defineConfig(
   eslintConfigScratch.recommended,
@@ -10,6 +11,12 @@ export default eslintConfigScratch.defineConfig(
         projectService: true,
         tsconfigRootDir: import.meta.dirname,
       },
+    },
+  },
+  {
+    files: ['*'], // files in the root of the package (not subdirectories)
+    languageOptions: {
+      globals: globals.node,
     },
   },
   globalIgnores(['dist/**', 'node_modules/**']),
