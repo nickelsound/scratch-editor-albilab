@@ -34,7 +34,7 @@
     "format": "prettier --write . && eslint --fix",
     "lint": "eslint && prettier --check .",
     "preview": "vite preview",
-    "test": "vitest run --coverage"
+    "test": "npm run lint && vitest run --coverage"
   },
   "devDependencies": {
     "@vitest/coverage-v8": "4.0.7",
