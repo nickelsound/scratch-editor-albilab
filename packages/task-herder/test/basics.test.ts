@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { TaskHerder, CancelReason } from '../src'
+import { TaskQueue, CancelReason } from '../src'
 import { waitTicks } from './test-utilities'
 
 describe('basics', () => {
@@ -10,16 +10,16 @@ describe('basics', () => {
     vi.restoreAllMocks()
   })
   it('should create an instance', () => {
-    const bucket = new TaskHerder({
+    const bucket = new TaskQueue({
       startingTokens: 3,
       burstLimit: 10,
       sustainRate: 1,
       queueCostLimit: 20,
     })
-    expect(bucket).toBeInstanceOf(TaskHerder)
+    expect(bucket).toBeInstanceOf(TaskQueue)
   })
   it('should pass through task results', async () => {
-    const bucket = new TaskHerder({
+    const bucket = new TaskQueue({
       burstLimit: 10,
       sustainRate: 1,
     })
@@ -38,7 +38,7 @@ describe('basics', () => {
     await expect(bucket.do(task4)).rejects.toThrow('async task error')
   })
   it('should reject a task that exceeds the burst limit', async () => {
-    const bucket = new TaskHerder({
+    const bucket = new TaskQueue({
       startingTokens: 3,
       burstLimit: 2,
       sustainRate: 1,
@@ -53,7 +53,7 @@ describe('basics', () => {
     await expect(bucket.do(task, { cost: 2 })).resolves.toBe('done')
   })
   it('should reject a task that pushes the queue past its cost limit', async () => {
-    const bucket = new TaskHerder({
+    const bucket = new TaskQueue({
       startingTokens: 3,
       burstLimit: 10,
       sustainRate: 1,
@@ -74,7 +74,7 @@ describe('basics', () => {
     expect(bucket.length).toBe(3)
   })
   it('should reject a task even if there are cost limit shenanigans', async () => {
-    const bucket = new TaskHerder({
+    const bucket = new TaskQueue({
       startingTokens: 0,
       burstLimit: 100,
       sustainRate: 1000,

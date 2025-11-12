@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { TaskHerder } from '../src'
+import { TaskQueue } from '../src'
 import { waitTicks, makeTask } from './test-utilities'
 
 describe('rate limit', () => {
@@ -10,7 +10,7 @@ describe('rate limit', () => {
     vi.restoreAllMocks()
   })
   it('should obey the rate limit', async () => {
-    const bucket = new TaskHerder({
+    const bucket = new TaskQueue({
       startingTokens: 1,
       burstLimit: 2,
       sustainRate: 1000, // 1 token per ms

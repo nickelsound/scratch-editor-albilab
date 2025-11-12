@@ -25,7 +25,7 @@ export interface BucketOptions {
  * reached, additional tasks must wait until a running task completes even if there are enough tokens available.
  * @see {@link https://en.wikipedia.org/wiki/Token_bucket} for more information about the algorithm.
  */
-export class TaskHerder {
+export class TaskQueue {
   private readonly burstLimit: number
   private readonly sustainRate: number
   private readonly queueCostLimit: number
