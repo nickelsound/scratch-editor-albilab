@@ -2,7 +2,7 @@ import pLimit, { type LimitFunction } from 'p-limit'
 import { CancelReason } from './CancelReason'
 import { TaskRecord, type TaskOptions } from './TaskRecord'
 
-export interface BucketOptions {
+export interface QueueOptions {
   /** The maximum number of tokens in the bucket controls the burst limit */
   burstLimit: number
   /** Rate at which tokens are added to the bucket (tokens per second) controls the sustained rate */
@@ -37,7 +37,7 @@ export class TaskQueue {
   private timeout: number | null = null
   private lastRefillTime: number = Date.now()
 
-  constructor(options: BucketOptions) {
+  constructor(options: QueueOptions) {
     this.burstLimit = options.burstLimit
     this.sustainRate = options.sustainRate
     this.tokenCount = options.startingTokens ?? options.burstLimit

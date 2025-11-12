@@ -1,2 +1,2 @@
 export { CancelReason } from './CancelReason'
-export { type BucketOptions, TaskQueue } from './TaskQueue'
+export { type QueueOptions, TaskQueue } from './TaskQueue'
