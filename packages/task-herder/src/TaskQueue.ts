@@ -51,6 +51,21 @@ export class TaskQueue {
   }
 
   /**
+   * @returns The current configuration options of the queue. Used primarily for testing and inspection.
+   * Note that the `startingTokens` value returned here reflects the current token count, which is only guaranteed to
+   * match the originally configured starting tokens value if no time has passed and no tasks have been processed.
+   */
+  get options(): Readonly<QueueOptions> {
+    return {
+      burstLimit: this.burstLimit,
+      sustainRate: this.sustainRate,
+      startingTokens: this.tokenCount,
+      queueCostLimit: this.queueCostLimit,
+      concurrency: this.concurrencyLimiter.concurrency,
+    }
+  }
+
+  /**
    * Adds a task to the queue. The task will first wait until enough tokens are available, then will wait its turn in
    * the concurrency queue.
    * @param task The task to be added to the queue.
