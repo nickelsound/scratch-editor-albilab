@@ -64,7 +64,7 @@
     "immutable": "3.8.2",
     "jszip": "3.10.1",
     "minilog": "3.1.0",
-    "scratch-audio": "2.0.262",
+    "scratch-audio": "2.0.263",
     "scratch-parser": "6.0.0",
     "scratch-sb1-converter": "2.0.273",
     "scratch-storage": "5.0.6",
