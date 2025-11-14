@@ -25,7 +25,7 @@ const UserAvatar = ({
 UserAvatar.propTypes = {
     className: PropTypes.string,
     imageUrl: PropTypes.string,
-    showAvatarBadge: PropTypes.bool,
+    showAvatarBadge: PropTypes.bool
 };
 
 export default UserAvatar;
