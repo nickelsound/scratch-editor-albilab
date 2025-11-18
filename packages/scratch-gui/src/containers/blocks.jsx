@@ -19,8 +19,8 @@ import {BLOCKS_DEFAULT_SCALE, STAGE_DISPLAY_SIZES} from '../lib/layout-constants
 import DropAreaHOC from '../lib/drop-area-hoc.jsx';
 import DragConstants from '../lib/drag-constants';
 import defineDynamicBlock from '../lib/define-dynamic-block';
-import {DEFAULT_THEME, getColorsForTheme, themeMap} from '../lib/themes';
-import {injectExtensionBlockTheme, injectExtensionCategoryTheme} from '../lib/themes/blockHelpers';
+import {DEFAULT_MODE, getColorsForMode, colorModeMap} from '../lib/settings/color-mode';
+import {injectExtensionBlockMode, injectExtensionCategoryMode} from '../lib/settings/color-mode/blockHelpers';
 
 import {connect} from 'react-redux';
 import {updateToolbox} from '../reducers/toolbox';
@@ -103,7 +103,7 @@ class Blocks extends React.Component {
         const workspaceConfig = defaultsDeep({},
             Blocks.defaultOptions,
             this.props.options,
-            {rtl: this.props.isRtl, toolbox: this.props.toolboxXML, colours: getColorsForTheme(this.props.theme)}
+            {rtl: this.props.isRtl, toolbox: this.props.toolboxXML, colours: getColorsForMode(this.props.colorMode)}
         );
         this.workspace = this.ScratchBlocks.inject(this.blocks, workspaceConfig);
 
@@ -366,15 +366,15 @@ class Blocks extends React.Component {
             const stageCostumes = stage.getCostumes();
             const targetCostumes = target.getCostumes();
             const targetSounds = target.getSounds();
-            const dynamicBlocksXML = injectExtensionCategoryTheme(
+            const dynamicBlocksXML = injectExtensionCategoryMode(
                 this.props.vm.runtime.getBlocksXML(target),
-                this.props.theme
+                this.props.colorMode
             );
             return makeToolboxXML(false, target.isStage, target.id, dynamicBlocksXML,
                 targetCostumes[targetCostumes.length - 1].name,
                 stageCostumes[stageCostumes.length - 1].name,
                 targetSounds.length > 0 ? targetSounds[targetSounds.length - 1].name : '',
-                getColorsForTheme(this.props.theme)
+                getColorsForMode(this.props.colorMode)
             );
         } catch {
             return null;
@@ -459,7 +459,7 @@ class Blocks extends React.Component {
                     if (blockInfo.info && blockInfo.info.isDynamic) {
                         dynamicBlocksInfo.push(blockInfo);
                     } else if (blockInfo.json) {
-                        staticBlocksJson.push(injectExtensionBlockTheme(blockInfo.json, this.props.theme));
+                        staticBlocksJson.push(injectExtensionBlockMode(blockInfo.json, this.props.colorMode));
                     }
                     // otherwise it's a non-block entry such as '---'
                 });
@@ -656,7 +656,7 @@ Blocks.propTypes = {
         collapse: PropTypes.bool
     }),
     stageSize: PropTypes.oneOf(Object.keys(STAGE_DISPLAY_SIZES)).isRequired,
-    theme: PropTypes.oneOf(Object.keys(themeMap)),
+    colorMode: PropTypes.oneOf(Object.keys(colorModeMap)),
     toolboxXML: PropTypes.string,
     updateMetrics: PropTypes.func,
     updateToolboxState: PropTypes.func,
@@ -688,7 +688,7 @@ Blocks.defaultOptions = {
 Blocks.defaultProps = {
     isVisible: true,
     options: Blocks.defaultOptions,
-    theme: DEFAULT_THEME
+    colorMode: DEFAULT_MODE
 };
 
 const mapStateToProps = state => ({
@@ -703,7 +703,8 @@ const mapStateToProps = state => ({
     toolboxXML: state.scratchGui.toolbox.toolboxXML,
     customProceduresVisible: state.scratchGui.customProcedures.active,
     workspaceMetrics: state.scratchGui.workspaceMetrics,
-    useCatBlocks: isTimeTravel2020(state) || state.scratchGui.theme.theme === 'high-contrast'
+    // TODO: Remove `state.scratchGui.settings.colorMode === 'high-contrast'`
+    useCatBlocks: isTimeTravel2020(state) || state.scratchGui.settings.colorMode === 'high-contrast'
 });
 
 const mapDispatchToProps = dispatch => ({

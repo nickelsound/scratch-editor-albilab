@@ -9,7 +9,7 @@ const MENU_LANGUAGE = 'languageMenu';
 const MENU_LOGIN = 'loginMenu';
 const MENU_MODE = 'modeMenu';
 const MENU_SETTINGS = 'settingsMenu';
-const MENU_THEME = 'themeMenu';
+const MENU_COLOR_MODE = 'colorModeMenu';
 
 class Menu {
     constructor (id) {
@@ -51,7 +51,7 @@ const rootMenu = new Menu('root')
     .addChild(
         new Menu(MENU_SETTINGS)
             .addChild(new Menu(MENU_LANGUAGE))
-            .addChild(new Menu(MENU_THEME))
+            .addChild(new Menu(MENU_COLOR_MODE))
     )
     .addChild(new Menu(MENU_FILE))
     .addChild(new Menu(MENU_EDIT))
@@ -70,7 +70,7 @@ const initialState = {
     [MENU_LOGIN]: false,
     [MENU_MODE]: false,
     [MENU_SETTINGS]: false,
-    [MENU_THEME]: false
+    [MENU_COLOR_MODE]: false
 };
 
 const reducer = function (state, action) {
@@ -142,10 +142,6 @@ const openSettingsMenu = () => openMenu(MENU_SETTINGS);
 const closeSettingsMenu = () => closeMenu(MENU_SETTINGS);
 const settingsMenuOpen = state => state.scratchGui.menus[MENU_SETTINGS];
 
-const openThemeMenu = () => openMenu(MENU_THEME);
-const closeThemeMenu = () => closeMenu(MENU_THEME);
-const themeMenuOpen = state => state.scratchGui.menus[MENU_THEME];
-
 export {
     reducer as default,
     initialState as menuInitialState,
@@ -172,8 +168,5 @@ export {
     modeMenuOpen,
     openSettingsMenu,
     closeSettingsMenu,
-    settingsMenuOpen,
-    openThemeMenu,
-    closeThemeMenu,
-    themeMenuOpen
+    settingsMenuOpen
 };

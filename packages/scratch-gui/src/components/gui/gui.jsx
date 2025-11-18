@@ -34,7 +34,7 @@ import TelemetryModal from '../telemetry-modal/telemetry-modal.jsx';
 
 import layout, {STAGE_SIZE_MODES} from '../../lib/layout-constants';
 import {resolveStageSize} from '../../lib/screen-utils';
-import {themeMap} from '../../lib/themes';
+import {colorModeMap} from '../../lib/settings/color-mode/index.js';
 import {AccountMenuOptionsPropTypes} from '../../lib/account-menu-options';
 
 import styles from './gui.css';
@@ -67,7 +67,7 @@ const GUIComponent = props => {
         blocksTabVisible,
         cardsVisible,
         canChangeLanguage,
-        canChangeTheme,
+        canChangeColorMode,
         canCreateNew,
         canEditTitle,
         canManageFiles,
@@ -129,7 +129,7 @@ const GUIComponent = props => {
         stageSizeMode,
         targetIsStage,
         telemetryModalVisible,
-        theme,
+        colorMode,
         tipsLibraryVisible,
         useExternalPeripheralList,
         username,
@@ -258,7 +258,7 @@ const GUIComponent = props => {
                     authorThumbnailUrl={authorThumbnailUrl}
                     authorUsername={authorUsername}
                     canChangeLanguage={canChangeLanguage}
-                    canChangeTheme={canChangeTheme}
+                    canChangeColorMode={canChangeColorMode}
                     canCreateCopy={canCreateCopy}
                     canCreateNew={canCreateNew}
                     canEditTitle={canEditTitle}
@@ -362,15 +362,15 @@ const GUIComponent = props => {
                                 <TabPanel className={tabClassNames.tabPanel}>
                                     <Box className={styles.blocksWrapper}>
                                         <Blocks
-                                            key={`${blocksId}/${theme}`}
+                                            key={`${blocksId}/${colorMode}`}
                                             canUseCloud={canUseCloud}
                                             grow={1}
                                             isVisible={blocksTabVisible}
                                             options={{
-                                                media: `${basePath}static/${themeMap[theme].blocksMediaFolder}/`
+                                                media: `${basePath}static/${colorModeMap[colorMode].blocksMediaFolder}/`
                                             }}
                                             stageSize={stageSize}
-                                            theme={theme}
+                                            colorMode={colorMode}
                                             vm={vm}
                                             showNewFeatureCallouts={showNewFeatureCallouts}
                                             username={username}
@@ -442,7 +442,7 @@ GUIComponent.propTypes = {
     blocksTabVisible: PropTypes.bool,
     blocksId: PropTypes.string,
     canChangeLanguage: PropTypes.bool,
-    canChangeTheme: PropTypes.bool,
+    canChangeColorMode: PropTypes.bool,
     canCreateCopy: PropTypes.bool,
     canCreateNew: PropTypes.bool,
     canEditTitle: PropTypes.bool,
@@ -503,7 +503,7 @@ GUIComponent.propTypes = {
     setPlatform: PropTypes.func,
     targetIsStage: PropTypes.bool,
     telemetryModalVisible: PropTypes.bool,
-    theme: PropTypes.string,
+    colorMode: PropTypes.string,
     tipsLibraryVisible: PropTypes.bool,
     useExternalPeripheralList: PropTypes.bool, // true for CDM, false for normal Scratch Link
     username: PropTypes.string,
@@ -518,7 +518,7 @@ GUIComponent.defaultProps = {
     basePath: './',
     blocksId: 'original',
     canChangeLanguage: true,
-    canChangeTheme: true,
+    canChangeColorMode: true,
     canCreateNew: false,
     canEditTitle: false,
     canManageFiles: true,
@@ -543,7 +543,7 @@ const mapStateToProps = state => ({
     // This is the button's mode, as opposed to the actual current state
     blocksId: state.scratchGui.timeTravel.year.toString(),
     stageSizeMode: state.scratchGui.stageSize.stageSize,
-    theme: state.scratchGui.theme.theme
+    colorMode: state.scratchGui.settings.colorMode
 });
 
 const mapDispatchToProps = dispatch => ({

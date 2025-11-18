@@ -452,9 +452,9 @@ class MenuBar extends React.Component {
                                 onClick={this.props.onClickLogo}
                             />
                         </div>
-                        {(this.props.canChangeTheme || this.props.canChangeLanguage) && (<SettingsMenu
+                        {(this.props.canChangeColorMode || this.props.canChangeLanguage) && (<SettingsMenu
                             canChangeLanguage={this.props.canChangeLanguage}
-                            canChangeTheme={this.props.canChangeTheme}
+                            canChangeColorMode={this.props.canChangeColorMode}
                             isRtl={this.props.isRtl}
                             onRequestClose={this.props.onRequestCloseSettings}
                             onRequestOpen={this.props.onClickSettings}
@@ -901,7 +901,7 @@ MenuBar.propTypes = {
     authorUsername: PropTypes.oneOfType([PropTypes.string, PropTypes.bool]),
     autoUpdateProject: PropTypes.func,
     canChangeLanguage: PropTypes.bool,
-    canChangeTheme: PropTypes.bool,
+    canChangeColorMode: PropTypes.bool,
     canCreateCopy: PropTypes.bool,
     canCreateNew: PropTypes.bool,
     canEditTitle: PropTypes.bool,
