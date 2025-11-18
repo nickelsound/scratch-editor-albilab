@@ -10,23 +10,29 @@ import {MenuSection} from '../menu/menu.jsx';
 import PreferenceMenu from './preference-menu.jsx';
 
 import {DEFAULT_MODE, HIGH_CONTRAST_MODE, colorModeMap} from '../../lib/settings/color-mode/index.js';
+import {themeMap} from '../../lib/settings/theme/index.js';
 import {persistColorMode} from '../../lib/settings/color-mode/persistence.js';
-import {setColorMode} from '../../reducers/settings.js';
+import {persistTheme} from '../../lib/settings/theme/persistence.js';
+import {setColorMode, setTheme} from '../../reducers/settings.js';
 
 import menuBarStyles from './menu-bar.css';
 import styles from './settings-menu.css';
 
 import dropdownCaret from './dropdown-caret.svg';
 import settingsIcon from './icon--settings.svg';
+import themeIcon from '../../lib/assets/icon--theme.svg';
 
 const enabledColorModes = [DEFAULT_MODE, HIGH_CONTRAST_MODE];
 
 const SettingsMenu = ({
     canChangeLanguage,
     canChangeColorMode,
+    canChangeTheme,
     isRtl,
     activeColorMode,
     onChangeColorMode,
+    activeTheme,
+    onChangeTheme,
     onRequestClose,
     onRequestOpen,
     settingsMenuOpen
@@ -64,6 +70,19 @@ const SettingsMenu = ({
             >
                 <MenuSection>
                     {canChangeLanguage && <LanguageMenu onRequestCloseSettings={onRequestClose} />}
+                    {canChangeTheme && <PreferenceMenu
+                        itemsMap={themeMap}
+                        onChange={onChangeTheme}
+                        defaultMenuIconSrc={themeIcon}
+                        submenuLabel={{
+                            defaultMessage: 'Theme',
+                            description: 'Theme sub-menu',
+                            id: 'gui.menuBar.theme'
+                        }}
+                        selectedItemKey={activeTheme}
+                        isRtl={isRtl}
+                        onRequestCloseSettings={onRequestClose}
+                    />}
                     {canChangeColorMode && <PreferenceMenu
                         itemsMap={enabledColorModesMap}
                         onChange={onChangeColorMode}
@@ -85,16 +104,20 @@ const SettingsMenu = ({
 SettingsMenu.propTypes = {
     canChangeLanguage: PropTypes.bool,
     canChangeColorMode: PropTypes.bool,
+    canChangeTheme: PropTypes.bool,
     isRtl: PropTypes.bool,
     activeColorMode: PropTypes.string,
     onChangeColorMode: PropTypes.func,
+    activeTheme: PropTypes.string,
+    onChangeTheme: PropTypes.func,
     onRequestClose: PropTypes.func,
     onRequestOpen: PropTypes.func,
     settingsMenuOpen: PropTypes.bool
 };
 
 const mapStateToProps = state => ({
-    activeColorMode: state.scratchGui.settings.colorMode
+    activeColorMode: state.scratchGui.settings.colorMode,
+    activeTheme: state.scratchGui.settings.theme
 });
 
 const mapDispatchToProps = (dispatch, ownProps) => ({
@@ -102,6 +125,11 @@ const mapDispatchToProps = (dispatch, ownProps) => ({
         dispatch(setColorMode(colorMode));
         ownProps.onRequestClose();
         persistColorMode(colorMode);
+    },
+    onChangeTheme: theme => {
+        dispatch(setTheme(theme));
+        ownProps.onRequestClose();
+        persistTheme(theme);
     }
 });
 

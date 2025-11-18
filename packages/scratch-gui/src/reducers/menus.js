@@ -10,6 +10,7 @@ const MENU_LOGIN = 'loginMenu';
 const MENU_MODE = 'modeMenu';
 const MENU_SETTINGS = 'settingsMenu';
 const MENU_COLOR_MODE = 'colorModeMenu';
+const MENU_THEME = 'themeMenu';
 
 class Menu {
     constructor (id) {
@@ -52,6 +53,7 @@ const rootMenu = new Menu('root')
         new Menu(MENU_SETTINGS)
             .addChild(new Menu(MENU_LANGUAGE))
             .addChild(new Menu(MENU_COLOR_MODE))
+            .addChild(new Menu(MENU_THEME))
     )
     .addChild(new Menu(MENU_FILE))
     .addChild(new Menu(MENU_EDIT))
@@ -70,7 +72,8 @@ const initialState = {
     [MENU_LOGIN]: false,
     [MENU_MODE]: false,
     [MENU_SETTINGS]: false,
-    [MENU_COLOR_MODE]: false
+    [MENU_COLOR_MODE]: false,
+    [MENU_THEME]: false
 };
 
 const reducer = function (state, action) {

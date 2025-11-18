@@ -20,6 +20,7 @@ import DropAreaHOC from '../lib/drop-area-hoc.jsx';
 import DragConstants from '../lib/drag-constants';
 import defineDynamicBlock from '../lib/define-dynamic-block';
 import {DEFAULT_MODE, getColorsForMode, colorModeMap} from '../lib/settings/color-mode';
+import {CAT_BLOCKS_THEME} from '../lib/settings/theme';
 import {injectExtensionBlockMode, injectExtensionCategoryMode} from '../lib/settings/color-mode/blockHelpers';
 
 import {connect} from 'react-redux';
@@ -165,10 +166,6 @@ class Blocks extends React.Component {
         );
     }
     componentDidUpdate (prevProps) {
-        if (this.props.useCatBlocks !== prevProps.useCatBlocks) {
-            this.ScratchBlocks = VMScratchBlocks(this.props.vm, this.props.useCatBlocks);
-        }
-
         // If any modals are open, call hideChaff to close z-indexed field editors
         if (this.props.anyModalVisible && !prevProps.anyModalVisible) {
             this.ScratchBlocks.hideChaff();
@@ -703,8 +700,7 @@ const mapStateToProps = state => ({
     toolboxXML: state.scratchGui.toolbox.toolboxXML,
     customProceduresVisible: state.scratchGui.customProcedures.active,
     workspaceMetrics: state.scratchGui.workspaceMetrics,
-    // TODO: Remove `state.scratchGui.settings.colorMode === 'high-contrast'`
-    useCatBlocks: isTimeTravel2020(state) || state.scratchGui.settings.colorMode === 'high-contrast'
+    useCatBlocks: isTimeTravel2020(state) || state.scratchGui.settings.theme === CAT_BLOCKS_THEME
 });
 
 const mapDispatchToProps = dispatch => ({

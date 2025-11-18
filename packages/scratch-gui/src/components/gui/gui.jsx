@@ -68,6 +68,7 @@ const GUIComponent = props => {
         cardsVisible,
         canChangeLanguage,
         canChangeColorMode,
+        canChangeTheme,
         canCreateNew,
         canEditTitle,
         canManageFiles,
@@ -130,6 +131,7 @@ const GUIComponent = props => {
         targetIsStage,
         telemetryModalVisible,
         colorMode,
+        theme,
         tipsLibraryVisible,
         useExternalPeripheralList,
         username,
@@ -259,6 +261,7 @@ const GUIComponent = props => {
                     authorUsername={authorUsername}
                     canChangeLanguage={canChangeLanguage}
                     canChangeColorMode={canChangeColorMode}
+                    canChangeTheme={canChangeTheme}
                     canCreateCopy={canCreateCopy}
                     canCreateNew={canCreateNew}
                     canEditTitle={canEditTitle}
@@ -362,7 +365,7 @@ const GUIComponent = props => {
                                 <TabPanel className={tabClassNames.tabPanel}>
                                     <Box className={styles.blocksWrapper}>
                                         <Blocks
-                                            key={`${blocksId}/${colorMode}`}
+                                            key={`${blocksId}/${colorMode}/${theme}`}
                                             canUseCloud={canUseCloud}
                                             grow={1}
                                             isVisible={blocksTabVisible}
@@ -443,6 +446,7 @@ GUIComponent.propTypes = {
     blocksId: PropTypes.string,
     canChangeLanguage: PropTypes.bool,
     canChangeColorMode: PropTypes.bool,
+    canChangeTheme: PropTypes.bool,
     canCreateCopy: PropTypes.bool,
     canCreateNew: PropTypes.bool,
     canEditTitle: PropTypes.bool,
@@ -504,6 +508,7 @@ GUIComponent.propTypes = {
     targetIsStage: PropTypes.bool,
     telemetryModalVisible: PropTypes.bool,
     colorMode: PropTypes.string,
+    theme: PropTypes.string,
     tipsLibraryVisible: PropTypes.bool,
     useExternalPeripheralList: PropTypes.bool, // true for CDM, false for normal Scratch Link
     username: PropTypes.string,
@@ -519,6 +524,8 @@ GUIComponent.defaultProps = {
     blocksId: 'original',
     canChangeLanguage: true,
     canChangeColorMode: true,
+    // TODO: Make this depend on membership status
+    canChangeTheme: true,
     canCreateNew: false,
     canEditTitle: false,
     canManageFiles: true,
@@ -543,7 +550,8 @@ const mapStateToProps = state => ({
     // This is the button's mode, as opposed to the actual current state
     blocksId: state.scratchGui.timeTravel.year.toString(),
     stageSizeMode: state.scratchGui.stageSize.stageSize,
-    colorMode: state.scratchGui.settings.colorMode
+    colorMode: state.scratchGui.settings.colorMode,
+    theme: state.scratchGui.settings.theme
 });
 
 const mapDispatchToProps = dispatch => ({
