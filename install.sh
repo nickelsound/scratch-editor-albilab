@@ -129,68 +129,144 @@ create_install_directory() {
     print_success "Instalační adresář vytvořen: $INSTALL_DIR"
 }
 
-# Stažení kontejnerů
-download_containers() {
-    print_step "6" "Stažení ARM64 kontejnerů..."
+# Funkce pro stažení a sestavení chunked tar archivu
+download_and_assemble_chunked() {
+    local base_name="$1"
+    local full_tar="${base_name}-arm64.tar"
     
-    # Funkce pro kontrolu a stažení souboru
-    download_if_needed() {
-        local filename="$1"
-        local url="$2"
-        
-        if [ -f "$filename" ]; then
-            print_info "Kontrola aktualizace $filename..."
+    print_info "Stahuji ${base_name}..."
+    
+    # Zkusíme stáhnout celý tar nejdřív
+    if wget --spider "${RELEASE_URL}/${full_tar}" 2>/dev/null; then
+        print_info "Celý tar archiv existuje, stahuji..."
+        if [ -f "$full_tar" ]; then
+            local local_size=$(stat -c%s "$full_tar" 2>/dev/null || echo "0")
+            local remote_size=$(wget --spider --server-response "${RELEASE_URL}/${full_tar}" 2>&1 | grep -i content-length | awk '{print $2}' | tail -1)
             
-            # Získání velikosti lokálního souboru
-            local local_size=$(stat -c%s "$filename" 2>/dev/null || echo "0")
-            
-            # Získání velikosti souboru na serveru pomocí wget --spider
-            local remote_size=$(wget --spider --server-response "$url" 2>&1 | grep -i content-length | awk '{print $2}' | tail -1)
-            
-            if [ -n "$remote_size" ] && [ "$remote_size" != "0" ]; then
-                if [ "$local_size" = "$remote_size" ]; then
-                    print_info "$filename je aktuální (velikost: $(($local_size / 1024 / 1024))MB), přeskakujeme stahování"
-                    return 0
-                else
-                    print_info "$filename má jinou velikost (lokální: $(($local_size / 1024 / 1024))MB, server: $(($remote_size / 1024 / 1024))MB), stahujeme aktualizaci"
-                fi
-            else
-                print_info "$filename - nelze zjistit velikost na serveru, stahujeme pro jistotu"
+            if [ -n "$remote_size" ] && [ "$remote_size" != "0" ] && [ "$local_size" = "$remote_size" ]; then
+                print_info "$full_tar je aktuální, přeskakujeme stahování"
+                return 0
             fi
-        else
-            print_info "$filename neexistuje, stahujeme..."
         fi
         
-        # Stažení souboru
-        wget --progress=bar:force "$url" -O "$filename"
-    }
+        wget --progress=bar:force "${RELEASE_URL}/${full_tar}" -O "${full_tar}"
+        print_success "${base_name} stažen jako jeden soubor"
+        return 0
+    fi
     
-    # Stažení GUI kontejneru
-    download_if_needed "scratch-gui-arm64.tar" "$RELEASE_URL/scratch-gui-arm64.tar"
+    # Pokud celý neexistuje, zkusíme chunked verzi
+    print_info "Hledám rozdělené části..."
     
-    # Stažení backend kontejneru
-    download_if_needed "scratch-backend-arm64.tar" "$RELEASE_URL/scratch-backend-arm64.tar"
+    local part_num=0
+    local parts_found=0
+    local parts_to_download=()
+    local needs_download=false
     
-    print_success "Kontejnery připraveny"
+    # Zjistíme, kolik částí existuje (zkusíme až 10 částí)
+    while [ $part_num -lt 10 ]; do
+        local part_file="${base_name}-arm64.tar.$(printf "%02d" $part_num)"
+        local part_url="${RELEASE_URL}/${part_file}"
+        
+        if wget --spider "$part_url" 2>/dev/null; then
+            parts_to_download+=("$part_file")
+            parts_found=$((parts_found + 1))
+            
+            # Kontrola, zda už nemáme lokální kopii
+            if [ ! -f "$part_file" ]; then
+                needs_download=true
+            else
+                local local_size=$(stat -c%s "$part_file" 2>/dev/null || echo "0")
+                local remote_size=$(wget --spider --server-response "$part_url" 2>&1 | grep -i content-length | awk '{print $2}' | tail -1)
+                
+                if [ -z "$remote_size" ] || [ "$remote_size" = "0" ] || [ "$local_size" != "$remote_size" ]; then
+                    needs_download=true
+                fi
+            fi
+            
+            print_info "Našel jsem část: $part_file"
+        else
+            break
+        fi
+        
+        part_num=$((part_num + 1))
+    done
+    
+    if [ $parts_found -eq 0 ]; then
+        print_error "Nepodařilo se najít ani celý tar, ani jeho části pro ${base_name}"
+        return 1
+    fi
+    
+    if [ "$needs_download" = true ]; then
+        # Stáhneme všechny části
+        print_info "Stahuji $parts_found částí..."
+        for part_file in "${parts_to_download[@]}"; do
+            local part_url="${RELEASE_URL}/${part_file}"
+            print_info "Stahuji ${part_file}..."
+            wget --progress=bar:force "$part_url" -O "$part_file"
+        done
+    else
+        print_info "Všechny části jsou aktuální, přeskakuji stahování"
+    fi
+    
+    # Sestavíme tar archiv ze všech částí (pokud ještě neexistuje nebo je starší)
+    if [ ! -f "$full_tar" ] || [ "$needs_download" = true ]; then
+        print_info "Sestavuji tar archiv ze všech částí..."
+        cat "${base_name}-arm64.tar."* > "${full_tar}"
+    else
+        print_info "Sestavený tar archiv už existuje a je aktuální"
+    fi
+    
+    # Ověříme integritu
+    if [ ! -s "${full_tar}" ]; then
+        print_error "Sestavení tar archivu selhalo"
+        return 1
+    fi
+    
+    print_success "${base_name} připraven ($(du -h ${full_tar} | cut -f1), ze $parts_found částí)"
+    
+    # Smažeme části (už nejsou potřeba)
+    rm -f "${base_name}-arm64.tar."*
+    
+    return 0
+}
+
+# Stažení kontejnerů
+download_containers() {
+    print_step "6" "Stažení Universal ARM64 kontejneru..."
+    
+    # Stáhneme universal image (jeden tar pro obě aplikace)
+    if ! download_and_assemble_chunked "scratch-universal"; then
+        print_error "Nepodařilo se stáhnout universal image"
+        exit 1
+    fi
+    
+    print_success "Universal kontejner připraven"
 }
 
 # Načtení kontejnerů
 load_containers() {
-    print_step "7" "Načítání kontejnerů do Podman..."
+    print_step "7" "Načítání Universal kontejneru do Podman..."
     
-    # Načtení GUI kontejneru
-    print_info "Načítání scratch-gui..."
-    podman load -i scratch-gui-arm64.tar
+    # Načtení universal tar archivu (obsahuje obě aplikace)
+    print_info "Načítání universal image..."
+    podman load -i scratch-universal-arm64.tar
     
-    # Načtení backend kontejneru
-    print_info "Načítání scratch-backend..."
-    podman load -i scratch-backend-arm64.tar
+    # Příprava image pro spuštění
+    print_info "Připravuji image pro spuštění..."
     
-    # Přejmenování images podle docker-compose.yml
-    podman tag localhost/scratch-gui-temp:latest scratch-gui
-    podman tag localhost/scratch-backend-temp:latest scratch-backend
+    # Najdeme správný tag pro universal image
+    if podman images | grep -q "scratch-universal"; then
+        UNIVERSAL_TAG=$(podman images --format "{{.Repository}}:{{.Tag}}" | grep "scratch-universal" | head -1)
+        # Tagujeme stejný image pod různými názvy pro kompatibilitu
+        podman tag "$UNIVERSAL_TAG" scratch-universal:latest
+        podman tag "$UNIVERSAL_TAG" scratch-gui
+        podman tag "$UNIVERSAL_TAG" scratch-backend
+    else
+        print_error "Universal image nebyl nalezen po načtení"
+        exit 1
+    fi
     
-    print_success "Kontejnery načteny"
+    print_success "Universal kontejner načten (použitelný pro frontend i backend)"
 }
 
 # Vytvoření adresářové struktury
@@ -238,33 +314,35 @@ create_docker_compose() {
 version: '3.8'
 
 services:
-  # Scratch GUI aplikace
+  # Scratch GUI aplikace (používá universal image s APP_MODE=frontend)
   scratch-gui:
-    image: scratch-gui
+    image: scratch-universal:latest
     container_name: scratch-gui-app
     ports:
       - "8601:8601"
     environment:
       - NODE_ENV=production
+      - APP_MODE=frontend
       - PORT=8601
     restart: unless-stopped
 
-  # Backend server pro trvalý běh projektů
+  # Backend server pro trvalý běh projektů (používá universal image s APP_MODE=backend)
   scratch-backend-app:
-    image: scratch-backend
+    image: scratch-universal:latest
     container_name: scratch-backend-app
     ports:
       - "3001:3001"
       - "3002:3002"
     environment:
       - NODE_ENV=production
+      - APP_MODE=backend
       - PORT=3001
     volumes:
       - ./uploads:/app/uploads
     restart: unless-stopped
 EOF
 
-    print_success "docker-compose.yml vytvořen"
+    print_success "docker-compose.yml vytvořen (universal image pro obě služby)"
 }
 
 # Vytvoření systemd služby

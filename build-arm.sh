@@ -49,6 +49,7 @@ podman build --platform linux/arm64 \
     -t scratch-gui-temp .
 
 echo "📦 Ukládám GUI image do tar archivu..."
+rm -f scratch-gui-arm64.tar
 podman save -o scratch-gui-arm64.tar scratch-gui-temp
 
 # Build Backend image (ARM64) přímo do tar archivu
@@ -59,6 +60,7 @@ podman build --platform linux/arm64 \
     -t scratch-backend-temp .
 
 echo "📦 Ukládám Backend image do tar archivu..."
+rm -f scratch-backend-arm64.tar
 podman save -o scratch-backend-arm64.tar scratch-backend-temp
 
 # Vyčistíme dočasné images

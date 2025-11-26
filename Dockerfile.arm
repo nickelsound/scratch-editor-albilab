@@ -1,5 +1,5 @@
-# ARM64 specifický Dockerfile pro Scratch GUI (Raspberry Pi)
-FROM --platform=linux/arm64 node:22-alpine
+# ARM64/x86_64 Dockerfile pro Scratch GUI
+FROM node:22-alpine
 
 # Nastavíme systemové limity pro ARM64 (Alpine Linux)
 RUN echo "* soft nofile 65536" >> /etc/security/limits.conf 2>/dev/null || true && \
