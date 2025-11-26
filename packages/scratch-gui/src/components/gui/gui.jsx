@@ -156,10 +156,13 @@ const GUIComponent = props => {
     }, [props.platform]);
 
     useEffect(() => {
-        if (!themeMap[theme]?.isAvailable?.({hasActiveMembership})) {
+        if (
+            // Avoid making the switch before the user info is fetched.
+            typeof hasActiveMembership !== 'undefined' &&
+            !themeMap[theme]?.isAvailable?.({hasActiveMembership})
+        ) {
             // If the preferred theme is not available, fall back to default.
-            // This is not the best place for this, but the other solution is to make
-            // user specific info available on redux init.
+            // TODO: It would be cleaner to do this on redux init.
             props.setTheme(DEFAULT_THEME);
         }
     }, [theme, hasActiveMembership, props.setTheme]);
