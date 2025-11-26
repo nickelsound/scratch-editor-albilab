@@ -1,4 +1,3 @@
-import defaultsDeep from 'lodash.defaultsdeep';
 import {defineMessages} from 'react-intl';
 
 const DEFAULT_THEME = 'default';
@@ -20,10 +19,14 @@ const messages = defineMessages({
 // Keeping this as a map for consistency with the color modes
 const themeMap = {
     [DEFAULT_THEME]: {
-        label: messages[DEFAULT_THEME]
+        label: messages[DEFAULT_THEME],
+        isAvailable: () => true
     },
     [CAT_BLOCKS_THEME]: {
-        label: messages[CAT_BLOCKS_THEME]
+        label: messages[CAT_BLOCKS_THEME],
+        // TODO: This should probably also depend on `isTimeTravel2020`,
+        // but it should be fine to stay as-is for now.
+        isAvailable: userInfo => userInfo?.hasActiveMembership
     }
 };
 

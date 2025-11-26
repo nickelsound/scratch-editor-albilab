@@ -28,6 +28,7 @@ const SettingsMenu = ({
     canChangeLanguage,
     canChangeColorMode,
     canChangeTheme,
+    hasActiveMembership,
     isRtl,
     activeColorMode,
     onChangeColorMode,
@@ -43,6 +44,14 @@ const SettingsMenu = ({
         }
         return acc;
     }, {}), []);
+    const availableThemesMap = useMemo(() => Object.keys(themeMap).reduce((acc, themeKey) => {
+        const theme = themeMap[themeKey];
+        if (theme.isAvailable?.({hasActiveMembership})) {
+            acc[themeKey] = theme;
+        }
+        return acc;
+    }, {}), [hasActiveMembership]);
+    const availableThemesLength = useMemo(() => Object.keys(availableThemesMap).length, [availableThemesMap]);
 
     return (
         <div
@@ -70,19 +79,22 @@ const SettingsMenu = ({
             >
                 <MenuSection>
                     {canChangeLanguage && <LanguageMenu onRequestCloseSettings={onRequestClose} />}
-                    {canChangeTheme && <PreferenceMenu
-                        itemsMap={themeMap}
-                        onChange={onChangeTheme}
-                        defaultMenuIconSrc={themeIcon}
-                        submenuLabel={{
-                            defaultMessage: 'Theme',
-                            description: 'Theme sub-menu',
-                            id: 'gui.menuBar.theme'
-                        }}
-                        selectedItemKey={activeTheme}
-                        isRtl={isRtl}
-                        onRequestCloseSettings={onRequestClose}
-                    />}
+                    {canChangeTheme &&
+                        // TODO: Consider always showing the theme menu, even if there is a single available theme
+                        availableThemesLength > 1 &&
+                        <PreferenceMenu
+                            itemsMap={availableThemesMap}
+                            onChange={onChangeTheme}
+                            defaultMenuIconSrc={themeIcon}
+                            submenuLabel={{
+                                defaultMessage: 'Theme',
+                                description: 'Theme sub-menu',
+                                id: 'gui.menuBar.theme'
+                            }}
+                            selectedItemKey={activeTheme}
+                            isRtl={isRtl}
+                            onRequestCloseSettings={onRequestClose}
+                        />}
                     {canChangeColorMode && <PreferenceMenu
                         itemsMap={enabledColorModesMap}
                         onChange={onChangeColorMode}
@@ -105,6 +117,7 @@ SettingsMenu.propTypes = {
     canChangeLanguage: PropTypes.bool,
     canChangeColorMode: PropTypes.bool,
     canChangeTheme: PropTypes.bool,
+    hasActiveMembership: PropTypes.bool,
     isRtl: PropTypes.bool,
     activeColorMode: PropTypes.string,
     onChangeColorMode: PropTypes.func,

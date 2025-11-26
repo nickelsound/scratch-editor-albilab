@@ -35,6 +35,7 @@ import TelemetryModal from '../telemetry-modal/telemetry-modal.jsx';
 import layout, {STAGE_SIZE_MODES} from '../../lib/layout-constants';
 import {resolveStageSize} from '../../lib/screen-utils';
 import {colorModeMap} from '../../lib/settings/color-mode/index.js';
+import {DEFAULT_THEME, themeMap} from '../../lib/settings/theme/index.js';
 import {AccountMenuOptionsPropTypes} from '../../lib/account-menu-options';
 
 import styles from './gui.css';
@@ -43,6 +44,7 @@ import costumesIcon from './icon--costumes.svg';
 import soundsIcon from './icon--sounds.svg';
 import DebugModal from '../debug-modal/debug-modal.jsx';
 import {setPlatform} from '../../reducers/platform.js';
+import {setTheme} from '../../reducers/settings.js';
 import {PLATFORM} from '../../lib/platform.js';
 
 // Cache this value to only retrieve it once the first time.
@@ -85,6 +87,7 @@ const GUIComponent = props => {
         onDebugModalClose,
         onTutorialSelect,
         enableCommunity,
+        hasActiveMembership,
         isCreating,
         isFullScreen,
         isPlayerOnly,
@@ -146,9 +149,20 @@ const GUIComponent = props => {
 
     useEffect(() => {
         if (props.platform) {
+            // TODO: This uses the imported `setPlatform` directly,
+            // but it should probably use the dispatched version from props.
             setPlatform(props.platform);
         }
     }, [props.platform]);
+
+    useEffect(() => {
+        if (!themeMap[theme]?.isAvailable?.({hasActiveMembership})) {
+            // If the preferred theme is not available, fall back to default.
+            // This is not the best place for this, but the other solution is to make
+            // user specific info available on redux init.
+            props.setTheme(DEFAULT_THEME);
+        }
+    }, [theme, hasActiveMembership, props.setTheme]);
 
     const tabClassNames = {
         tabs: styles.tabs,
@@ -271,6 +285,7 @@ const GUIComponent = props => {
                     canShare={canShare}
                     className={styles.menuBarPosition}
                     enableCommunity={enableCommunity}
+                    hasActiveMembership={hasActiveMembership}
                     isShared={isShared}
                     isTotallyNormal={isTotallyNormal}
                     logo={logo}
@@ -460,6 +475,7 @@ GUIComponent.propTypes = {
     costumeLibraryVisible: PropTypes.bool,
     costumesTabVisible: PropTypes.bool,
     debugModalVisible: PropTypes.bool,
+    hasActiveMembership: PropTypes.bool,
     onDebugModalClose: PropTypes.func,
     onTutorialSelect: PropTypes.func,
     enableCommunity: PropTypes.bool,
@@ -500,6 +516,7 @@ GUIComponent.propTypes = {
     onUpdateProjectThumbnail: PropTypes.func,
     platform: PropTypes.oneOf(Object.keys(PLATFORM)),
     renderLogin: PropTypes.func,
+    setTheme: PropTypes.func.isRequired,
     showComingSoon: PropTypes.bool,
     showNewFeatureCallouts: PropTypes.bool,
     soundsTabVisible: PropTypes.bool,
@@ -522,9 +539,9 @@ GUIComponent.defaultProps = {
     backpackVisible: false,
     basePath: './',
     blocksId: 'original',
+    // TODO: Currently all of those are always true. Do we actually need them?
     canChangeLanguage: true,
     canChangeColorMode: true,
-    // TODO: Make this depend on membership status
     canChangeTheme: true,
     canCreateNew: false,
     canEditTitle: false,
@@ -535,6 +552,7 @@ GUIComponent.defaultProps = {
     canShare: false,
     canUseCloud: false,
     enableCommunity: false,
+    hasActiveMembership: false,
     isCreating: false,
     isShared: false,
     isTotallyNormal: false,
@@ -555,7 +573,8 @@ const mapStateToProps = state => ({
 });
 
 const mapDispatchToProps = dispatch => ({
-    setPlatform: platform => dispatch(setPlatform(platform))
+    setPlatform: platform => dispatch(setPlatform(platform)),
+    setTheme: theme => dispatch(setTheme(theme))
 });
 
 export default connect(mapStateToProps,
