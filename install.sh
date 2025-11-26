@@ -16,7 +16,10 @@ NC='\033[0m' # No Color
 INSTALL_DIR="/opt/scratch-albilab"
 SERVICE_NAME="scratch-albilab"
 GITHUB_REPO="https://github.com/nickelsound/scratch-editor-albilab"
-RELEASE_URL="https://github.com/nickelsound/scratch-editor-albilab/releases/download/arm64"
+
+# Verze release, ze kterého se stahují tar soubory (tag na GitHubu)
+RELEASE_VERSION="0.0.1"
+RELEASE_URL="https://github.com/nickelsound/scratch-editor-albilab/releases/download/${RELEASE_VERSION}"
 
 # Funkce pro výpis
 print_header() {
