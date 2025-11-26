@@ -26,7 +26,10 @@ const themeMap = {
         label: messages[CAT_BLOCKS_THEME],
         // TODO: This should probably also depend on `isTimeTravel2020`,
         // but it should be fine to stay as-is for now.
-        isAvailable: userInfo => userInfo?.hasActiveMembership
+        isAvailable: userInfo =>
+            // Return true, unless we explicitly know the user's membership status
+            typeof userInfo.hasActiveMembership === 'undefined' ||
+            userInfo.hasActiveMembership
     }
 };
 
