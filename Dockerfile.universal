@@ -31,6 +31,11 @@ COPY scripts/ ./scripts/
 # Spustíme prepare script
 RUN npm run prepare --workspace=packages/scratch-gui
 
+# Build-time konfigurace pro produkční URL backendu
+# Tyto proměnné se použijí v api-config.js (REACT_APP_API_PORT/WS_PORT)
+ENV REACT_APP_API_PORT=3001
+ENV REACT_APP_WS_PORT=3001
+
 # Sestavíme všechny balíčky (potřebné pro obě aplikace)
 RUN npm run build --workspace=packages/scratch-svg-renderer && \
     npm run build --workspace=packages/scratch-render && \
