@@ -21,6 +21,7 @@ import styles from './settings-menu.css';
 import dropdownCaret from './dropdown-caret.svg';
 import settingsIcon from './icon--settings.svg';
 import themeIcon from '../../lib/assets/icon--theme.svg';
+import {colorModeMenuOpen, themeMenuOpen, openColorModeMenu, openThemeMenu} from '../../reducers/menus.js';
 
 const enabledColorModes = [DEFAULT_MODE, HIGH_CONTRAST_MODE];
 
@@ -30,8 +31,12 @@ const SettingsMenu = ({
     canChangeTheme,
     hasActiveMembership,
     isRtl,
+    isColorModeMenuOpen,
+    isThemeMenuOpen,
     activeColorMode,
     onChangeColorMode,
+    onRequestOpenColorMode,
+    onRequestOpenTheme,
     activeTheme,
     onChangeTheme,
     onRequestClose,
@@ -83,6 +88,7 @@ const SettingsMenu = ({
                         // TODO: Consider always showing the theme menu, even if there is a single available theme
                         availableThemesLength > 1 &&
                         <PreferenceMenu
+                            open={isThemeMenuOpen}
                             itemsMap={availableThemesMap}
                             onChange={onChangeTheme}
                             defaultMenuIconSrc={themeIcon}
@@ -94,8 +100,10 @@ const SettingsMenu = ({
                             selectedItemKey={activeTheme}
                             isRtl={isRtl}
                             onRequestCloseSettings={onRequestClose}
+                            onRequestOpen={onRequestOpenTheme}
                         />}
                     {canChangeColorMode && <PreferenceMenu
+                        open={isColorModeMenuOpen}
                         itemsMap={enabledColorModesMap}
                         onChange={onChangeColorMode}
                         submenuLabel={{
@@ -106,6 +114,7 @@ const SettingsMenu = ({
                         selectedItemKey={activeColorMode}
                         isRtl={isRtl}
                         onRequestCloseSettings={onRequestClose}
+                        onRequestOpen={onRequestOpenColorMode}
                     />}
                 </MenuSection>
             </MenuBarMenu>
@@ -121,8 +130,12 @@ SettingsMenu.propTypes = {
     isRtl: PropTypes.bool,
     activeColorMode: PropTypes.string,
     onChangeColorMode: PropTypes.func,
+    onRequestOpenColorMode: PropTypes.func,
+    isColorModeMenuOpen: PropTypes.bool,
     activeTheme: PropTypes.string,
     onChangeTheme: PropTypes.func,
+    onRequestOpenTheme: PropTypes.func,
+    isThemeMenuOpen: PropTypes.bool,
     onRequestClose: PropTypes.func,
     onRequestOpen: PropTypes.func,
     settingsMenuOpen: PropTypes.bool
@@ -130,10 +143,18 @@ SettingsMenu.propTypes = {
 
 const mapStateToProps = state => ({
     activeColorMode: state.scratchGui.settings.colorMode,
-    activeTheme: state.scratchGui.settings.theme
+    activeTheme: state.scratchGui.settings.theme,
+    isColorModeMenuOpen: colorModeMenuOpen(state),
+    isThemeMenuOpen: themeMenuOpen(state)
 });
 
 const mapDispatchToProps = (dispatch, ownProps) => ({
+    onRequestOpenColorMode: () => {
+        dispatch(openColorModeMenu());
+    },
+    onRequestOpenTheme: () => {
+        dispatch(openThemeMenu());
+    },
     onChangeColorMode: colorMode => {
         dispatch(setColorMode(colorMode));
         ownProps.onRequestClose();

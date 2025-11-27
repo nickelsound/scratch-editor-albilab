@@ -1,6 +1,6 @@
 import classNames from 'classnames';
 import PropTypes from 'prop-types';
-import React, {useState, useMemo, useCallback} from 'react';
+import React, {useMemo} from 'react';
 import {FormattedMessage} from 'react-intl';
 import {connect} from 'react-redux';
 
@@ -47,23 +47,21 @@ PreferenceItem.propTypes = {
 
 const PreferenceMenu = ({
     itemsMap,
+    open,
     onChange,
+    onRequestOpen,
     defaultMenuIconSrc,
     submenuLabel,
     selectedItemKey,
     isRtl
 }) => {
-    const [isOpen, setIsOpen] = useState(false);
     const itemKeys = useMemo(() => Object.keys(itemsMap), [itemsMap]);
     const selectedItem = useMemo(() => itemsMap[selectedItemKey], [itemsMap, selectedItemKey]);
-    const onClick = useCallback(() => {
-        setIsOpen(!isOpen);
-    }, [isOpen]);
     return (
-        <MenuItem expanded={isOpen}>
+        <MenuItem expanded={open}>
             <div
                 className={styles.option}
-                onClick={onClick}
+                onClick={onRequestOpen}
             >
                 <img
                     src={selectedItem.icon || defaultMenuIconSrc}
@@ -97,12 +95,14 @@ PreferenceMenu.propTypes = {
         icon: PropTypes.string,
         label: intlMessageShape.isRequired
     })).isRequired,
+    open: PropTypes.bool,
     onChange: PropTypes.func,
+    onRequestCloseSettings: PropTypes.func,
+    onRequestOpen: PropTypes.func,
     defaultMenuIconSrc: PropTypes.string,
     submenuLabel: intlMessageShape.isRequired,
     selectedItemKey: PropTypes.string,
-    isRtl: PropTypes.bool,
-    onRequestCloseSettings: PropTypes.func
+    isRtl: PropTypes.bool
 };
 
 const mapStateToProps = state => ({
