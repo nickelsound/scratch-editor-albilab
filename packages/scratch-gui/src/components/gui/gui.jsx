@@ -59,6 +59,7 @@ const GUIComponent = props => {
         authorId,
         authorThumbnailUrl,
         authorUsername,
+        authorAvatarBadge,
         basePath,
         backdropLibraryVisible,
         backpackHost,
@@ -257,6 +258,7 @@ const GUIComponent = props => {
                     authorId={authorId}
                     authorThumbnailUrl={authorThumbnailUrl}
                     authorUsername={authorUsername}
+                    authorAvatarBadge={authorAvatarBadge}
                     canChangeLanguage={canChangeLanguage}
                     canChangeTheme={canChangeTheme}
                     canCreateCopy={canCreateCopy}
@@ -435,6 +437,7 @@ GUIComponent.propTypes = {
     authorId: PropTypes.oneOfType([PropTypes.string, PropTypes.bool]), // can be false
     authorThumbnailUrl: PropTypes.string,
     authorUsername: PropTypes.oneOfType([PropTypes.string, PropTypes.bool]), // can be false
+    authorAvatarBadge: PropTypes.number,
     backdropLibraryVisible: PropTypes.bool,
     backpackHost: PropTypes.string,
     backpackVisible: PropTypes.bool,

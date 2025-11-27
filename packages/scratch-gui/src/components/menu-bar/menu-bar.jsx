@@ -648,6 +648,7 @@ class MenuBar extends React.Component {
                             projectTitle={this.props.projectTitle}
                             userId={this.props.authorId}
                             username={this.props.authorUsername}
+                            avatarBadge={this.props.authorAvatarBadge}
                         />
                     ) : null)}
                     <div className={classNames(styles.menuBarItem)}>
@@ -782,6 +783,7 @@ class MenuBar extends React.Component {
                                     onLogOut={menuOpts.canLogout ? this.props.onLogOut : null}
 
                                     username={this.props.username}
+                                    avatarBadge={this.props.avatarBadge}
 
                                     avatarUrl={menuOpts.avatarUrl}
                                     myStuffUrl={menuOpts.myStuffUrl}
@@ -899,6 +901,7 @@ MenuBar.propTypes = {
     authorId: PropTypes.oneOfType([PropTypes.string, PropTypes.bool]),
     authorThumbnailUrl: PropTypes.string,
     authorUsername: PropTypes.oneOfType([PropTypes.string, PropTypes.bool]),
+    authorAvatarBadge: PropTypes.number,
     autoUpdateProject: PropTypes.func,
     canChangeLanguage: PropTypes.bool,
     canChangeTheme: PropTypes.bool,
@@ -975,6 +978,7 @@ MenuBar.propTypes = {
     shouldSaveBeforeTransition: PropTypes.func,
     showComingSoon: PropTypes.bool,
     username: PropTypes.string,
+    avatarBadge: PropTypes.number,
     userOwnsProject: PropTypes.bool,
 
     accountMenuOptions: AccountMenuOptionsPropTypes,
@@ -1008,6 +1012,7 @@ const mapStateToProps = (state, ownProps) => {
         projectTitle: state.scratchGui.projectTitle,
         settingsMenuOpen: settingsMenuOpen(state),
         username: ownProps.username ?? (user ? user.username : null),
+        avatarBadge: user ? user.membership_avatar_badge : null,
         userIsEducator: permissions && permissions.educator,
         vm: state.scratchGui.vm,
         mode220022BC: isTimeTravel220022BC(state),
