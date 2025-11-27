@@ -34,12 +34,9 @@ export const getApiBaseUrl = () => {
         console.log('Vývojové prostředí - používám API URL:', devApiUrl);
         return devApiUrl;
     } else {
-        // Produkční prostředí
-        // Preferuj port z build-time proměnné (umožňuje měnit port bez změny kódu),
-        // jinak fallback na původní chování (443 pro nginx proxy).
-        const apiPort =
-            (typeof process !== 'undefined' && process.env && process.env.REACT_APP_API_PORT) ||
-            '443';
+        // Production environment on Raspberry Pi:
+        // Always use backend on port 3001 on the same host as the frontend.
+        const apiPort = '3001';
         const apiUrl = `${window.location.protocol}//${window.location.hostname}:${apiPort}`;
         console.log('Produkční prostředí - používám API URL:', apiUrl);
         return apiUrl;
@@ -56,12 +53,10 @@ export const getWebSocketBaseUrl = () => {
         console.log('Vývojové prostředí - používám WebSocket URL:', devWsUrl);
         return devWsUrl;
     } else {
-        // Produkční prostředí
-        // Preferuj port z build-time proměnné, jinak fallback na 443
+        // Production environment on Raspberry Pi:
+        // Always use backend WebSocket on port 3001 on the same host.
         const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const wsPort =
-            (typeof process !== 'undefined' && process.env && process.env.REACT_APP_WS_PORT) ||
-            '443';
+        const wsPort = '3001';
         const wsUrl = `${wsProtocol}//${window.location.hostname}:${wsPort}`;
         console.log('Produkční prostředí - používám WebSocket URL:', wsUrl);
         return wsUrl;
