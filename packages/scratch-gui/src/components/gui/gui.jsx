@@ -89,6 +89,7 @@ const GUIComponent = props => {
         enableCommunity,
         hasActiveMembership,
         isCreating,
+        isFetchingUserData,
         isFullScreen,
         isPlayerOnly,
         isRtl,
@@ -157,8 +158,7 @@ const GUIComponent = props => {
 
     useEffect(() => {
         if (
-            // Avoid making the switch before the user info is fetched.
-            typeof hasActiveMembership !== 'undefined' &&
+            !isFetchingUserData &&
             !themeMap[theme]?.isAvailable?.({hasActiveMembership})
         ) {
             // If the preferred theme is not available, fall back to default.
@@ -483,6 +483,7 @@ GUIComponent.propTypes = {
     onTutorialSelect: PropTypes.func,
     enableCommunity: PropTypes.bool,
     isCreating: PropTypes.bool,
+    isFetchingUserData: PropTypes.bool,
     isFullScreen: PropTypes.bool,
     isPlayerOnly: PropTypes.bool,
     isRtl: PropTypes.bool,
