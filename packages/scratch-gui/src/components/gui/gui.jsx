@@ -34,7 +34,8 @@ import TelemetryModal from '../telemetry-modal/telemetry-modal.jsx';
 
 import layout, {STAGE_SIZE_MODES} from '../../lib/layout-constants';
 import {resolveStageSize} from '../../lib/screen-utils';
-import {themeMap} from '../../lib/themes';
+import {colorModeMap} from '../../lib/settings/color-mode/index.js';
+import {DEFAULT_THEME, themeMap} from '../../lib/settings/theme/index.js';
 import {AccountMenuOptionsPropTypes} from '../../lib/account-menu-options';
 
 import styles from './gui.css';
@@ -43,6 +44,7 @@ import costumesIcon from './icon--costumes.svg';
 import soundsIcon from './icon--sounds.svg';
 import DebugModal from '../debug-modal/debug-modal.jsx';
 import {setPlatform} from '../../reducers/platform.js';
+import {setTheme} from '../../reducers/settings.js';
 import {PLATFORM} from '../../lib/platform.js';
 
 // Cache this value to only retrieve it once the first time.
@@ -68,6 +70,7 @@ const GUIComponent = props => {
         blocksTabVisible,
         cardsVisible,
         canChangeLanguage,
+        canChangeColorMode,
         canChangeTheme,
         canCreateNew,
         canEditTitle,
@@ -85,7 +88,9 @@ const GUIComponent = props => {
         onDebugModalClose,
         onTutorialSelect,
         enableCommunity,
+        hasActiveMembership,
         isCreating,
+        isFetchingUserData,
         isFullScreen,
         isPlayerOnly,
         isRtl,
@@ -130,6 +135,7 @@ const GUIComponent = props => {
         stageSizeMode,
         targetIsStage,
         telemetryModalVisible,
+        colorMode,
         theme,
         tipsLibraryVisible,
         useExternalPeripheralList,
@@ -145,9 +151,22 @@ const GUIComponent = props => {
 
     useEffect(() => {
         if (props.platform) {
+            // TODO: This uses the imported `setPlatform` directly,
+            // but it should probably use the dispatched version from props.
             setPlatform(props.platform);
         }
     }, [props.platform]);
+
+    useEffect(() => {
+        if (
+            !isFetchingUserData &&
+            !themeMap[theme]?.isAvailable?.({hasActiveMembership})
+        ) {
+            // If the preferred theme is not available, fall back to default.
+            // TODO: It would be cleaner to do this on redux init.
+            props.setTheme(DEFAULT_THEME);
+        }
+    }, [theme, hasActiveMembership, props.setTheme]);
 
     const tabClassNames = {
         tabs: styles.tabs,
@@ -260,6 +279,7 @@ const GUIComponent = props => {
                     authorUsername={authorUsername}
                     authorAvatarBadge={authorAvatarBadge}
                     canChangeLanguage={canChangeLanguage}
+                    canChangeColorMode={canChangeColorMode}
                     canChangeTheme={canChangeTheme}
                     canCreateCopy={canCreateCopy}
                     canCreateNew={canCreateNew}
@@ -270,6 +290,7 @@ const GUIComponent = props => {
                     canShare={canShare}
                     className={styles.menuBarPosition}
                     enableCommunity={enableCommunity}
+                    hasActiveMembership={hasActiveMembership}
                     isShared={isShared}
                     isTotallyNormal={isTotallyNormal}
                     logo={logo}
@@ -364,15 +385,15 @@ const GUIComponent = props => {
                                 <TabPanel className={tabClassNames.tabPanel}>
                                     <Box className={styles.blocksWrapper}>
                                         <Blocks
-                                            key={`${blocksId}/${theme}`}
+                                            key={`${blocksId}/${colorMode}/${theme}`}
                                             canUseCloud={canUseCloud}
                                             grow={1}
                                             isVisible={blocksTabVisible}
                                             options={{
-                                                media: `${basePath}static/${themeMap[theme].blocksMediaFolder}/`
+                                                media: `${basePath}static/${colorModeMap[colorMode].blocksMediaFolder}/`
                                             }}
                                             stageSize={stageSize}
-                                            theme={theme}
+                                            colorMode={colorMode}
                                             vm={vm}
                                             showNewFeatureCallouts={showNewFeatureCallouts}
                                             username={username}
@@ -445,6 +466,7 @@ GUIComponent.propTypes = {
     blocksTabVisible: PropTypes.bool,
     blocksId: PropTypes.string,
     canChangeLanguage: PropTypes.bool,
+    canChangeColorMode: PropTypes.bool,
     canChangeTheme: PropTypes.bool,
     canCreateCopy: PropTypes.bool,
     canCreateNew: PropTypes.bool,
@@ -459,10 +481,12 @@ GUIComponent.propTypes = {
     costumeLibraryVisible: PropTypes.bool,
     costumesTabVisible: PropTypes.bool,
     debugModalVisible: PropTypes.bool,
+    hasActiveMembership: PropTypes.bool,
     onDebugModalClose: PropTypes.func,
     onTutorialSelect: PropTypes.func,
     enableCommunity: PropTypes.bool,
     isCreating: PropTypes.bool,
+    isFetchingUserData: PropTypes.bool,
     isFullScreen: PropTypes.bool,
     isPlayerOnly: PropTypes.bool,
     isRtl: PropTypes.bool,
@@ -499,6 +523,7 @@ GUIComponent.propTypes = {
     onUpdateProjectThumbnail: PropTypes.func,
     platform: PropTypes.oneOf(Object.keys(PLATFORM)),
     renderLogin: PropTypes.func,
+    setTheme: PropTypes.func.isRequired,
     showComingSoon: PropTypes.bool,
     showNewFeatureCallouts: PropTypes.bool,
     soundsTabVisible: PropTypes.bool,
@@ -506,6 +531,7 @@ GUIComponent.propTypes = {
     setPlatform: PropTypes.func,
     targetIsStage: PropTypes.bool,
     telemetryModalVisible: PropTypes.bool,
+    colorMode: PropTypes.string,
     theme: PropTypes.string,
     tipsLibraryVisible: PropTypes.bool,
     useExternalPeripheralList: PropTypes.bool, // true for CDM, false for normal Scratch Link
@@ -520,7 +546,9 @@ GUIComponent.defaultProps = {
     backpackVisible: false,
     basePath: './',
     blocksId: 'original',
+    // TODO: Currently all of those are always true. Do we actually need them?
     canChangeLanguage: true,
+    canChangeColorMode: true,
     canChangeTheme: true,
     canCreateNew: false,
     canEditTitle: false,
@@ -546,11 +574,13 @@ const mapStateToProps = state => ({
     // This is the button's mode, as opposed to the actual current state
     blocksId: state.scratchGui.timeTravel.year.toString(),
     stageSizeMode: state.scratchGui.stageSize.stageSize,
-    theme: state.scratchGui.theme.theme
+    colorMode: state.scratchGui.settings.colorMode,
+    theme: state.scratchGui.settings.theme
 });
 
 const mapDispatchToProps = dispatch => ({
-    setPlatform: platform => dispatch(setPlatform(platform))
+    setPlatform: platform => dispatch(setPlatform(platform)),
+    setTheme: theme => dispatch(setTheme(theme))
 });
 
 export default connect(mapStateToProps,
