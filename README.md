@@ -305,12 +305,12 @@ docker run --rm -v scratch-editor-albilab_scratch-uploads:/data -v $(pwd):/backu
 For Raspberry Pi OS Lite, you can install everything with a single command:
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/nickelsound/scratch-editor-albilab/refs/heads/develop/install.sh | bash
+curl -sSL https://raw.githubusercontent.com/nickelsound/scratch-editor-albilab/refs/heads/main/install.sh | bash
 ```
 
 **Or manually:**
 ```bash
-wget https://raw.githubusercontent.com/nickelsound/scratch-editor-albilab/refs/heads/develop/install.sh
+wget https://raw.githubusercontent.com/nickelsound/scratch-editor-albilab/refs/heads/main/install.sh
 chmod +x install.sh
 ./install.sh
 ```
