@@ -90,13 +90,6 @@ async function initializeEnvironment() {
     
     // Nastavení logování
     console.log('   ✓ Logování je aktivní');
-    
-    // Kontrola AlbiLAB API URL
-    if (process.env.ALBILAB_API_URL) {
-        console.log(`   ✓ AlbiLAB API URL: ${process.env.ALBILAB_API_URL}`);
-    } else {
-        console.log('   ⚠️  ALBILAB_API_URL není nastavena');
-    }
 }
 
 /**
