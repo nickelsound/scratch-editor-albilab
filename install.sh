@@ -382,9 +382,9 @@ EOF
     print_success "docker-compose.yml created (universal image for both services)"
 }
 
-# Create systemd service
-create_systemd_service() {
-    print_step "10" "Creating systemd service..."
+# Create wrapper script for podman-compose operations
+create_wrapper_script() {
+    print_step "10a" "Creating wrapper script for podman-compose..."
     
     # Find path to podman-compose
     PODMAN_COMPOSE_PATH=$(which podman-compose)
@@ -395,6 +395,115 @@ create_systemd_service() {
     fi
     
     print_info "Using podman-compose from: $PODMAN_COMPOSE_PATH"
+    
+    # Create wrapper script
+    sudo tee "$INSTALL_DIR/podman-compose-wrapper.sh" > /dev/null << 'WRAPPER_EOF'
+#!/bin/bash
+# Wrapper script for podman-compose to handle errors gracefully
+
+INSTALL_DIR="/opt/scratch-albilab"
+PODMAN_COMPOSE_PATH=$(which podman-compose)
+COMPOSE_FILE="$INSTALL_DIR/docker-compose.yml"
+
+# Function to check if containers are running
+containers_running() {
+    cd "$INSTALL_DIR" 2>/dev/null || return 1
+    # Check if containers exist and are running using podman directly
+    # Check for both container names
+    if podman ps --format "{{.Names}}" 2>/dev/null | grep -qE "(scratch-gui-app|scratch-backend-app)"; then
+        return 0
+    fi
+    return 1
+}
+
+# Function to start containers
+start_containers() {
+    cd "$INSTALL_DIR" || return 1
+    
+    # If containers are already running, return success
+    if containers_running; then
+        echo "Containers are already running"
+        return 0
+    fi
+    
+    # Try to start containers, but ignore some errors
+    set +e
+    $PODMAN_COMPOSE_PATH up -d 2>&1
+    local exit_code=$?
+    set -e
+    
+    # Check if containers are running despite the error
+    sleep 2
+    if containers_running; then
+        echo "Containers are running"
+        return 0
+    elif [ $exit_code -eq 0 ]; then
+        echo "Containers started successfully"
+        return 0
+    else
+        echo "Failed to start containers (exit code: $exit_code)"
+        return 1
+    fi
+}
+
+# Function to stop containers
+stop_containers() {
+    cd "$INSTALL_DIR" || return 0
+    
+    # If containers are not running, return success
+    if ! containers_running; then
+        echo "Containers are not running"
+        return 0
+    fi
+    
+    # Stop containers (ignore errors)
+    set +e
+    $PODMAN_COMPOSE_PATH down 2>&1
+    set -e
+    echo "Containers stopped"
+    return 0
+}
+
+# Function to restart containers
+restart_containers() {
+    stop_containers
+    sleep 1
+    start_containers
+}
+
+# Main command handling
+case "$1" in
+    start)
+        start_containers
+        exit $?
+        ;;
+    stop)
+        stop_containers
+        exit $?
+        ;;
+    restart)
+        restart_containers
+        exit $?
+        ;;
+    *)
+        echo "Usage: $0 {start|stop|restart}"
+        exit 1
+        ;;
+esac
+WRAPPER_EOF
+
+    # Make script executable
+    sudo chmod +x "$INSTALL_DIR/podman-compose-wrapper.sh"
+    sudo chown $USER:$USER "$INSTALL_DIR/podman-compose-wrapper.sh"
+    
+    print_success "Wrapper script created"
+}
+
+# Create systemd service
+create_systemd_service() {
+    print_step "10" "Creating systemd service..."
+    
+    WRAPPER_SCRIPT="$INSTALL_DIR/podman-compose-wrapper.sh"
     
     sudo tee /etc/systemd/system/scratch-albilab.service > /dev/null << EOF
 [Unit]
@@ -407,13 +516,15 @@ Requires=podman.service
 Type=oneshot
 RemainAfterExit=yes
 WorkingDirectory=$INSTALL_DIR
-ExecStart=$PODMAN_COMPOSE_PATH up -d
-ExecStop=$PODMAN_COMPOSE_PATH down
-ExecReload=$PODMAN_COMPOSE_PATH restart
+ExecStart=$WRAPPER_SCRIPT start
+ExecStop=$WRAPPER_SCRIPT stop
+ExecReload=$WRAPPER_SCRIPT restart
 Restart=on-failure
 RestartSec=10
 User=$USER
 Group=$USER
+StandardOutput=journal
+StandardError=journal
 
 [Install]
 WantedBy=multi-user.target
@@ -581,6 +692,130 @@ UPDATE_SCRIPT_EOF
     print_success "Automatic update script created"
 }
 
+# Create monitoring script for container health check
+create_monitoring_script() {
+    print_step "11a" "Creating container monitoring script..."
+    
+    sudo tee "$INSTALL_DIR/container-monitor.sh" > /dev/null << 'MONITOR_SCRIPT_EOF'
+#!/bin/bash
+# Script for monitoring and auto-restarting containers if they stop
+
+INSTALL_DIR="/opt/scratch-albilab"
+WRAPPER_SCRIPT="$INSTALL_DIR/podman-compose-wrapper.sh"
+LOG_FILE="$INSTALL_DIR/container-monitor.log"
+
+# Logging function
+log() {
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" | tee -a "$LOG_FILE"
+}
+
+# Function to check if containers are running
+containers_running() {
+    cd "$INSTALL_DIR" 2>/dev/null || return 1
+    # Check if containers exist and are running using podman directly
+    if podman ps --format "{{.Names}}" 2>/dev/null | grep -qE "(scratch-gui-app|scratch-backend-app)"; then
+        return 0
+    fi
+    return 1
+}
+
+# Function to get container status
+get_container_status() {
+    cd "$INSTALL_DIR" 2>/dev/null || echo "unknown"
+    podman ps -a --format "{{.Names}}: {{.Status}}" 2>/dev/null | grep -E "(scratch-gui-app|scratch-backend-app)" || echo "not found"
+}
+
+# Main monitoring logic
+main() {
+    log "=== Container Health Check ==="
+    
+    # Check if containers are running
+    if containers_running; then
+        log "Containers are running - OK"
+        exit 0
+    fi
+    
+    # Containers are not running - log status and restart
+    log "WARNING: Containers are not running!"
+    log "Container status: $(get_container_status)"
+    log "Attempting to restart containers..."
+    
+    # Restart containers using wrapper script
+    if $WRAPPER_SCRIPT start 2>&1 | tee -a "$LOG_FILE"; then
+        # Wait a moment and verify
+        sleep 3
+        if containers_running; then
+            log "SUCCESS: Containers restarted successfully"
+            exit 0
+        else
+            log "ERROR: Containers failed to start after restart attempt"
+            exit 1
+        fi
+    else
+        log "ERROR: Failed to restart containers"
+        exit 1
+    fi
+}
+
+main "$@"
+MONITOR_SCRIPT_EOF
+
+    sudo chmod +x "$INSTALL_DIR/container-monitor.sh"
+    sudo chown $USER:$USER "$INSTALL_DIR/container-monitor.sh"
+    
+    print_success "Container monitoring script created"
+}
+
+# Create systemd service and timer for container monitoring
+create_monitoring_timer() {
+    print_step "11b" "Creating systemd timer for container monitoring..."
+    
+    # Create systemd service for container monitoring
+    sudo tee /etc/systemd/system/scratch-albilab-monitor.service > /dev/null << EOF
+[Unit]
+Description=Scratch Editor AlbiLAB - Container Health Monitor
+After=network.target podman.service scratch-albilab.service
+Wants=network.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=$INSTALL_DIR
+ExecStart=$INSTALL_DIR/container-monitor.sh
+User=$USER
+Group=$USER
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+    # Create systemd timer (runs every minute)
+    sudo tee /etc/systemd/system/scratch-albilab-monitor.timer > /dev/null << EOF
+[Unit]
+Description=Scratch Editor AlbiLAB - Container Health Monitor Timer
+Requires=scratch-albilab-monitor.service
+
+[Timer]
+# Runs every minute
+OnCalendar=*:0/1
+Persistent=true
+# Run immediately if missed
+OnBootSec=60
+OnUnitActiveSec=60
+
+[Install]
+WantedBy=timers.target
+EOF
+
+    # Reload systemd and enable timer
+    sudo systemctl daemon-reload
+    sudo systemctl enable scratch-albilab-monitor.timer
+    sudo systemctl start scratch-albilab-monitor.timer
+    
+    print_success "Container monitoring timer created and enabled (runs every minute)"
+}
+
 # Create systemd service and timer for automatic updates
 create_update_timer() {
     print_step "12" "Creating systemd timer for automatic updates..."
@@ -697,6 +932,13 @@ show_final_instructions() {
     echo -e "  Restart service: ${BLUE}sudo systemctl restart scratch-albilab${NC}"
     echo -e "  View logs:       ${BLUE}podman-compose logs -f${NC}"
     echo ""
+    echo -e "${YELLOW}Container monitoring (auto-restart):${NC}"
+    echo -e "  Monitor status:  ${BLUE}sudo systemctl status scratch-albilab-monitor.timer${NC}"
+    echo -e "  Run check:        ${BLUE}sudo systemctl start scratch-albilab-monitor.service${NC}"
+    echo -e "  View logs:        ${BLUE}sudo journalctl -u scratch-albilab-monitor.service${NC}"
+    echo -e "  View log file:    ${BLUE}cat /opt/scratch-albilab/container-monitor.log${NC}"
+    echo -e "  ${GREEN}Note: Monitoring runs every minute and auto-restarts stopped containers${NC}"
+    echo ""
     echo -e "${YELLOW}Automatic updates:${NC}"
     echo -e "  Timer status:    ${BLUE}sudo systemctl status scratch-albilab-update.timer${NC}"
     echo -e "  Run check:        ${BLUE}sudo systemctl start scratch-albilab-update.service${NC}"
@@ -730,7 +972,10 @@ main() {
     load_containers
     create_directories
     create_docker_compose
+    create_wrapper_script
     create_systemd_service
+    create_monitoring_script
+    create_monitoring_timer
     create_update_check_script
     create_update_timer
     start_service
