@@ -51,6 +51,36 @@ const baseConfig = new ScratchWebpackConfigBuilder(
                 Buffer: require.resolve('buffer/'),
                 stream: require.resolve('stream-browserify')
             }
+        },
+        module: {
+            rules: [
+                {
+                    test: /\.tsx?$/,
+                    exclude: [
+                        /node_modules/,
+                        /dist/,
+                        /\.dist/,
+                        /node_modules\/.*\/dist\//
+                    ],
+                    use: [
+                        {
+                            loader: 'ts-loader',
+                            options: {
+                                transpileOnly: true,
+                                compilerOptions: {
+                                    skipLibCheck: true
+                                },
+                                exclude: [
+                                    /node_modules/,
+                                    /dist/,
+                                    /\.dist/,
+                                    /node_modules\/.*\/dist\//
+                                ]
+                            }
+                        }
+                    ]
+                }
+            ]
         }
     })
     .addModuleRule({
