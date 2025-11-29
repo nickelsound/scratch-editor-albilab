@@ -22,6 +22,29 @@ GITHUB_REPO="https://github.com/nickelsound/scratch-editor-albilab"
 RELEASE_VERSION="${RELEASE_VERSION:-}"
 GITHUB_REPO_API="https://api.github.com/repos/nickelsound/scratch-editor-albilab"
 
+# Output functions (must be defined before use)
+print_header() {
+    echo -e "${BLUE}═══════════════════════════════════════════════════════${NC}"
+    echo -e "${BLUE}  Scratch Editor AlbiLAB - Installation${NC}"
+    echo -e "${BLUE}═══════════════════════════════════════════════════════${NC}"
+}
+
+print_step() {
+    echo -e "${YELLOW}[STEP $1]${NC} $2"
+}
+
+print_success() {
+    echo -e "${GREEN}✓${NC} $1"
+}
+
+print_error() {
+    echo -e "${RED}✗${NC} $1"
+}
+
+print_info() {
+    echo -e "${BLUE}ℹ${NC} $1"
+}
+
 # Function to get the latest version from GitHub releases
 get_latest_version() {
     local latest_tag=$(curl -s "${GITHUB_REPO_API}/releases/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/' || echo "")
@@ -47,29 +70,6 @@ else
 fi
 
 RELEASE_URL="https://github.com/nickelsound/scratch-editor-albilab/releases/download/${RELEASE_VERSION}"
-
-# Output functions
-print_header() {
-    echo -e "${BLUE}═══════════════════════════════════════════════════════${NC}"
-    echo -e "${BLUE}  Scratch Editor AlbiLAB - Installation${NC}"
-    echo -e "${BLUE}═══════════════════════════════════════════════════════${NC}"
-}
-
-print_step() {
-    echo -e "${YELLOW}[STEP $1]${NC} $2"
-}
-
-print_success() {
-    echo -e "${GREEN}✓${NC} $1"
-}
-
-print_error() {
-    echo -e "${RED}✗${NC} $1"
-}
-
-print_info() {
-    echo -e "${BLUE}ℹ${NC} $1"
-}
 
 # Check if running as root
 check_root() {
