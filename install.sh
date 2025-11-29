@@ -3,8 +3,6 @@
 # Scratch Editor AlbiLAB - Installation script for Raspberry Pi
 # Automatic installation and configuration for ARM64
 
-set -e  # Exit on error
-
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -70,6 +68,9 @@ else
 fi
 
 RELEASE_URL="https://github.com/nickelsound/scratch-editor-albilab/releases/download/${RELEASE_VERSION}"
+
+# Enable exit on error after functions are defined
+set -e
 
 # Check if running as root
 check_root() {
