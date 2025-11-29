@@ -2,7 +2,7 @@ import classNames from 'classnames';
 import {connect} from 'react-redux';
 import PropTypes from 'prop-types';
 import React from 'react';
-import {defineMessages, intlShape, injectIntl} from 'react-intl';
+import {defineMessages, useIntl} from 'react-intl';
 import {setProjectTitle} from '../../reducers/project-title';
 import {getApiUrl} from '../../lib/api-config.js';
 import notificationService from '../../lib/notification-service.js';
@@ -28,15 +28,27 @@ const messages = defineMessages({
 
 const ProjectTitleInput = ({
     className,
-    intl,
     onSubmit,
     projectTitle,
     vm
 }) => {
+    const intl = useIntl();
     const handleManageClick = () => {
         // Vyvolej event pro otevření manageru
         window.dispatchEvent(new CustomEvent('openAutoSaveManager'));
     };
+    return (
+        <BufferedInput
+            className={classNames(styles.titleField, className)}
+            maxLength="100"
+            placeholder={intl.formatMessage(messages.projectTitlePlaceholder)}
+            tabIndex="0"
+            type="text"
+            value={projectTitle}
+            onSubmit={onSubmit}
+        />
+    );
+};
 
     const handleDeployClick = async () => {
         try {
@@ -129,7 +141,6 @@ const ProjectTitleInput = ({
 
 ProjectTitleInput.propTypes = {
     className: PropTypes.string,
-    intl: intlShape.isRequired,
     onSubmit: PropTypes.func,
     projectTitle: PropTypes.string,
     vm: PropTypes.object
@@ -144,7 +155,4 @@ const mapDispatchToProps = dispatch => ({
     onSubmit: title => dispatch(setProjectTitle(title))
 });
 
-export default injectIntl(connect(
-    mapStateToProps,
-    mapDispatchToProps
-)(ProjectTitleInput));
+export default connect(mapStateToProps, mapDispatchToProps)(ProjectTitleInput);
