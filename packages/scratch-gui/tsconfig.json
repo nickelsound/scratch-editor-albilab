@@ -5,7 +5,8 @@
     "dist",
     "**/dist/**",
     "**/node_modules/**/dist/**",
-    "**/node_modules/@scratch/scratch-svg-renderer/dist/**"
+    "**/node_modules/@scratch/scratch-svg-renderer/dist/**",
+    "**/node_modules/**/dist/**/*.js"
   ],
   "compilerOptions": {
     /* Visit https://aka.ms/tsconfig to read more about this file */

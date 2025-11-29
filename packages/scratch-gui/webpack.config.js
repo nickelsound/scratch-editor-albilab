@@ -50,37 +50,11 @@ const baseConfig = new ScratchWebpackConfigBuilder(
             fallback: {
                 Buffer: require.resolve('buffer/'),
                 stream: require.resolve('stream-browserify')
+            },
+            // Ignore dist directories to avoid TypeScript errors in compiled files
+            alias: {
+                '@scratch/scratch-svg-renderer/dist': false
             }
-        },
-        module: {
-            rules: [
-                {
-                    test: /\.tsx?$/,
-                    exclude: [
-                        /node_modules/,
-                        /dist/,
-                        /\.dist/,
-                        /node_modules\/.*\/dist\//
-                    ],
-                    use: [
-                        {
-                            loader: 'ts-loader',
-                            options: {
-                                transpileOnly: true,
-                                compilerOptions: {
-                                    skipLibCheck: true
-                                },
-                                exclude: [
-                                    /node_modules/,
-                                    /dist/,
-                                    /\.dist/,
-                                    /node_modules\/.*\/dist\//
-                                ]
-                            }
-                        }
-                    ]
-                }
-            ]
         }
     })
     .addModuleRule({
@@ -93,6 +67,9 @@ const baseConfig = new ScratchWebpackConfigBuilder(
         'process.env.GA_ID': `"${process.env.GA_ID || 'UA-000000-01'}"`,
         'process.env.GTM_ENV_AUTH': `"${process.env.GTM_ENV_AUTH || ''}"`,
         'process.env.GTM_ID': process.env.GTM_ID ? `"${process.env.GTM_ID}"` : null
+    }))
+    .addPlugin(new webpack.IgnorePlugin({
+        resourceRegExp: /node_modules\/@scratch\/scratch-svg-renderer\/dist\//
     }))
     .addPlugin(new CopyWebpackPlugin({
         patterns: [
