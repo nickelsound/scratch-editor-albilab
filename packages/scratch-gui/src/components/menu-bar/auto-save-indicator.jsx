@@ -8,27 +8,27 @@ import styles from './menu-bar.css';
 const messages = defineMessages({
     saving: {
         id: 'gui.menuBar.autoSave.saving',
-        defaultMessage: 'Ukládám...',
+        defaultMessage: 'Saving...',
         description: 'Auto-save indicator when saving'
     },
     saved: {
         id: 'gui.menuBar.autoSave.saved',
-        defaultMessage: 'Uloženo',
+        defaultMessage: 'Saved',
         description: 'Auto-save indicator when saved'
     },
     error: {
         id: 'gui.menuBar.autoSave.error',
-        defaultMessage: 'Chyba ukládání',
+        defaultMessage: 'Save error',
         description: 'Auto-save indicator when error'
     },
     lastSaved: {
         id: 'gui.menuBar.autoSave.lastSaved',
-        defaultMessage: 'Naposledy uloženo: {time}',
+        defaultMessage: 'Last saved: {time}',
         description: 'Auto-save indicator with last save time'
     },
     unsaved: {
         id: 'gui.menuBar.autoSave.unsaved',
-        defaultMessage: 'Neuložený projekt',
+        defaultMessage: 'Unsaved project',
         description: 'Auto-save indicator when project is not saved'
     }
 });
@@ -78,7 +78,8 @@ const AutoSaveIndicator = function (props) {
         if (!time) return '';
         
         const saveTime = new Date(time);
-        return saveTime.toLocaleTimeString('cs-CZ', {
+        const locale = intl.locale || 'en';
+        return saveTime.toLocaleTimeString(locale, {
             hour: '2-digit',
             minute: '2-digit',
             second: '2-digit'
@@ -109,7 +110,10 @@ const AutoSaveIndicator = function (props) {
                 <button
                     className={styles.autoSaveTimeButton}
                     onClick={handleForceSave}
-                    title="Klikněte pro okamžité uložení"
+                    title={intl.formatMessage({
+                        id: 'gui.menuBar.autoSave.forceSave',
+                        defaultMessage: 'Click for immediate save'
+                    })}
                 >
                     {getStatusMessage()}
                 </button>

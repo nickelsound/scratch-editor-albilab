@@ -8,77 +8,77 @@ import styles from './menu-bar.css';
 const messages = defineMessages({
     title: {
         id: 'gui.menuBar.autoSaveManager.title',
-        defaultMessage: 'Správa automaticky uložených projektů',
+        defaultMessage: 'Auto-saved projects management',
         description: 'Title for auto-save manager dialog'
     },
     loading: {
         id: 'gui.menuBar.autoSaveManager.loading',
-        defaultMessage: 'Načítám projekty...',
+        defaultMessage: 'Loading projects...',
         description: 'Loading message'
     },
     noProjects: {
         id: 'gui.menuBar.autoSaveManager.noProjects',
-        defaultMessage: 'Žádné automaticky uložené projekty',
+        defaultMessage: 'No auto-saved projects',
         description: 'No projects message'
     },
     loadProject: {
         id: 'gui.menuBar.autoSaveManager.loadProject',
-        defaultMessage: 'Načíst',
+        defaultMessage: 'Load',
         description: 'Load project button'
     },
     deployProject: {
         id: 'gui.menuBar.autoSaveManager.deployProject',
-        defaultMessage: 'Nasadit',
+        defaultMessage: 'Deploy',
         description: 'Deploy project button'
     },
     deployCurrentProject: {
         id: 'gui.menuBar.autoSaveManager.deployCurrentProject',
-        defaultMessage: 'Nasadit aktuální projekt',
+        defaultMessage: 'Deploy current project',
         description: 'Deploy current project button'
     },
     startProject: {
         id: 'gui.menuBar.autoSaveManager.startProject',
-        defaultMessage: 'Spustit',
+        defaultMessage: 'Start',
         description: 'Start project button'
     },
     stopProject: {
         id: 'gui.menuBar.autoSaveManager.stopProject',
-        defaultMessage: 'Zastavit',
+        defaultMessage: 'Stop',
         description: 'Stop project button'
     },
     deleteProject: {
         id: 'gui.menuBar.autoSaveManager.deleteProject',
-        defaultMessage: 'Smazat',
+        defaultMessage: 'Delete',
         description: 'Delete project button'
     },
     close: {
         id: 'gui.menuBar.autoSaveManager.close',
-        defaultMessage: 'Zavřít',
+        defaultMessage: 'Close',
         description: 'Close button'
     },
     lastSaved: {
         id: 'gui.menuBar.autoSaveManager.lastSaved',
-        defaultMessage: 'Naposledy uloženo: {time}',
+        defaultMessage: 'Last saved: {time}',
         description: 'Last saved time'
     },
     confirmDelete: {
         id: 'gui.menuBar.autoSaveManager.confirmDelete',
-        defaultMessage: 'Opravdu chcete smazat projekt "{name}"?',
+        defaultMessage: 'Do you really want to delete project "{name}"?',
         description: 'Delete confirmation'
     },
     statusRunning: {
         id: 'gui.menuBar.autoSaveManager.statusRunning',
-        defaultMessage: 'Běží',
+        defaultMessage: 'Running',
         description: 'Running status'
     },
     statusStopped: {
         id: 'gui.menuBar.autoSaveManager.statusStopped',
-        defaultMessage: 'Zastaveno',
+        defaultMessage: 'Stopped',
         description: 'Stopped status'
     },
     statusNotDeployed: {
         id: 'gui.menuBar.autoSaveManager.statusNotDeployed',
-        defaultMessage: 'Nenasazeno',
+        defaultMessage: 'Not deployed',
         description: 'Not deployed status'
     }
 });
@@ -104,7 +104,8 @@ const AutoSaveManager = function (props) {
         if (!time) return '';
         
         const saveTime = new Date(time);
-        return saveTime.toLocaleString('cs-CZ', {
+        const locale = intl.locale || 'en';
+        return saveTime.toLocaleString(locale, {
             day: '2-digit',
             month: '2-digit',
             year: 'numeric',

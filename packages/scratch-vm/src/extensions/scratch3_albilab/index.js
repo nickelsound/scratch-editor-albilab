@@ -76,7 +76,7 @@ class Scratch3AlbiLABBlocks {
                     blockType: BlockType.COMMAND,
                     text: formatMessage({
                         id: 'albilab.lightsOn',
-                        default: 'zapnout světla',
+                        default: 'turn on lights',
                         description: 'Turn on lights'
                     })
                 },
@@ -85,7 +85,7 @@ class Scratch3AlbiLABBlocks {
                     blockType: BlockType.COMMAND,
                     text: formatMessage({
                         id: 'albilab.lightsOff',
-                        default: 'vypnout světla',
+                        default: 'turn off lights',
                         description: 'Turn off lights'
                     })
                 },
@@ -94,7 +94,7 @@ class Scratch3AlbiLABBlocks {
                             blockType: BlockType.COMMAND,
                             text: formatMessage({
                                 id: 'albilab.lightsCustom',
-                                default: 'rozsvítit světla červená [RED]% modrá [BLUE]% bílá [WHITE]%',
+                                default: 'set lights red [RED]% blue [BLUE]% white [WHITE]%',
                                 description: 'Set custom light colors with intensity'
                             }),
                             arguments: {
@@ -118,7 +118,7 @@ class Scratch3AlbiLABBlocks {
                     blockType: BlockType.COMMAND,
                     text: formatMessage({
                         id: 'albilab.pumpOn',
-                        default: 'zapnout čerpadlo',
+                        default: 'turn on pump',
                         description: 'Turn on pump'
                     })
                 },
@@ -127,7 +127,7 @@ class Scratch3AlbiLABBlocks {
                     blockType: BlockType.COMMAND,
                     text: formatMessage({
                         id: 'albilab.pumpOff',
-                        default: 'vypnout čerpadlo',
+                        default: 'turn off pump',
                         description: 'Turn off pump'
                     })
                 },
@@ -136,7 +136,7 @@ class Scratch3AlbiLABBlocks {
                     blockType: BlockType.COMMAND,
                     text: formatMessage({
                         id: 'albilab.pumpOnFor',
-                        default: 'zapnout čerpadlo na [SECONDS] sekund',
+                        default: 'turn on pump for [SECONDS] seconds',
                         description: 'Turn on pump for specified time'
                     }),
                     arguments: {
@@ -151,7 +151,7 @@ class Scratch3AlbiLABBlocks {
                     blockType: BlockType.COMMAND,
                     text: formatMessage({
                         id: 'albilab.pumpOffFor',
-                        default: 'vypnout čerpadlo na [SECONDS] sekund',
+                        default: 'turn off pump for [SECONDS] seconds',
                         description: 'Turn off pump for specified time'
                     }),
                     arguments: {
@@ -167,7 +167,7 @@ class Scratch3AlbiLABBlocks {
                     blockType: BlockType.COMMAND,
                     text: formatMessage({
                         id: 'albilab.fanOn',
-                        default: 'zapnout větrák',
+                        default: 'turn on fan',
                         description: 'Turn on fan'
                     })
                 },
@@ -176,7 +176,7 @@ class Scratch3AlbiLABBlocks {
                             blockType: BlockType.COMMAND,
                             text: formatMessage({
                                 id: 'albilab.fanOff',
-                                default: 'vypnout větrák',
+                                default: 'turn off fan',
                                 description: 'Turn off fan'
                             })
                         },
@@ -185,7 +185,7 @@ class Scratch3AlbiLABBlocks {
                             blockType: BlockType.COMMAND,
                             text: formatMessage({
                                 id: 'albilab.fanOnFor',
-                                default: 'zapnout větrák na [SECONDS] sekund',
+                                default: 'turn on fan for [SECONDS] seconds',
                                 description: 'Turn on fan for specified time'
                             }),
                             arguments: {
@@ -201,7 +201,7 @@ class Scratch3AlbiLABBlocks {
                     blockType: BlockType.REPORTER,
                     text: formatMessage({
                         id: 'albilab.getTemperature',
-                        default: 'teplota vzduchu',
+                        default: 'air temperature',
                         description: 'Get air temperature'
                     })
                 },
@@ -210,7 +210,7 @@ class Scratch3AlbiLABBlocks {
                     blockType: BlockType.REPORTER,
                     text: formatMessage({
                         id: 'albilab.getHumidity',
-                        default: 'vlhkost vzduchu',
+                        default: 'air humidity',
                         description: 'Get air humidity'
                     })
                 },
@@ -219,7 +219,7 @@ class Scratch3AlbiLABBlocks {
                     blockType: BlockType.REPORTER,
                     text: formatMessage({
                         id: 'albilab.getSoilMoisture',
-                        default: 'vlhkost půdy',
+                        default: 'soil moisture',
                         description: 'Get soil moisture'
                     })
                 },
@@ -228,7 +228,7 @@ class Scratch3AlbiLABBlocks {
                             blockType: BlockType.BOOLEAN,
                             text: formatMessage({
                                 id: 'albilab.getWaterLevel',
-                                default: 'přítomnost vody v nádrži',
+                                default: 'water level in tank',
                                 description: 'Check water level in tank'
                             })
                         },
@@ -238,17 +238,37 @@ class Scratch3AlbiLABBlocks {
                             blockType: BlockType.COMMAND,
                             text: formatMessage({
                                 id: 'albilab.setDeviceIP',
-                                default: 'nastavit IP adresu AlbiLAB na [IP]',
+                                default: 'set AlbiLAB IP address to [IP]',
                                 description: 'Set AlbiLAB device IP address'
                             }),
                             arguments: {
                                 IP: {
                                     type: ArgumentType.STRING,
-                                    defaultValue: ''
+                                    defaultValue: '192.168.1.100'
                                 }
                             }
                         }
-            ]
+            ],
+            translation_map: {
+                cs: {
+                    'albilab.categoryName': 'AlbiLAB',
+                    'albilab.lightsOn': 'zapnout světla',
+                    'albilab.lightsOff': 'vypnout světla',
+                    'albilab.lightsCustom': 'rozsvítit světla červená [RED]% modrá [BLUE]% bílá [WHITE]%',
+                    'albilab.pumpOn': 'zapnout čerpadlo',
+                    'albilab.pumpOff': 'vypnout čerpadlo',
+                    'albilab.pumpOnFor': 'zapnout čerpadlo na [SECONDS] sekund',
+                    'albilab.pumpOffFor': 'vypnout čerpadlo na [SECONDS] sekund',
+                    'albilab.fanOn': 'zapnout větrák',
+                    'albilab.fanOff': 'vypnout větrák',
+                    'albilab.fanOnFor': 'zapnout větrák na [SECONDS] sekund',
+                    'albilab.getTemperature': 'teplota vzduchu',
+                    'albilab.getHumidity': 'vlhkost vzduchu',
+                    'albilab.getSoilMoisture': 'vlhkost půdy',
+                    'albilab.getWaterLevel': 'přítomnost vody v nádrži',
+                    'albilab.setDeviceIP': 'nastavit IP adresu AlbiLAB na [IP]'
+                }
+            }
         };
     }
 
