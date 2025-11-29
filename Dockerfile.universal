@@ -31,6 +31,9 @@ COPY scripts/ ./scripts/
 # Spustíme prepare script
 RUN npm run prepare --workspace=packages/scratch-gui
 
+# Nastavíme zvýšený limit paměti pro Node.js (potřebné pro build scratch-gui)
+ENV NODE_OPTIONS=--max-old-space-size=4096
+
 # Build-time konfigurace pro produkční URL backendu
 # Tyto proměnné se použijí v api-config.js (REACT_APP_API_PORT/WS_PORT)
 ENV REACT_APP_API_PORT=3001

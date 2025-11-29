@@ -34,6 +34,9 @@ COPY scripts/ ./scripts/
 # Spustíme prepare script pro scratch-gui (stáhne microbit hex soubor)
 RUN npm run prepare --workspace=packages/scratch-gui
 
+# Nastavíme zvýšený limit paměti pro Node.js (potřebné pro build scratch-gui)
+ENV NODE_OPTIONS=--max-old-space-size=4096
+
 # Sestavíme závislé balíčky v správném pořadí
 # Nejdříve scratch-svg-renderer a scratch-render (závislosti pro scratch-vm)
 RUN npm run build --workspace=packages/scratch-svg-renderer
