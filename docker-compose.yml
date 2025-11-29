@@ -17,7 +17,7 @@ services:
       - NODE_ENV=production
       - APP_MODE=frontend
       - PORT=8601
-    restart: unless-stopped
+    restart: always
 
   # Backend server pro trvalý běh projektů (používá universal image s APP_MODE=backend)
   scratch-backend-app:
@@ -38,4 +38,4 @@ services:
       - PORT=3001
     volumes:
       - ./uploads:/app/uploads
-    restart: unless-stopped
+    restart: always
