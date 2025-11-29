@@ -3,6 +3,43 @@ const BlockType = require('../../extension-support/block-type');
 const formatMessage = require('format-message');
 const AlbiLABAPIClient = require('./api-client');
 
+// Czech translations for AlbiLAB blocks
+const csTranslations = {
+    'albilab.categoryName': 'AlbiLAB',
+    'albilab.lightsOn': 'zapnout světla',
+    'albilab.lightsOff': 'vypnout světla',
+    'albilab.lightsCustom': 'rozsvítit světla červená [RED]% modrá [BLUE]% bílá [WHITE]%',
+    'albilab.pumpOn': 'zapnout čerpadlo',
+    'albilab.pumpOff': 'vypnout čerpadlo',
+    'albilab.pumpOnFor': 'zapnout čerpadlo na [SECONDS] sekund',
+    'albilab.pumpOffFor': 'vypnout čerpadlo na [SECONDS] sekund',
+    'albilab.fanOn': 'zapnout větrák',
+    'albilab.fanOff': 'vypnout větrák',
+    'albilab.fanOnFor': 'zapnout větrák na [SECONDS] sekund',
+    'albilab.getTemperature': 'teplota vzduchu',
+    'albilab.getHumidity': 'vlhkost vzduchu',
+    'albilab.getSoilMoisture': 'vlhkost půdy',
+    'albilab.getWaterLevel': 'přítomnost vody v nádrži',
+    'albilab.setDeviceIP': 'nastavit IP adresu AlbiLAB na [IP]'
+};
+
+// Setup formatMessage with Czech translations on module load
+const currentSetup = formatMessage.setup();
+if (currentSetup && currentSetup.translations) {
+    if (!currentSetup.translations.cs) {
+        currentSetup.translations.cs = {};
+    }
+    Object.assign(currentSetup.translations.cs, csTranslations);
+    formatMessage.setup(currentSetup);
+} else {
+    formatMessage.setup({
+        locale: currentSetup?.locale || 'en',
+        translations: {
+            cs: csTranslations
+        }
+    });
+}
+
 /**
  * Icon svg to be displayed at the left edge of each extension block, encoded as a data URI.
  * @type {string}
@@ -59,6 +96,16 @@ class Scratch3AlbiLABBlocks {
      * @returns {object} metadata for this extension and its blocks.
      */
     getInfo () {
+        // Ensure Czech translations are available in formatMessage setup
+        const currentSetup = formatMessage.setup();
+        if (currentSetup && currentSetup.translations) {
+            if (!currentSetup.translations.cs) {
+                currentSetup.translations.cs = {};
+            }
+            Object.assign(currentSetup.translations.cs, csTranslations);
+            formatMessage.setup(currentSetup);
+        }
+        
         return {
             id: 'albilab',
             name: formatMessage({
