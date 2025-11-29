@@ -51,10 +51,11 @@ const baseConfig = new ScratchWebpackConfigBuilder(
                 Buffer: require.resolve('buffer/'),
                 stream: require.resolve('stream-browserify')
             },
-            // Ignore dist directories to avoid TypeScript errors in compiled files
-            alias: {
-                '@scratch/scratch-svg-renderer/dist': false
-            }
+            // Prevent webpack from resolving dist files
+            modules: [
+                'node_modules',
+                path.resolve(__dirname, 'src')
+            ]
         }
     })
     .addModuleRule({

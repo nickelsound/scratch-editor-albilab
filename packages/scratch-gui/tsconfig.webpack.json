@@ -1,0 +1,18 @@
+{
+  "extends": "./tsconfig.json",
+  "exclude": [
+    "node_modules",
+    "dist",
+    "**/dist/**",
+    "**/node_modules/**/dist/**",
+    "**/node_modules/@scratch/scratch-svg-renderer/dist/**",
+    "**/node_modules/**/dist/**/*.js",
+    "**/node_modules/**/dist/**/*.ts",
+    "**/node_modules/**/dist/**/*.tsx"
+  ],
+  "compilerOptions": {
+    "skipLibCheck": true,
+    "noEmit": true
+  }
+}
+
