@@ -190,48 +190,54 @@ create_install_directory() {
 install_ble_files() {
     print_step "5a" "Installing BLE WiFi server files..."
     
-    # Get the directory where install.sh is located
-    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-    BLE_SOURCE_DIR="$SCRIPT_DIR/ble"
     BLE_TARGET_DIR="$INSTALL_DIR/ble"
-    
-    # Check if source directory exists
-    if [ ! -d "$BLE_SOURCE_DIR" ]; then
-        print_error "BLE source directory not found: $BLE_SOURCE_DIR"
-        exit 1
-    fi
     
     # Create target directory
     mkdir -p "$BLE_TARGET_DIR"
     
-    # Copy BLE files
-    if [ -f "$BLE_SOURCE_DIR/ble_wifi_server.py" ]; then
-        cp "$BLE_SOURCE_DIR/ble_wifi_server.py" "$BLE_TARGET_DIR/"
-        chmod +x "$BLE_TARGET_DIR/ble_wifi_server.py"
-        print_info "Copied ble_wifi_server.py"
+    # Use GitHub raw URL to download files
+    # Try to use release version, fallback to main branch
+    if [ -n "$RELEASE_VERSION" ] && [ "$RELEASE_VERSION" != "0.0.1" ]; then
+        GITHUB_RAW_BASE="https://raw.githubusercontent.com/nickelsound/scratch-editor-albilab/${RELEASE_VERSION}/ble"
     else
-        print_error "ble_wifi_server.py not found in $BLE_SOURCE_DIR"
+        GITHUB_RAW_BASE="https://raw.githubusercontent.com/nickelsound/scratch-editor-albilab/refs/heads/main/ble"
+    fi
+    
+    cd "$BLE_TARGET_DIR"
+    
+    # Download ble_wifi_server.py
+    print_info "Downloading ble_wifi_server.py from GitHub..."
+    if wget -q --spider "${GITHUB_RAW_BASE}/ble_wifi_server.py" 2>/dev/null; then
+        wget --progress=bar:force "${GITHUB_RAW_BASE}/ble_wifi_server.py" -O "ble_wifi_server.py"
+        chmod +x "ble_wifi_server.py"
+        print_info "Downloaded ble_wifi_server.py"
+    else
+        print_error "Failed to download ble_wifi_server.py from ${GITHUB_RAW_BASE}/ble_wifi_server.py"
         exit 1
     fi
     
-    if [ -f "$BLE_SOURCE_DIR/wifi_config.py" ]; then
-        cp "$BLE_SOURCE_DIR/wifi_config.py" "$BLE_TARGET_DIR/"
-        chmod +x "$BLE_TARGET_DIR/wifi_config.py"
-        print_info "Copied wifi_config.py"
+    # Download wifi_config.py
+    print_info "Downloading wifi_config.py from GitHub..."
+    if wget -q --spider "${GITHUB_RAW_BASE}/wifi_config.py" 2>/dev/null; then
+        wget --progress=bar:force "${GITHUB_RAW_BASE}/wifi_config.py" -O "wifi_config.py"
+        chmod +x "wifi_config.py"
+        print_info "Downloaded wifi_config.py"
     else
-        print_error "wifi_config.py not found in $BLE_SOURCE_DIR"
+        print_error "Failed to download wifi_config.py from ${GITHUB_RAW_BASE}/wifi_config.py"
         exit 1
     fi
     
-    if [ -f "$BLE_SOURCE_DIR/requirements.txt" ]; then
-        cp "$BLE_SOURCE_DIR/requirements.txt" "$BLE_TARGET_DIR/"
-        print_info "Copied requirements.txt"
+    # Download requirements.txt
+    print_info "Downloading requirements.txt from GitHub..."
+    if wget -q --spider "${GITHUB_RAW_BASE}/requirements.txt" 2>/dev/null; then
+        wget --progress=bar:force "${GITHUB_RAW_BASE}/requirements.txt" -O "requirements.txt"
+        print_info "Downloaded requirements.txt"
     else
-        print_error "requirements.txt not found in $BLE_SOURCE_DIR"
+        print_error "Failed to download requirements.txt from ${GITHUB_RAW_BASE}/requirements.txt"
         exit 1
     fi
     
-    print_success "BLE files installed to $BLE_TARGET_DIR"
+    print_success "BLE files downloaded and installed to $BLE_TARGET_DIR"
 }
 
 # Setup BLE Python virtual environment
