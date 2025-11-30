@@ -195,13 +195,8 @@ install_ble_files() {
     # Create target directory
     mkdir -p "$BLE_TARGET_DIR"
     
-    # Use GitHub raw URL to download files
-    # Try to use release version, fallback to main branch
-    if [ -n "$RELEASE_VERSION" ] && [ "$RELEASE_VERSION" != "0.0.1" ]; then
-        GITHUB_RAW_BASE="https://raw.githubusercontent.com/nickelsound/scratch-editor-albilab/${RELEASE_VERSION}/ble"
-    else
-        GITHUB_RAW_BASE="https://raw.githubusercontent.com/nickelsound/scratch-editor-albilab/refs/heads/main/ble"
-    fi
+    # Use GitHub raw URL to download files from main branch
+    GITHUB_RAW_BASE="https://raw.githubusercontent.com/nickelsound/scratch-editor-albilab/refs/heads/main/ble"
     
     cd "$BLE_TARGET_DIR"
     
