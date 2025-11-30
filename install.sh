@@ -117,6 +117,32 @@ update_system() {
     print_success "System updated"
 }
 
+# Install BLE dependencies
+install_ble_dependencies() {
+    print_step "2a" "Installing BLE WiFi server dependencies..."
+    
+    # Install bluez and Python dependencies
+    sudo apt-get install -y bluez python3-pip python3-dbus python3-gi python3-venv
+    
+    # Install development libraries for PyGObject, pycairo and dbus-python
+    sudo apt-get install -y \
+        python3-dev \
+        build-essential \
+        pkg-config \
+        libcairo2-dev \
+        libgirepository1.0-dev \
+        libgirepository-2.0-dev \
+        libglib2.0-dev \
+        libdbus-1-dev \
+        gobject-introspection
+    
+    # Ensure Bluetooth service is enabled and started
+    sudo systemctl enable bluetooth
+    sudo systemctl start bluetooth
+    
+    print_success "BLE dependencies installed and Bluetooth service enabled"
+}
+
 # Install Podman
 install_podman() {
     print_step "3" "Installing Podman..."
@@ -158,6 +184,86 @@ create_install_directory() {
     cd "$INSTALL_DIR"
     
     print_success "Installation directory created: $INSTALL_DIR"
+}
+
+# Install BLE files
+install_ble_files() {
+    print_step "5a" "Installing BLE WiFi server files..."
+    
+    # Get the directory where install.sh is located
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    BLE_SOURCE_DIR="$SCRIPT_DIR/ble"
+    BLE_TARGET_DIR="$INSTALL_DIR/ble"
+    
+    # Check if source directory exists
+    if [ ! -d "$BLE_SOURCE_DIR" ]; then
+        print_error "BLE source directory not found: $BLE_SOURCE_DIR"
+        exit 1
+    fi
+    
+    # Create target directory
+    mkdir -p "$BLE_TARGET_DIR"
+    
+    # Copy BLE files
+    if [ -f "$BLE_SOURCE_DIR/ble_wifi_server.py" ]; then
+        cp "$BLE_SOURCE_DIR/ble_wifi_server.py" "$BLE_TARGET_DIR/"
+        chmod +x "$BLE_TARGET_DIR/ble_wifi_server.py"
+        print_info "Copied ble_wifi_server.py"
+    else
+        print_error "ble_wifi_server.py not found in $BLE_SOURCE_DIR"
+        exit 1
+    fi
+    
+    if [ -f "$BLE_SOURCE_DIR/wifi_config.py" ]; then
+        cp "$BLE_SOURCE_DIR/wifi_config.py" "$BLE_TARGET_DIR/"
+        chmod +x "$BLE_TARGET_DIR/wifi_config.py"
+        print_info "Copied wifi_config.py"
+    else
+        print_error "wifi_config.py not found in $BLE_SOURCE_DIR"
+        exit 1
+    fi
+    
+    if [ -f "$BLE_SOURCE_DIR/requirements.txt" ]; then
+        cp "$BLE_SOURCE_DIR/requirements.txt" "$BLE_TARGET_DIR/"
+        print_info "Copied requirements.txt"
+    else
+        print_error "requirements.txt not found in $BLE_SOURCE_DIR"
+        exit 1
+    fi
+    
+    print_success "BLE files installed to $BLE_TARGET_DIR"
+}
+
+# Setup BLE Python virtual environment
+setup_ble_venv() {
+    print_step "5b" "Setting up BLE Python virtual environment..."
+    
+    BLE_DIR="$INSTALL_DIR/ble"
+    VENV_DIR="$BLE_DIR/venv"
+    
+    # Check if venv already exists
+    if [ -d "$VENV_DIR" ]; then
+        print_info "Virtual environment already exists, removing old one..."
+        rm -rf "$VENV_DIR"
+    fi
+    
+    # Create virtual environment
+    cd "$BLE_DIR"
+    python3 -m venv venv
+    
+    # Activate venv and install requirements
+    print_info "Installing Python packages..."
+    source venv/bin/activate
+    pip install --upgrade pip
+    pip install -r requirements.txt
+    
+    # Verify installation
+    if [ -f "$VENV_DIR/bin/python3" ]; then
+        print_success "BLE Python virtual environment created and packages installed"
+    else
+        print_error "Failed to create virtual environment"
+        exit 1
+    fi
 }
 
 # Function to download and assemble chunked tar archive
@@ -538,6 +644,53 @@ EOF
     print_success "Systemd service created and enabled"
 }
 
+# Create BLE systemd service
+create_ble_service() {
+    print_step "10b" "Creating BLE WiFi server systemd service..."
+    
+    BLE_DIR="$INSTALL_DIR/ble"
+    BLE_PYTHON="$BLE_DIR/venv/bin/python3"
+    BLE_SCRIPT="$BLE_DIR/ble_wifi_server.py"
+    
+    # Verify files exist
+    if [ ! -f "$BLE_PYTHON" ]; then
+        print_error "Python interpreter not found: $BLE_PYTHON"
+        exit 1
+    fi
+    
+    if [ ! -f "$BLE_SCRIPT" ]; then
+        print_error "BLE server script not found: $BLE_SCRIPT"
+        exit 1
+    fi
+    
+    # Create systemd service file
+    sudo tee /etc/systemd/system/rpi-ble-wifi.service > /dev/null << EOF
+[Unit]
+Description=RPi BLE WiFi Configuration Server
+After=bluetooth.service
+Requires=bluetooth.service
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=$BLE_DIR
+ExecStart=$BLE_PYTHON $BLE_SCRIPT
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+    # Reload systemd and enable service
+    sudo systemctl daemon-reload
+    sudo systemctl enable rpi-ble-wifi.service
+    
+    print_success "BLE WiFi server systemd service created and enabled"
+}
+
 # Get IP address
 get_ip_address() {
     # Get primary IP address
@@ -908,6 +1061,39 @@ start_service() {
     fi
 }
 
+# Start BLE service
+start_ble_service() {
+    print_step "13a" "Starting BLE WiFi server service..."
+    
+    # If service is already running, restart it (for update)
+    if sudo systemctl is-active --quiet rpi-ble-wifi.service 2>/dev/null; then
+        print_info "BLE service is already running, restarting to apply update..."
+        sudo systemctl restart rpi-ble-wifi.service
+    else
+        # Start service
+        sudo systemctl start rpi-ble-wifi.service
+    fi
+    
+    # Wait for startup
+    sleep 3
+    
+    # Check status
+    if sudo systemctl is-active --quiet rpi-ble-wifi.service; then
+        print_success "BLE WiFi server service started/restarted successfully"
+    else
+        print_error "Failed to start BLE service"
+        print_info "Check logs: sudo journalctl -u rpi-ble-wifi.service"
+        print_info "Check status: sudo systemctl status rpi-ble-wifi.service"
+        
+        # Show last logs
+        print_info "Last logs:"
+        sudo journalctl -u rpi-ble-wifi.service --no-pager -n 10
+        
+        # Don't exit on BLE service failure, just warn
+        print_info "Continuing installation despite BLE service failure..."
+    fi
+}
+
 # Print final instructions
 show_final_instructions() {
     IP=$(get_ip_address)
@@ -946,6 +1132,14 @@ show_final_instructions() {
     echo -e "  View logs:        ${BLUE}sudo journalctl -u scratch-albilab-update.service${NC}"
     echo -e "  View log file:    ${BLUE}cat /opt/scratch-albilab/update-check.log${NC}"
     echo ""
+    echo -e "${YELLOW}BLE WiFi Configuration Server:${NC}"
+    echo -e "  Service status:  ${BLUE}sudo systemctl status rpi-ble-wifi${NC}"
+    echo -e "  Stop service:     ${BLUE}sudo systemctl stop rpi-ble-wifi${NC}"
+    echo -e "  Start service:   ${BLUE}sudo systemctl start rpi-ble-wifi${NC}"
+    echo -e "  Restart service: ${BLUE}sudo systemctl restart rpi-ble-wifi${NC}"
+    echo -e "  View logs:        ${BLUE}sudo journalctl -u rpi-ble-wifi.service -f${NC}"
+    echo -e "  ${GREEN}Note: BLE server allows WiFi configuration via Bluetooth Low Energy${NC}"
+    echo ""
     echo -e "${GREEN}═══════════════════════════════════════════════════════${NC}"
 }
 
@@ -966,20 +1160,25 @@ main() {
     check_root
     check_system
     update_system
+    install_ble_dependencies
     install_podman
     install_podman_compose
     create_install_directory
+    install_ble_files
+    setup_ble_venv
     download_containers
     load_containers
     create_directories
     create_docker_compose
     create_wrapper_script
     create_systemd_service
+    create_ble_service
     create_monitoring_script
     create_monitoring_timer
     create_update_check_script
     create_update_timer
     start_service
+    start_ble_service
     save_installed_version
     show_final_instructions
 }
