@@ -372,6 +372,19 @@ download_and_assemble_chunked() {
 download_containers() {
     print_step "6" "Downloading Universal ARM64 container..."
     
+    # Check if the same version is already installed
+    if [ -f "$INSTALL_DIR/.installed_version" ]; then
+        INSTALLED_VERSION=$(cat "$INSTALL_DIR/.installed_version")
+        if [ "$INSTALLED_VERSION" = "$RELEASE_VERSION" ]; then
+            # Check if podman image already exists
+            if podman images | grep -q "scratch-universal"; then
+                print_info "Version $RELEASE_VERSION is already installed, skipping download"
+                print_success "Using existing container image"
+                return 0
+            fi
+        fi
+    fi
+    
     # Download universal image (one tar for both applications)
     if ! download_and_assemble_chunked "scratch-universal"; then
         print_error "Failed to download universal image"
