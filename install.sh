@@ -769,6 +769,25 @@ download_and_update() {
     
     cd "$INSTALL_DIR"
     
+    # Check if podman image already exists AND version matches
+    local installed_version=""
+    if [ -f "$INSTALL_DIR/.installed_version" ]; then
+        installed_version=$(cat "$INSTALL_DIR/.installed_version")
+    fi
+    
+    if podman images | grep -q "scratch-universal" && [ "$installed_version" = "$version" ]; then
+        log "Podman image already exists for version ${version}, skipping download..."
+        log "Restarting service with existing image..."
+        sudo systemctl restart scratch-albilab.service || {
+            log "Error: Failed to restart service"
+            return 1
+        }
+        
+        log "Update to version ${version} completed successfully (using existing image)"
+        return 0
+    fi
+    
+    # Version changed or image doesn't exist - need to download new container
     log "Downloading new version ${version}..."
     
     # Download tar archive
