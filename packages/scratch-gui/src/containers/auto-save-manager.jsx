@@ -56,17 +56,17 @@ const AutoSaveManager = (props) => {
                 } else {
                     console.error('Chyba při načítání seznamu projektů:', data.error);
                     setProjects([]);
-                    showError(data.error || props.intl.formatMessage({id: 'gui.errors.loadingProjects'}));
+                    showError(data.error || props.intl.formatMessage({id: 'gui.errors.loadingProjects'}), props.intl.formatMessage({id: 'gui.errors.error'}));
                 }
             } else {
                 console.error('Chyba při načítání seznamu projektů:', response.statusText);
                 setProjects([]);
-                showError(props.intl.formatMessage({id: 'gui.errors.loadingProjectsWithDetails'}, {details: response.statusText}));
+                showError(props.intl.formatMessage({id: 'gui.errors.loadingProjectsWithDetails'}, {details: response.statusText}), props.intl.formatMessage({id: 'gui.errors.error'}));
             }
         } catch (error) {
             console.error('Chyba při načítání seznamu projektů:', error);
             setProjects([]);
-            showError(props.intl.formatMessage({id: 'gui.errors.loadingProjectsWithDetails'}, {details: error.message}));
+            showError(props.intl.formatMessage({id: 'gui.errors.loadingProjectsWithDetails'}, {details: error.message}), props.intl.formatMessage({id: 'gui.errors.error'}));
         } finally {
             setIsLoading(false);
         }
@@ -80,8 +80,15 @@ const AutoSaveManager = (props) => {
             if (response.ok) {
                 const data = await response.json();
                 if (data.success && data.projectData) {
+                    // Pokud je projectData string (JSON string), parsuj ho na objekt
+                    // loadProject může přijmout objekt nebo string, ale pokud je to dvojitě serializovaný string,
+                    // musíme ho parsovat
+                    const projectData = typeof data.projectData === 'string' 
+                        ? JSON.parse(data.projectData) 
+                        : data.projectData;
+                    
                     // Načti projekt do VM
-                    await props.vm.loadProject(data.projectData);
+                    await props.vm.loadProject(projectData);
                     
                     // Aktualizuj název projektu
                     props.setProjectTitle(data.projectName);

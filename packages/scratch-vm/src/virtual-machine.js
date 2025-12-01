@@ -306,6 +306,10 @@ class VirtualMachine extends EventEmitter {
      * @return {!Promise} Promise that resolves after targets are installed.
      */
     loadProject (input) {
+        // Track whether input was originally an object (converted to JSON string)
+        // vs binary data (ArrayBuffer) - SB1 files are always binary
+        let isStringInput = false;
+        
         if (typeof input === 'object' && !(input instanceof ArrayBuffer) &&
           !ArrayBuffer.isView(input)) {
             // If the input is an object and not any ArrayBuffer
@@ -314,7 +318,11 @@ class VirtualMachine extends EventEmitter {
             // this is a project.json as an object
             // validate expects a string or buffer as input
             // TODO not sure if we need to check that it also isn't a data view
+            isStringInput = true;
             input = JSON.stringify(input);
+        } else if (typeof input === 'string') {
+            // Input is already a string (JSON string)
+            isStringInput = true;
         }
 
         const validationPromise = new Promise((resolve, reject) => {
@@ -327,6 +335,14 @@ class VirtualMachine extends EventEmitter {
             });
         })
             .catch(error => {
+                // Only try to parse as SB1 if input is binary (ArrayBuffer)
+                // SB1 files are always binary, not JSON strings
+                if (isStringInput) {
+                    // Input is a JSON string, so it can't be an SB1 file
+                    // Throw original error
+                    return Promise.reject(error);
+                }
+                
                 const {SB1File, ValidationError} = require('scratch-sb1-converter');
 
                 try {

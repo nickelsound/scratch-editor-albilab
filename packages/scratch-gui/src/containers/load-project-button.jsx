@@ -42,8 +42,13 @@ class LoadProjectButton extends React.Component {
             const data = await response.json();
             
             if (data.success && data.projectData) {
-                // Načti projekt do Scratch VM - data.projectData je už JSON objekt
-                await this.props.vm.loadProject(data.projectData);
+                // Pokud je projectData string (JSON string), parsuj ho na objekt
+                const projectData = typeof data.projectData === 'string' 
+                    ? JSON.parse(data.projectData) 
+                    : data.projectData;
+                
+                // Načti projekt do Scratch VM
+                await this.props.vm.loadProject(projectData);
                 
                 // Aktualizuj název projektu
                 if (this.props.onUpdateProjectTitle) {

@@ -44,7 +44,17 @@ const baseConfig = new ScratchWebpackConfigBuilder(
             fallback: {
                 Buffer: require.resolve('buffer/'),
                 stream: require.resolve('stream-browserify')
-            }
+            },
+            alias: {
+                'intl-relativeformat/lib/main': path.resolve(__dirname, '../../node_modules/intl-relativeformat/lib/core.js'),
+                'intl-relativeformat': path.resolve(__dirname, '../../node_modules/intl-relativeformat'),
+                'hull.js': path.resolve(__dirname, '../../node_modules/hull.js')
+            },
+            modules: [
+                'node_modules',
+                path.resolve(__dirname, '../../node_modules')
+            ],
+            extensions: ['.ts', '.tsx', '.js', '.jsx', '.json']
         }
     })
     .addModuleRule({

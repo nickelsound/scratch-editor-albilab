@@ -120,19 +120,19 @@ class NotificationService {
         }
     }
 
-    showSuccess(message, title = 'Úspěch') {
+    showSuccess(message, title = 'Success') {
         return this.showNotification({ type: 'success', title, message });
     }
 
-    showError(message, title = 'Chyba') {
+    showError(message, title = 'Error') {
         return this.showNotification({ type: 'error', title, message, autoClose: false });
     }
 
-    showWarning(message, title = 'Upozornění') {
+    showWarning(message, title = 'Warning') {
         return this.showNotification({ type: 'warning', title, message });
     }
 
-    showInfo(message, title = 'Informace') {
+    showInfo(message, title = 'Information') {
         return this.showNotification({ type: 'info', title, message });
     }
 }

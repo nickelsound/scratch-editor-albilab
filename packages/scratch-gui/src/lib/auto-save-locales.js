@@ -43,7 +43,8 @@ export const cs = {
     'gui.errors.controllingService': 'Chyba při ovládání služby',
     'gui.errors.startingService': 'Chyba při spouštění služby',
     'gui.errors.stoppingService': 'Chyba při zastavování služby',
-    'gui.errors.processingWebSocket': 'Chyba při zpracování WebSocket zprávy'
+    'gui.errors.processingWebSocket': 'Chyba při zpracování WebSocket zprávy',
+    'gui.errors.error': 'Chyba'
 };
 
 export const en = {
@@ -88,6 +89,7 @@ export const en = {
     'gui.errors.controllingService': 'Error controlling service',
     'gui.errors.startingService': 'Error starting service',
     'gui.errors.stoppingService': 'Error stopping service',
-    'gui.errors.processingWebSocket': 'Error processing WebSocket message'
+    'gui.errors.processingWebSocket': 'Error processing WebSocket message',
+    'gui.errors.error': 'Error'
 };
 

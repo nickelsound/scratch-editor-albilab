@@ -61,12 +61,17 @@ function getAllRunningServices() {
     return services;
 }
 
+// Pomocná funkce pro sanitizaci názvu souboru (stejná jako při ukládání)
+function sanitizeFileName(projectName) {
+    return projectName.replace(/[^a-zA-Z0-9_-]/g, '_') + '.json';
+}
+
 // Kontrola, zda je služba nasazena (uložena v AlbiLAB)
 async function isProjectDeployed(projectName) {
     try {
         // Zkontroluj, zda je projekt uložen v AlbiLAB (deployed-projects adresář)
         const deployedProjectsDir = path.join('/app', 'uploads', 'deployed-projects');
-        const safeFileName = projectName.replace(/[^a-zA-Z0-9_-]/g, '_') + '.json';
+        const safeFileName = sanitizeFileName(projectName);
         const deployedProjectPath = path.join(deployedProjectsDir, safeFileName);
         return await fs.pathExists(deployedProjectPath);
     } catch (error) {
@@ -90,13 +95,13 @@ async function saveProject(projectData, projectName, isAutoSave = false) {
         if (isAutoSave) {
             // Pro auto-save vytvoř adresář a ulož podle názvu projektu
             await fs.ensureDir(AUTO_SAVE_DIR);
-            const safeFileName = projectName.replace(/[^a-zA-Z0-9_-]/g, '_') + '.json';
+            const safeFileName = sanitizeFileName(projectName);
             filePath = path.join(AUTO_SAVE_DIR, safeFileName);
         } else {
             // Pro nasazené projekty vytvoř adresář deployed-projects
             const deployedProjectsDir = path.join('/app', 'uploads', 'deployed-projects');
             await fs.ensureDir(deployedProjectsDir);
-            const safeFileName = projectName.replace(/[^a-zA-Z0-9_-]/g, '_') + '.json';
+            const safeFileName = sanitizeFileName(projectName);
             filePath = path.join(deployedProjectsDir, safeFileName);
         }
         
@@ -156,7 +161,29 @@ async function loadAutoSaveProject(projectName) {
             return null;
         }
         
-        // Projdi všechny soubory a hledej podle originálního názvu
+        // Nejdříve zkus najít soubor přímo podle sanitizovaného názvu (rychlejší)
+        const safeFileName = sanitizeFileName(projectName);
+        const directFilePath = path.join(AUTO_SAVE_DIR, safeFileName);
+        
+        if (await fs.pathExists(directFilePath)) {
+            try {
+                const projectInfo = await fs.readJson(directFilePath);
+                // Ověř, že originální název v souboru odpovídá hledanému názvu
+                if (projectInfo.projectName === projectName) {
+                    log(`Auto-save projekt načten (přímý přístup): ${projectInfo.projectName}`, 'info', {
+                        savedAt: projectInfo.savedAt,
+                        version: projectInfo.version,
+                        filePath: directFilePath
+                    });
+                    return projectInfo;
+                }
+            } catch (error) {
+                log(`Chyba při načítání souboru ${safeFileName}: ${error.message}`, 'error');
+            }
+        }
+        
+        // Fallback: Projdi všechny soubory a hledej podle originálního názvu
+        // (pro případ, že sanitizace vytvořila duplicitní názvy)
         const files = await fs.readdir(AUTO_SAVE_DIR);
         
         for (const file of files) {
@@ -167,7 +194,7 @@ async function loadAutoSaveProject(projectName) {
                     
                     // Porovnej originální názvy (case-sensitive)
                     if (projectInfo.projectName === projectName) {
-                        log(`Auto-save projekt načten: ${projectInfo.projectName}`, 'info', {
+                        log(`Auto-save projekt načten (fallback): ${projectInfo.projectName}`, 'info', {
                             savedAt: projectInfo.savedAt,
                             version: projectInfo.version,
                             filePath: filePath
@@ -589,9 +616,36 @@ app.get('/api/saved-project/load', async (req, res) => {
         
         const savedProject = await loadSavedProject();
         if (savedProject) {
+            // Pokud je projectData string (starý formát), parsuj ho
+            let actualProjectData = savedProject.projectData;
+            
+            // Zajisti, že projectData je vždy objekt, ne string
+            if (typeof actualProjectData === 'string') {
+                try {
+                    actualProjectData = JSON.parse(actualProjectData);
+                    log(`API: Parsed projectData from string to object for saved project`, 'info');
+                } catch (parseError) {
+                    log(`API: Error parsing projectData string for saved project: ${parseError.message}`, 'error');
+                    return res.status(500).json({
+                        success: false,
+                        error: 'Error parsing project data',
+                        details: parseError.message
+                    });
+                }
+            }
+            
+            // Ověř, že projectData je objekt
+            if (typeof actualProjectData !== 'object' || actualProjectData === null) {
+                log(`API: projectData is not an object for saved project, type: ${typeof actualProjectData}`, 'error');
+                return res.status(500).json({
+                    success: false,
+                    error: 'Invalid project data format'
+                });
+            }
+            
             res.json({
                 success: true,
-                projectData: savedProject.projectData,
+                projectData: actualProjectData,
                 projectName: savedProject.projectName,
                 savedAt: savedProject.savedAt,
                 version: savedProject.version
@@ -627,9 +681,36 @@ app.get('/api/saved-project/auto-save/load', async (req, res) => {
         
         const autoSaveProject = await loadAutoSaveProject(projectName);
         if (autoSaveProject) {
+            // Pokud je projectData string (starý formát), parsuj ho
+            let actualProjectData = autoSaveProject.projectData;
+            
+            // Zajisti, že projectData je vždy objekt, ne string
+            if (typeof actualProjectData === 'string') {
+                try {
+                    actualProjectData = JSON.parse(actualProjectData);
+                    log(`API: Parsed projectData from string to object for project: ${projectName}`, 'info');
+                } catch (parseError) {
+                    log(`API: Error parsing projectData string for project ${projectName}: ${parseError.message}`, 'error');
+                    return res.status(500).json({
+                        success: false,
+                        error: 'Error parsing project data',
+                        details: parseError.message
+                    });
+                }
+            }
+            
+            // Ověř, že projectData je objekt
+            if (typeof actualProjectData !== 'object' || actualProjectData === null) {
+                log(`API: projectData is not an object for project ${projectName}, type: ${typeof actualProjectData}`, 'error');
+                return res.status(500).json({
+                    success: false,
+                    error: 'Invalid project data format'
+                });
+            }
+            
             res.json({
                 success: true,
-                projectData: autoSaveProject.projectData,
+                projectData: actualProjectData,
                 projectName: autoSaveProject.projectName,
                 savedAt: autoSaveProject.savedAt,
                 version: autoSaveProject.version,
@@ -669,8 +750,14 @@ app.post('/api/saved-project/auto-save', async (req, res) => {
         
         const name = projectName || 'Neznámý projekt';
         
+        // Pokud je projectData string (JSON string), parsuj ho na objekt
+        // vm.toJSON() vrací string, ale při JSON.stringify() se to může stát double-encoded
+        const actualProjectData = typeof projectData === 'string' 
+            ? JSON.parse(projectData) 
+            : projectData;
+        
         // Ulož projekt bez spuštění služby (auto-save)
-        const saved = await saveProject(projectData, name, true);
+        const saved = await saveProject(actualProjectData, name, true);
         
         if (saved) {
             const response = { 
@@ -742,7 +829,25 @@ app.delete('/api/saved-project/auto-save', async (req, res) => {
             return res.json({ success: true, message: `Auto-save projekt "${projectName}" nebyl nalezen` });
         }
         
-        // Projdi všechny soubory a hledej podle originálního názvu
+        // Nejdříve zkus najít soubor přímo podle sanitizovaného názvu (rychlejší)
+        const safeFileName = sanitizeFileName(projectName);
+        const directFilePath = path.join(AUTO_SAVE_DIR, safeFileName);
+        
+        if (await fs.pathExists(directFilePath)) {
+            try {
+                const projectInfo = await fs.readJson(directFilePath);
+                // Ověř, že originální název v souboru odpovídá hledanému názvu
+                if (projectInfo.projectName === projectName) {
+                    await fs.remove(directFilePath);
+                    log(`Auto-save projekt ${projectName} byl smazán (přímý přístup)`, 'success');
+                    return res.json({ success: true, message: `Auto-save projekt "${projectName}" byl smazán` });
+                }
+            } catch (error) {
+                log(`Chyba při načítání souboru ${safeFileName}: ${error.message}`, 'error');
+            }
+        }
+        
+        // Fallback: Projdi všechny soubory a hledej podle originálního názvu
         const files = await fs.readdir(AUTO_SAVE_DIR);
         
         for (const file of files) {
@@ -754,7 +859,7 @@ app.delete('/api/saved-project/auto-save', async (req, res) => {
                     // Porovnej originální názvy (case-sensitive)
                     if (projectInfo.projectName === projectName) {
                         await fs.remove(filePath);
-                        log(`Auto-save projekt ${projectName} byl smazán`, 'success');
+                        log(`Auto-save projekt ${projectName} byl smazán (fallback)`, 'success');
                         return res.json({ success: true, message: `Auto-save projekt "${projectName}" byl smazán` });
                     }
                 } catch (error) {
