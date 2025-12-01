@@ -140,6 +140,10 @@ button::-moz-focus-inner {
     font-family: "Helvetica Neue", Helvetica, Arial, sans-serif !important;
 }
 
+.tooltip:after {
+    background-color: $extensions-primary;
+}
+
 .coming-soon-tooltip {
     background-color: $data-primary !important;
 }
@@ -162,7 +166,6 @@ $arrow-inset: -0.25rem;
 $arrow-rounding: 0.125rem;
 
 .tooltip:after {
-    background-color: $extensions-primary !important;
     content: "";
     border-top: 1px solid hsla(0, 0%, 0%, .1) !important;
     border-left: 0 !important;
