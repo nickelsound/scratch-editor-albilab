@@ -1,5 +1,5 @@
 /**
- * Czech translations for auto-save components
+ * Translations for auto-save components
  */
 export const cs = {
     'gui.menuBar.autoSaveManager.title': 'Správa automaticky uložených projektů',
@@ -22,6 +22,74 @@ export const cs = {
     'gui.menuBar.autoSave.error': 'Chyba ukládání',
     'gui.menuBar.autoSave.lastSaved': 'Naposledy uloženo: {time}',
     'gui.menuBar.autoSave.unsaved': 'Neuložený projekt',
-    'gui.menuBar.autoSave.forceSave': 'Klikněte pro okamžité uložení'
+    'gui.menuBar.autoSave.forceSave': 'Klikněte pro okamžité uložení',
+    // Error messages
+    'gui.errors.loadingProjects': 'Chyba při načítání projektů',
+    'gui.errors.loadingProjectsWithDetails': 'Chyba při načítání projektů: {details}',
+    'gui.errors.loadingProject': 'Chyba při načítání projektu',
+    'gui.errors.deployingProject': 'Chyba při nasazování projektu',
+    'gui.errors.deployingCurrentProject': 'Chyba při nasazování aktuálního projektu',
+    'gui.errors.savingProject': 'Chyba při ukládání projektu',
+    'gui.errors.savingProjectWithDetails': 'Chyba při ukládání projektu: {details}',
+    'gui.errors.startingProject': 'Chyba při spouštění projektu',
+    'gui.errors.stoppingProject': 'Chyba při zastavování projektu',
+    'gui.errors.deletingProject': 'Chyba při mazání projektu',
+    'gui.errors.unknownError': 'Neznámá chyba',
+    'gui.errors.noProjectLoaded': 'Žádný projekt není načten v editoru',
+    'gui.errors.loadingSavedProject': 'Chyba při načítání uloženého projektu',
+    'gui.errors.autoSaving': 'Chyba při automatickém ukládání',
+    'gui.errors.autoSavingWithDetails': 'Chyba při automatickém ukládání: {details}',
+    'gui.errors.loadingAutoSaveProject': 'Chyba při načítání auto-save projektu',
+    'gui.errors.controllingService': 'Chyba při ovládání služby',
+    'gui.errors.startingService': 'Chyba při spouštění služby',
+    'gui.errors.stoppingService': 'Chyba při zastavování služby',
+    'gui.errors.processingWebSocket': 'Chyba při zpracování WebSocket zprávy',
+    'gui.errors.error': 'Chyba'
+};
+
+export const en = {
+    'gui.menuBar.autoSaveManager.title': 'Auto-saved projects manager',
+    'gui.menuBar.autoSaveManager.loading': 'Loading projects...',
+    'gui.menuBar.autoSaveManager.noProjects': 'No auto-saved projects',
+    'gui.menuBar.autoSaveManager.loadProject': 'Load',
+    'gui.menuBar.autoSaveManager.deployProject': 'Deploy',
+    'gui.menuBar.autoSaveManager.deployCurrentProject': 'Deploy current project',
+    'gui.menuBar.autoSaveManager.startProject': 'Start',
+    'gui.menuBar.autoSaveManager.stopProject': 'Stop',
+    'gui.menuBar.autoSaveManager.deleteProject': 'Delete',
+    'gui.menuBar.autoSaveManager.close': 'Close',
+    'gui.menuBar.autoSaveManager.lastSaved': 'Last saved: {time}',
+    'gui.menuBar.autoSaveManager.confirmDelete': 'Do you really want to delete project "{name}"?',
+    'gui.menuBar.autoSaveManager.statusRunning': 'Running',
+    'gui.menuBar.autoSaveManager.statusStopped': 'Stopped',
+    'gui.menuBar.autoSaveManager.statusNotDeployed': 'Not deployed',
+    'gui.menuBar.autoSave.saving': 'Saving...',
+    'gui.menuBar.autoSave.saved': 'Saved',
+    'gui.menuBar.autoSave.error': 'Save error',
+    'gui.menuBar.autoSave.lastSaved': 'Last saved: {time}',
+    'gui.menuBar.autoSave.unsaved': 'Unsaved project',
+    'gui.menuBar.autoSave.forceSave': 'Click for immediate save',
+    // Error messages
+    'gui.errors.loadingProjects': 'Error loading projects',
+    'gui.errors.loadingProjectsWithDetails': 'Error loading projects: {details}',
+    'gui.errors.loadingProject': 'Error loading project',
+    'gui.errors.deployingProject': 'Error deploying project',
+    'gui.errors.deployingCurrentProject': 'Error deploying current project',
+    'gui.errors.savingProject': 'Error saving project',
+    'gui.errors.savingProjectWithDetails': 'Error saving project: {details}',
+    'gui.errors.startingProject': 'Error starting project',
+    'gui.errors.stoppingProject': 'Error stopping project',
+    'gui.errors.deletingProject': 'Error deleting project',
+    'gui.errors.unknownError': 'Unknown error',
+    'gui.errors.noProjectLoaded': 'No project is loaded in the editor',
+    'gui.errors.loadingSavedProject': 'Error loading saved project',
+    'gui.errors.autoSaving': 'Error auto-saving',
+    'gui.errors.autoSavingWithDetails': 'Error auto-saving: {details}',
+    'gui.errors.loadingAutoSaveProject': 'Error loading auto-save project',
+    'gui.errors.controllingService': 'Error controlling service',
+    'gui.errors.startingService': 'Error starting service',
+    'gui.errors.stoppingService': 'Error stopping service',
+    'gui.errors.processingWebSocket': 'Error processing WebSocket message',
+    'gui.errors.error': 'Error'
 };
 

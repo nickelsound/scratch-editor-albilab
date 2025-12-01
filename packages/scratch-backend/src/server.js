@@ -61,12 +61,17 @@ function getAllRunningServices() {
     return services;
 }
 
+// Pomocná funkce pro sanitizaci názvu souboru (stejná jako při ukládání)
+function sanitizeFileName(projectName) {
+    return projectName.replace(/[^a-zA-Z0-9_-]/g, '_') + '.json';
+}
+
 // Kontrola, zda je služba nasazena (uložena v AlbiLAB)
 async function isProjectDeployed(projectName) {
     try {
         // Zkontroluj, zda je projekt uložen v AlbiLAB (deployed-projects adresář)
         const deployedProjectsDir = path.join('/app', 'uploads', 'deployed-projects');
-        const safeFileName = projectName.replace(/[^a-zA-Z0-9_-]/g, '_') + '.json';
+        const safeFileName = sanitizeFileName(projectName);
         const deployedProjectPath = path.join(deployedProjectsDir, safeFileName);
         return await fs.pathExists(deployedProjectPath);
     } catch (error) {
@@ -90,13 +95,13 @@ async function saveProject(projectData, projectName, isAutoSave = false) {
         if (isAutoSave) {
             // Pro auto-save vytvoř adresář a ulož podle názvu projektu
             await fs.ensureDir(AUTO_SAVE_DIR);
-            const safeFileName = projectName.replace(/[^a-zA-Z0-9_-]/g, '_') + '.json';
+            const safeFileName = sanitizeFileName(projectName);
             filePath = path.join(AUTO_SAVE_DIR, safeFileName);
         } else {
             // Pro nasazené projekty vytvoř adresář deployed-projects
             const deployedProjectsDir = path.join('/app', 'uploads', 'deployed-projects');
             await fs.ensureDir(deployedProjectsDir);
-            const safeFileName = projectName.replace(/[^a-zA-Z0-9_-]/g, '_') + '.json';
+            const safeFileName = sanitizeFileName(projectName);
             filePath = path.join(deployedProjectsDir, safeFileName);
         }
         
@@ -156,7 +161,29 @@ async function loadAutoSaveProject(projectName) {
             return null;
         }
         
-        // Projdi všechny soubory a hledej podle originálního názvu
+        // Nejdříve zkus najít soubor přímo podle sanitizovaného názvu (rychlejší)
+        const safeFileName = sanitizeFileName(projectName);
+        const directFilePath = path.join(AUTO_SAVE_DIR, safeFileName);
+        
+        if (await fs.pathExists(directFilePath)) {
+            try {
+                const projectInfo = await fs.readJson(directFilePath);
+                // Ověř, že originální název v souboru odpovídá hledanému názvu
+                if (projectInfo.projectName === projectName) {
+                    log(`Auto-save projekt načten (přímý přístup): ${projectInfo.projectName}`, 'info', {
+                        savedAt: projectInfo.savedAt,
+                        version: projectInfo.version,
+                        filePath: directFilePath
+                    });
+                    return projectInfo;
+                }
+            } catch (error) {
+                log(`Chyba při načítání souboru ${safeFileName}: ${error.message}`, 'error');
+            }
+        }
+        
+        // Fallback: Projdi všechny soubory a hledej podle originálního názvu
+        // (pro případ, že sanitizace vytvořila duplicitní názvy)
         const files = await fs.readdir(AUTO_SAVE_DIR);
         
         for (const file of files) {
@@ -167,7 +194,7 @@ async function loadAutoSaveProject(projectName) {
                     
                     // Porovnej originální názvy (case-sensitive)
                     if (projectInfo.projectName === projectName) {
-                        log(`Auto-save projekt načten: ${projectInfo.projectName}`, 'info', {
+                        log(`Auto-save projekt načten (fallback): ${projectInfo.projectName}`, 'info', {
                             savedAt: projectInfo.savedAt,
                             version: projectInfo.version,
                             filePath: filePath
@@ -427,7 +454,7 @@ app.post('/api/start-service', upload.single('project'), async (req, res) => {
             await fs.remove(req.file.path);
             return res.status(400).json({ 
                 success: false,
-                error: 'Chybí komponenta určující IP adresu AlbiLAB. Přidejte blok "nastavit IP adresu AlbiLAB na [IP]" do vašeho projektu.' 
+                error: 'Missing AlbiLAB IP address component. Add the "set AlbiLAB IP address to [IP]" block to your project.' 
             });
         }
         
@@ -454,7 +481,7 @@ app.post('/api/start-service', upload.single('project'), async (req, res) => {
             fileName: req.file ? req.file.originalname : null
         });
         res.status(500).json({ 
-            error: 'Chyba při spouštění služby', 
+            error: 'Error starting service', 
             details: error.message 
         });
     }
@@ -474,7 +501,7 @@ app.post('/api/start-service-json', async (req, res) => {
         
         if (!projectData) {
             log('API: Missing projectData in request', 'error');
-            return res.status(400).json({ error: 'Chybí projectData' });
+            return res.status(400).json({ error: 'Missing projectData' });
         }
         
         const name = projectName || 'Neznámý projekt';
@@ -489,7 +516,7 @@ app.post('/api/start-service-json', async (req, res) => {
         if (!validateAlbiLABIPComponent(projectData)) {
             return res.status(400).json({ 
                 success: false,
-                error: 'Chybí komponenta určující IP adresu AlbiLAB. Přidejte blok "nastavit IP adresu AlbiLAB na [IP]" do vašeho projektu.' 
+                error: 'Missing AlbiLAB IP address component. Add the "set AlbiLAB IP address to [IP]" block to your project.' 
             });
         }
         
@@ -512,7 +539,7 @@ app.post('/api/start-service-json', async (req, res) => {
             projectName: req.body.projectName
         });
         res.status(500).json({ 
-            error: 'Chyba při spouštění služby', 
+            error: 'Error starting service', 
             details: error.message 
         });
     }
@@ -539,7 +566,7 @@ app.post('/api/stop-service', async (req, res) => {
             runningServicesCount: runningServices.size
         });
         res.status(500).json({ 
-            error: 'Chyba při zastavování služeb', 
+            error: 'Error stopping services', 
             details: error.message 
         });
     }
@@ -576,7 +603,7 @@ app.get('/api/saved-project', async (req, res) => {
     } catch (error) {
         log(`API: Error getting saved project info: ${error.message}`, 'error');
         res.status(500).json({ 
-            error: 'Chyba při získávání informací o uloženém projektu', 
+            error: 'Error getting saved project information', 
             details: error.message 
         });
     }
@@ -589,9 +616,36 @@ app.get('/api/saved-project/load', async (req, res) => {
         
         const savedProject = await loadSavedProject();
         if (savedProject) {
+            // Pokud je projectData string (starý formát), parsuj ho
+            let actualProjectData = savedProject.projectData;
+            
+            // Zajisti, že projectData je vždy objekt, ne string
+            if (typeof actualProjectData === 'string') {
+                try {
+                    actualProjectData = JSON.parse(actualProjectData);
+                    log(`API: Parsed projectData from string to object for saved project`, 'info');
+                } catch (parseError) {
+                    log(`API: Error parsing projectData string for saved project: ${parseError.message}`, 'error');
+                    return res.status(500).json({
+                        success: false,
+                        error: 'Error parsing project data',
+                        details: parseError.message
+                    });
+                }
+            }
+            
+            // Ověř, že projectData je objekt
+            if (typeof actualProjectData !== 'object' || actualProjectData === null) {
+                log(`API: projectData is not an object for saved project, type: ${typeof actualProjectData}`, 'error');
+                return res.status(500).json({
+                    success: false,
+                    error: 'Invalid project data format'
+                });
+            }
+            
             res.json({
                 success: true,
-                projectData: savedProject.projectData,
+                projectData: actualProjectData,
                 projectName: savedProject.projectName,
                 savedAt: savedProject.savedAt,
                 version: savedProject.version
@@ -606,7 +660,7 @@ app.get('/api/saved-project/load', async (req, res) => {
         log(`API: Error loading saved project for frontend: ${error.message}`, 'error');
         res.status(500).json({ 
             success: false,
-            error: 'Chyba při načítání uloženého projektu', 
+            error: 'Error loading saved project', 
             details: error.message 
         });
     }
@@ -627,9 +681,36 @@ app.get('/api/saved-project/auto-save/load', async (req, res) => {
         
         const autoSaveProject = await loadAutoSaveProject(projectName);
         if (autoSaveProject) {
+            // Pokud je projectData string (starý formát), parsuj ho
+            let actualProjectData = autoSaveProject.projectData;
+            
+            // Zajisti, že projectData je vždy objekt, ne string
+            if (typeof actualProjectData === 'string') {
+                try {
+                    actualProjectData = JSON.parse(actualProjectData);
+                    log(`API: Parsed projectData from string to object for project: ${projectName}`, 'info');
+                } catch (parseError) {
+                    log(`API: Error parsing projectData string for project ${projectName}: ${parseError.message}`, 'error');
+                    return res.status(500).json({
+                        success: false,
+                        error: 'Error parsing project data',
+                        details: parseError.message
+                    });
+                }
+            }
+            
+            // Ověř, že projectData je objekt
+            if (typeof actualProjectData !== 'object' || actualProjectData === null) {
+                log(`API: projectData is not an object for project ${projectName}, type: ${typeof actualProjectData}`, 'error');
+                return res.status(500).json({
+                    success: false,
+                    error: 'Invalid project data format'
+                });
+            }
+            
             res.json({
                 success: true,
-                projectData: autoSaveProject.projectData,
+                projectData: actualProjectData,
                 projectName: autoSaveProject.projectName,
                 savedAt: autoSaveProject.savedAt,
                 version: autoSaveProject.version,
@@ -645,7 +726,7 @@ app.get('/api/saved-project/auto-save/load', async (req, res) => {
         log(`API: Error loading auto-save project for frontend: ${error.message}`, 'error');
         res.status(500).json({ 
             success: false,
-            error: 'Chyba při načítání auto-save projektu', 
+            error: 'Error loading auto-save project', 
             details: error.message 
         });
     }
@@ -664,13 +745,19 @@ app.post('/api/saved-project/auto-save', async (req, res) => {
         
         if (!projectData) {
             log('API: Missing projectData in auto-save request', 'error');
-            return res.status(400).json({ error: 'Chybí projectData' });
+            return res.status(400).json({ error: 'Missing projectData' });
         }
         
         const name = projectName || 'Neznámý projekt';
         
+        // Pokud je projectData string (JSON string), parsuj ho na objekt
+        // vm.toJSON() vrací string, ale při JSON.stringify() se to může stát double-encoded
+        const actualProjectData = typeof projectData === 'string' 
+            ? JSON.parse(projectData) 
+            : projectData;
+        
         // Ulož projekt bez spuštění služby (auto-save)
-        const saved = await saveProject(projectData, name, true);
+        const saved = await saveProject(actualProjectData, name, true);
         
         if (saved) {
             const response = { 
@@ -685,7 +772,7 @@ app.post('/api/saved-project/auto-save', async (req, res) => {
         } else {
             res.status(500).json({ 
                 success: false,
-                error: 'Chyba při automatickém ukládání projektu' 
+                error: 'Error auto-saving project' 
             });
         }
         
@@ -697,7 +784,7 @@ app.post('/api/saved-project/auto-save', async (req, res) => {
         });
         res.status(500).json({ 
             success: false,
-            error: 'Chyba při automatickém ukládání projektu', 
+            error: 'Error auto-saving project', 
             details: error.message 
         });
     }
@@ -718,7 +805,7 @@ app.delete('/api/saved-project', async (req, res) => {
     } catch (error) {
         log(`API: Error deleting saved project: ${error.message}`, 'error');
         res.status(500).json({ 
-            error: 'Chyba při mazání uloženého projektu', 
+            error: 'Error deleting saved project', 
             details: error.message 
         });
     }
@@ -742,7 +829,25 @@ app.delete('/api/saved-project/auto-save', async (req, res) => {
             return res.json({ success: true, message: `Auto-save projekt "${projectName}" nebyl nalezen` });
         }
         
-        // Projdi všechny soubory a hledej podle originálního názvu
+        // Nejdříve zkus najít soubor přímo podle sanitizovaného názvu (rychlejší)
+        const safeFileName = sanitizeFileName(projectName);
+        const directFilePath = path.join(AUTO_SAVE_DIR, safeFileName);
+        
+        if (await fs.pathExists(directFilePath)) {
+            try {
+                const projectInfo = await fs.readJson(directFilePath);
+                // Ověř, že originální název v souboru odpovídá hledanému názvu
+                if (projectInfo.projectName === projectName) {
+                    await fs.remove(directFilePath);
+                    log(`Auto-save projekt ${projectName} byl smazán (přímý přístup)`, 'success');
+                    return res.json({ success: true, message: `Auto-save projekt "${projectName}" byl smazán` });
+                }
+            } catch (error) {
+                log(`Chyba při načítání souboru ${safeFileName}: ${error.message}`, 'error');
+            }
+        }
+        
+        // Fallback: Projdi všechny soubory a hledej podle originálního názvu
         const files = await fs.readdir(AUTO_SAVE_DIR);
         
         for (const file of files) {
@@ -754,7 +859,7 @@ app.delete('/api/saved-project/auto-save', async (req, res) => {
                     // Porovnej originální názvy (case-sensitive)
                     if (projectInfo.projectName === projectName) {
                         await fs.remove(filePath);
-                        log(`Auto-save projekt ${projectName} byl smazán`, 'success');
+                        log(`Auto-save projekt ${projectName} byl smazán (fallback)`, 'success');
                         return res.json({ success: true, message: `Auto-save projekt "${projectName}" byl smazán` });
                     }
                 } catch (error) {
@@ -767,7 +872,7 @@ app.delete('/api/saved-project/auto-save', async (req, res) => {
     } catch (error) {
         log(`API: Error deleting auto-save project: ${error.message}`, 'error');
         res.status(500).json({ 
-            error: 'Chyba při mazání auto-save projektu', 
+            error: 'Error deleting auto-save project', 
             details: error.message 
         });
     }
@@ -817,7 +922,7 @@ app.get('/api/saved-project/auto-save/list', async (req, res) => {
         log(`API: Error listing auto-save projects: ${error.message}`, 'error');
         res.status(500).json({ 
             success: false,
-            error: 'Chyba při získávání seznamu auto-save projektů', 
+            error: 'Error getting auto-save projects list', 
             details: error.message 
         });
     }
@@ -874,7 +979,7 @@ app.post('/api/deploy-project', async (req, res) => {
         if (!projectName) {
             return res.status(400).json({ 
                 success: false,
-                error: 'Chybí název projektu' 
+                error: 'Missing project name' 
             });
         }
         
@@ -888,7 +993,7 @@ app.post('/api/deploy-project', async (req, res) => {
         if (!projectData) {
             return res.status(404).json({ 
                 success: false,
-                error: `Projekt ${projectName} nebyl nalezen v auto-save` 
+                error: `Project ${projectName} not found in auto-save` 
             });
         }
         
@@ -901,7 +1006,7 @@ app.post('/api/deploy-project', async (req, res) => {
         if (!validateAlbiLABIPComponent(actualProjectData)) {
             return res.status(400).json({ 
                 success: false,
-                error: 'Chybí komponenta určující IP adresu AlbiLAB. Přidejte blok "nastavit IP adresu AlbiLAB na [IP]" do vašeho projektu.' 
+                error: 'Missing AlbiLAB IP address component. Add the "set AlbiLAB IP address to [IP]" block to your project.' 
             });
         }
         
@@ -920,7 +1025,7 @@ app.post('/api/deploy-project', async (req, res) => {
         } else {
             res.status(500).json({ 
                 success: false,
-                error: 'Chyba při nasazování projektu' 
+                error: 'Error deploying project' 
             });
         }
         
@@ -932,7 +1037,7 @@ app.post('/api/deploy-project', async (req, res) => {
         });
         res.status(500).json({ 
             success: false,
-            error: 'Chyba při nasazování projektu', 
+            error: 'Error deploying project', 
             details: error.message 
         });
     }
@@ -946,7 +1051,7 @@ app.post('/api/start-project', async (req, res) => {
         if (!projectName) {
             return res.status(400).json({ 
                 success: false,
-                error: 'Chybí název projektu' 
+                error: 'Missing project name' 
             });
         }
         
@@ -960,7 +1065,7 @@ app.post('/api/start-project', async (req, res) => {
         if (!isDeployed) {
             return res.status(404).json({ 
                 success: false,
-                error: `Projekt ${projectName} není nasazen. Nejdříve ho nasaďte.` 
+                error: `Project ${projectName} is not deployed. Deploy it first.` 
             });
         }
         
@@ -968,7 +1073,7 @@ app.post('/api/start-project', async (req, res) => {
         if (runningServices.has(projectName)) {
             return res.status(409).json({ 
                 success: false,
-                error: `Projekt ${projectName} už běží` 
+                error: `Project ${projectName} is already running` 
             });
         }
         
@@ -977,7 +1082,7 @@ app.post('/api/start-project', async (req, res) => {
         if (!projectData) {
             return res.status(404).json({ 
                 success: false,
-                error: `Projekt ${projectName} nebyl nalezen` 
+                error: `Project ${projectName} not found` 
             });
         }
         
@@ -990,7 +1095,7 @@ app.post('/api/start-project', async (req, res) => {
         if (!validateAlbiLABIPComponent(actualProjectData)) {
             return res.status(400).json({ 
                 success: false,
-                error: 'Chybí komponenta určující IP adresu AlbiLAB. Přidejte blok "nastavit IP adresu AlbiLAB na [IP]" do vašeho projektu.' 
+                error: 'Missing AlbiLAB IP address component. Add the "set AlbiLAB IP address to [IP]" block to your project.' 
             });
         }
         
@@ -1014,7 +1119,7 @@ app.post('/api/start-project', async (req, res) => {
         });
         res.status(500).json({ 
             success: false,
-            error: 'Chyba při spouštění projektu', 
+            error: 'Error starting project', 
             details: error.message 
         });
     }
@@ -1028,7 +1133,7 @@ app.post('/api/stop-project', async (req, res) => {
         if (!projectName) {
             return res.status(400).json({ 
                 success: false,
-                error: 'Chybí název projektu' 
+                error: 'Missing project name' 
             });
         }
         
@@ -1041,7 +1146,7 @@ app.post('/api/stop-project', async (req, res) => {
         if (!runningServices.has(projectName)) {
             return res.status(404).json({ 
                 success: false,
-                error: `Projekt ${projectName} neběží` 
+                error: `Project ${projectName} is not running` 
             });
         }
         
@@ -1060,7 +1165,7 @@ app.post('/api/stop-project', async (req, res) => {
         } else {
             res.status(500).json({ 
                 success: false,
-                error: 'Chyba při zastavování projektu' 
+                error: 'Error stopping project' 
             });
         }
         
@@ -1072,7 +1177,7 @@ app.post('/api/stop-project', async (req, res) => {
         });
         res.status(500).json({ 
             success: false,
-            error: 'Chyba při zastavování projektu', 
+            error: 'Error stopping project', 
             details: error.message 
         });
     }
@@ -1129,7 +1234,7 @@ app.get('/api/projects-status', async (req, res) => {
         log(`API: Error getting projects status: ${error.message}`, 'error');
         res.status(500).json({ 
             success: false,
-            error: 'Chyba při získávání stavu projektů', 
+            error: 'Error getting projects status', 
             details: error.message 
         });
     }
