@@ -2,6 +2,7 @@ import bindAll from 'lodash.bindall';
 import PropTypes from 'prop-types';
 import React from 'react';
 import {connect} from 'react-redux';
+import {injectIntl, intlShape} from 'react-intl';
 import VM from '@scratch/scratch-vm';
 
 import LoadProjectButtonComponent from '../components/menu-bar/load-project-button.jsx';
@@ -31,6 +32,7 @@ class LoadProjectButton extends React.Component {
             
             if (!response.ok) {
                 if (response.status === 404) {
+                    // TODO: Přidat lokalizační klíč pro "Žádný uložený projekt nebyl nalezen"
                     alert('Žádný uložený projekt nebyl nalezen');
                     return;
                 }
@@ -50,12 +52,15 @@ class LoadProjectButton extends React.Component {
                 
                 alert(`Projekt "${data.projectName}" byl úspěšně načten do editoru!`);
             } else {
-                alert('Chyba při načítání projektu: ' + (data.error || 'Neznámá chyba'));
+                const errorMsg = this.props.intl.formatMessage({id: 'gui.errors.loadingProject'});
+                const unknownError = this.props.intl.formatMessage({id: 'gui.errors.unknownError'});
+                alert(`${errorMsg}: ${data.error || unknownError}`);
             }
             
         } catch (error) {
             console.error('Chyba při načítání projektu:', error);
-            alert(`Chyba při načítání projektu: ${error.message}`);
+            const errorMsg = this.props.intl.formatMessage({id: 'gui.errors.loadingProject'});
+            alert(`${errorMsg}: ${error.message}`);
         } finally {
             this.setState({ isLoading: false });
         }
@@ -72,6 +77,7 @@ class LoadProjectButton extends React.Component {
 }
 
 LoadProjectButton.propTypes = {
+    intl: intlShape.isRequired,
     vm: PropTypes.instanceOf(VM).isRequired,
     onUpdateProjectTitle: PropTypes.func
 };
@@ -80,4 +86,4 @@ const mapStateToProps = state => ({
     vm: state.scratchGui.vm
 });
 
-export default connect(mapStateToProps)(LoadProjectButton);
+export default injectIntl(connect(mapStateToProps)(LoadProjectButton));

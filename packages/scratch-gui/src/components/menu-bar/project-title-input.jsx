@@ -41,7 +41,7 @@ const ProjectTitleInput = ({
     const handleDeployClick = async () => {
         try {
             if (!vm) {
-                notificationService.showWarning('Žádný projekt není načten v editoru');
+                notificationService.showWarning(intl.formatMessage({id: 'gui.errors.noProjectLoaded'}));
                 return;
             }
 
@@ -63,7 +63,7 @@ const ProjectTitleInput = ({
             });
 
             if (!autoSaveResponse.ok) {
-                notificationService.showError('Chyba při ukládání projektu: ' + autoSaveResponse.statusText);
+                notificationService.showError(intl.formatMessage({id: 'gui.errors.savingProjectWithDetails'}, {details: autoSaveResponse.statusText}));
                 return;
             }
 
@@ -82,19 +82,19 @@ const ProjectTitleInput = ({
                 if (data.success) {
                     notificationService.showSuccess(`Aktuální projekt "${projectName}" byl nasazen do AlbiLAB.`);
                 } else {
-                    notificationService.showError(data.error || 'Neznámá chyba', 'Chyba při nasazování projektu');
+                    notificationService.showError(data.error || intl.formatMessage({id: 'gui.errors.unknownError'}), intl.formatMessage({id: 'gui.errors.deployingProject'}));
                 }
             } else {
                 try {
                     const errorData = await deployResponse.json();
-                    notificationService.showError(errorData.error || deployResponse.statusText, 'Chyba při nasazování projektu');
+                    notificationService.showError(errorData.error || deployResponse.statusText, intl.formatMessage({id: 'gui.errors.deployingProject'}));
                 } catch (parseError) {
-                    notificationService.showError(deployResponse.statusText, 'Chyba při nasazování projektu');
+                    notificationService.showError(deployResponse.statusText, intl.formatMessage({id: 'gui.errors.deployingProject'}));
                 }
             }
         } catch (error) {
             console.error('Chyba při nasazování aktuálního projektu:', error);
-            notificationService.showError(error.message, 'Chyba při nasazování aktuálního projektu');
+            notificationService.showError(error.message, intl.formatMessage({id: 'gui.errors.deployingCurrentProject'}));
         }
     };
 

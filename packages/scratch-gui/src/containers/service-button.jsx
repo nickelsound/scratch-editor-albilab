@@ -2,9 +2,11 @@ import bindAll from 'lodash.bindall';
 import PropTypes from 'prop-types';
 import React from 'react';
 import {connect} from 'react-redux';
+import {injectIntl, intlShape} from 'react-intl';
 import VM from '@scratch/scratch-vm';
 
 import ServiceButtonComponent from '../components/menu-bar/service-button.jsx';
+import {getApiUrl, getWebSocketUrl} from '../lib/api-config.js';
 
 class ServiceButton extends React.Component {
     constructor (props) {
@@ -36,7 +38,8 @@ class ServiceButton extends React.Component {
             }
         } catch (error) {
             console.error('Chyba při ovládání služby:', error);
-            alert(`Chyba: ${error.message}`);
+            const errorMsg = this.props.intl.formatMessage({id: 'gui.errors.controllingService'});
+            alert(`${errorMsg}: ${error.message}`);
         } finally {
             this.setState({ isLoading: false });
         }
@@ -68,7 +71,8 @@ class ServiceButton extends React.Component {
             
             if (!response.ok) {
                 const errorData = await response.json();
-                throw new Error(errorData.error || 'Chyba při spouštění služby');
+                const errorMsg = this.props.intl.formatMessage({id: 'gui.errors.startingService'});
+                throw new Error(errorData.error || errorMsg);
             }
             
             const result = await response.json();
@@ -97,7 +101,8 @@ class ServiceButton extends React.Component {
             
             if (!response.ok) {
                 const errorData = await response.json();
-                throw new Error(errorData.error || 'Chyba při zastavování služby');
+                const errorMsg = this.props.intl.formatMessage({id: 'gui.errors.stoppingService'});
+                throw new Error(errorData.error || errorMsg);
             }
             
             // Okamžitě aktualizuj stav - nečekej na WebSocket zprávu
@@ -148,6 +153,7 @@ class ServiceButton extends React.Component {
                 }
             } catch (error) {
                 console.error('Chyba při zpracování WebSocket zprávy:', error);
+                // WebSocket chyby jsou logovány, ale nejsou zobrazovány uživateli
             }
         };
         
@@ -204,6 +210,7 @@ class ServiceButton extends React.Component {
 }
 
 ServiceButton.propTypes = {
+    intl: intlShape.isRequired,
     vm: PropTypes.instanceOf(VM).isRequired,
     projectTitle: PropTypes.string
 };
@@ -213,4 +220,4 @@ const mapStateToProps = state => ({
     vm: state.scratchGui.vm
 });
 
-export default connect(mapStateToProps)(ServiceButton);
+export default injectIntl(connect(mapStateToProps)(ServiceButton));

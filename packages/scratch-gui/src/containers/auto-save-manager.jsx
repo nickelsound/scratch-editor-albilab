@@ -1,5 +1,7 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import {connect} from 'react-redux';
+import {injectIntl, intlShape} from 'react-intl';
 import AutoSaveManagerComponent from '../components/menu-bar/auto-save-manager.jsx';
 import {setProjectTitle} from '../reducers/project-title.js';
 import {getApiUrl} from '../lib/api-config.js';
@@ -54,17 +56,17 @@ const AutoSaveManager = (props) => {
                 } else {
                     console.error('Chyba při načítání seznamu projektů:', data.error);
                     setProjects([]);
-                    showError(data.error || 'Chyba při načítání projektů');
+                    showError(data.error || props.intl.formatMessage({id: 'gui.errors.loadingProjects'}));
                 }
             } else {
                 console.error('Chyba při načítání seznamu projektů:', response.statusText);
                 setProjects([]);
-                showError('Chyba při načítání projektů: ' + response.statusText);
+                showError(props.intl.formatMessage({id: 'gui.errors.loadingProjectsWithDetails'}, {details: response.statusText}));
             }
         } catch (error) {
             console.error('Chyba při načítání seznamu projektů:', error);
             setProjects([]);
-            showError('Chyba při načítání projektů: ' + error.message);
+            showError(props.intl.formatMessage({id: 'gui.errors.loadingProjectsWithDetails'}, {details: error.message}));
         } finally {
             setIsLoading(false);
         }
@@ -89,20 +91,20 @@ const AutoSaveManager = (props) => {
                     
                     showSuccess(`Projekt "${data.projectName}" byl úspěšně načten!`);
                 } else {
-                    showError(data.error || 'Neznámá chyba', 'Chyba při načítání projektu');
+                    showError(data.error || props.intl.formatMessage({id: 'gui.errors.unknownError'}), props.intl.formatMessage({id: 'gui.errors.loadingProject'}));
                 }
             } else {
                 // Pokus se načíst chybovou zprávu z response body
                 try {
                     const errorData = await response.json();
-                    showError(errorData.error || response.statusText, 'Chyba při načítání projektu');
+                    showError(errorData.error || response.statusText, props.intl.formatMessage({id: 'gui.errors.loadingProject'}));
                 } catch (parseError) {
-                    showError(response.statusText, 'Chyba při načítání projektu');
+                    showError(response.statusText, props.intl.formatMessage({id: 'gui.errors.loadingProject'}));
                 }
             }
         } catch (error) {
             console.error('Chyba při načítání projektu:', error);
-            showError(error.message, 'Chyba při načítání projektu');
+            showError(error.message, props.intl.formatMessage({id: 'gui.errors.loadingProject'}));
         }
     };
 
@@ -124,27 +126,27 @@ const AutoSaveManager = (props) => {
                     loadProjects();
                     showSuccess(`Projekt "${projectName}" byl nasazen.`);
                 } else {
-                    showError(data.error || 'Neznámá chyba', 'Chyba při nasazování projektu');
+                    showError(data.error || props.intl.formatMessage({id: 'gui.errors.unknownError'}), props.intl.formatMessage({id: 'gui.errors.deployingProject'}));
                 }
             } else {
                 // Pokus se načíst chybovou zprávu z response body
                 try {
                     const errorData = await response.json();
-                    showError(errorData.error || response.statusText, 'Chyba při nasazování projektu');
+                    showError(errorData.error || response.statusText, props.intl.formatMessage({id: 'gui.errors.deployingProject'}));
                 } catch (parseError) {
-                    showError(response.statusText, 'Chyba při nasazování projektu');
+                    showError(response.statusText, props.intl.formatMessage({id: 'gui.errors.deployingProject'}));
                 }
             }
         } catch (error) {
             console.error('Chyba při nasazování projektu:', error);
-            showError(error.message, 'Chyba při nasazování projektu');
+            showError(error.message, props.intl.formatMessage({id: 'gui.errors.deployingProject'}));
         }
     };
 
     const handleDeployCurrentProject = async () => {
         try {
             if (!props.vm) {
-                showWarning('Žádný projekt není načten v editoru');
+                showWarning(props.intl.formatMessage({id: 'gui.errors.noProjectLoaded'}));
                 return;
             }
 
@@ -166,7 +168,7 @@ const AutoSaveManager = (props) => {
             });
 
             if (!autoSaveResponse.ok) {
-                showError('Chyba při ukládání projektu: ' + autoSaveResponse.statusText);
+                showError(props.intl.formatMessage({id: 'gui.errors.savingProjectWithDetails'}, {details: autoSaveResponse.statusText}));
                 return;
             }
 
@@ -187,20 +189,20 @@ const AutoSaveManager = (props) => {
                     loadProjects();
                     showSuccess(`Aktuální projekt "${projectName}" byl nasazen do AlbiLAB.`);
                 } else {
-                    showError(data.error || 'Neznámá chyba', 'Chyba při nasazování projektu');
+                    showError(data.error || props.intl.formatMessage({id: 'gui.errors.unknownError'}), props.intl.formatMessage({id: 'gui.errors.deployingProject'}));
                 }
             } else {
                 // Pokus se načíst chybovou zprávu z response body
                 try {
                     const errorData = await deployResponse.json();
-                    showError(errorData.error || deployResponse.statusText, 'Chyba při nasazování projektu');
+                    showError(errorData.error || deployResponse.statusText, props.intl.formatMessage({id: 'gui.errors.deployingProject'}));
                 } catch (parseError) {
-                    showError(deployResponse.statusText, 'Chyba při nasazování projektu');
+                    showError(deployResponse.statusText, props.intl.formatMessage({id: 'gui.errors.deployingProject'}));
                 }
             }
         } catch (error) {
             console.error('Chyba při nasazování aktuálního projektu:', error);
-            showError(error.message, 'Chyba při nasazování aktuálního projektu');
+            showError(error.message, props.intl.formatMessage({id: 'gui.errors.deployingCurrentProject'}));
         }
     };
 
@@ -222,20 +224,20 @@ const AutoSaveManager = (props) => {
                     loadProjects();
                     showSuccess(`Projekt "${projectName}" byl spuštěn.`);
                 } else {
-                    showError(data.error || 'Neznámá chyba', 'Chyba při spouštění projektu');
+                    showError(data.error || props.intl.formatMessage({id: 'gui.errors.unknownError'}), props.intl.formatMessage({id: 'gui.errors.startingProject'}));
                 }
             } else {
                 // Pokus se načíst chybovou zprávu z response body
                 try {
                     const errorData = await response.json();
-                    showError(errorData.error || response.statusText, 'Chyba při spouštění projektu');
+                    showError(errorData.error || response.statusText, props.intl.formatMessage({id: 'gui.errors.startingProject'}));
                 } catch (parseError) {
-                    showError(response.statusText, 'Chyba při spouštění projektu');
+                    showError(response.statusText, props.intl.formatMessage({id: 'gui.errors.startingProject'}));
                 }
             }
         } catch (error) {
             console.error('Chyba při spouštění projektu:', error);
-            showError(error.message, 'Chyba při spouštění projektu');
+            showError(error.message, props.intl.formatMessage({id: 'gui.errors.startingProject'}));
         }
     };
 
@@ -257,20 +259,20 @@ const AutoSaveManager = (props) => {
                     loadProjects();
                     showSuccess(`Projekt "${projectName}" byl zastaven.`);
                 } else {
-                    showError(data.error || 'Neznámá chyba', 'Chyba při zastavování projektu');
+                    showError(data.error || props.intl.formatMessage({id: 'gui.errors.unknownError'}), props.intl.formatMessage({id: 'gui.errors.stoppingProject'}));
                 }
             } else {
                 // Pokus se načíst chybovou zprávu z response body
                 try {
                     const errorData = await response.json();
-                    showError(errorData.error || response.statusText, 'Chyba při zastavování projektu');
+                    showError(errorData.error || response.statusText, props.intl.formatMessage({id: 'gui.errors.stoppingProject'}));
                 } catch (parseError) {
-                    showError(response.statusText, 'Chyba při zastavování projektu');
+                    showError(response.statusText, props.intl.formatMessage({id: 'gui.errors.stoppingProject'}));
                 }
             }
         } catch (error) {
             console.error('Chyba při zastavování projektu:', error);
-            showError(error.message, 'Chyba při zastavování projektu');
+            showError(error.message, props.intl.formatMessage({id: 'gui.errors.stoppingProject'}));
         }
     };
 
@@ -288,20 +290,20 @@ const AutoSaveManager = (props) => {
                     loadProjects();
                     showSuccess(`Projekt "${projectName}" byl smazán.`);
                 } else {
-                    showError(data.error || 'Neznámá chyba', 'Chyba při mazání projektu');
+                    showError(data.error || props.intl.formatMessage({id: 'gui.errors.unknownError'}), props.intl.formatMessage({id: 'gui.errors.deletingProject'}));
                 }
             } else {
                 // Pokus se načíst chybovou zprávu z response body
                 try {
                     const errorData = await response.json();
-                    showError(errorData.error || response.statusText, 'Chyba při mazání projektu');
+                    showError(errorData.error || response.statusText, props.intl.formatMessage({id: 'gui.errors.deletingProject'}));
                 } catch (parseError) {
-                    showError(response.statusText, 'Chyba při mazání projektu');
+                    showError(response.statusText, props.intl.formatMessage({id: 'gui.errors.deletingProject'}));
                 }
             }
         } catch (error) {
             console.error('Chyba při mazání projektu:', error);
-            showError(error.message, 'Chyba při mazání projektu');
+            showError(error.message, props.intl.formatMessage({id: 'gui.errors.deletingProject'}));
         }
     };
 
@@ -330,4 +332,11 @@ const mapDispatchToProps = dispatch => ({
     setProjectTitle: title => dispatch(setProjectTitle(title))
 });
 
-export default connect(mapStateToProps, mapDispatchToProps)(AutoSaveManager);
+AutoSaveManager.propTypes = {
+    intl: intlShape.isRequired,
+    vm: PropTypes.object,
+    projectTitle: PropTypes.string,
+    setProjectTitle: PropTypes.func
+};
+
+export default injectIntl(connect(mapStateToProps, mapDispatchToProps)(AutoSaveManager));
