@@ -407,6 +407,32 @@ load_containers() {
         podman-compose down 2>/dev/null || true
     fi
     
+    # Check if image already exists in Podman
+    if podman images | grep -q "scratch-universal"; then
+        print_info "Universal image already exists in Podman, skipping load..."
+        
+        # Prepare image for running (ensure tags are correct)
+        print_info "Preparing image for running..."
+        
+        # Find the correct tag for universal image
+        UNIVERSAL_TAG=$(podman images --format "{{.Repository}}:{{.Tag}}" | grep "scratch-universal" | head -1)
+        # Tag the same image under different names for compatibility
+        podman tag "$UNIVERSAL_TAG" scratch-universal:latest 2>/dev/null || true
+        podman tag "$UNIVERSAL_TAG" scratch-gui 2>/dev/null || true
+        podman tag "$UNIVERSAL_TAG" scratch-backend 2>/dev/null || true
+        print_info "Image tagged as: scratch-universal:latest"
+        
+        print_success "Using existing container image (usable for both frontend and backend)"
+        return 0
+    fi
+    
+    # Image doesn't exist, check if tar file exists
+    if [ ! -f "scratch-universal-arm64.tar" ]; then
+        print_error "Container image not found in Podman and tar file doesn't exist"
+        print_info "Please run the installation again or download the container manually"
+        exit 1
+    fi
+    
     # Load universal tar archive (contains both applications)
     print_info "Loading universal image..."
     podman load -i scratch-universal-arm64.tar
