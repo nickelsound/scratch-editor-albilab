@@ -136,6 +136,9 @@ install_ble_dependencies() {
         libdbus-1-dev \
         gobject-introspection
     
+    # Unblock all RF devices (WiFi, Bluetooth, etc.)
+    sudo rfkill unblock all
+    
     # Ensure Bluetooth service is enabled and started
     sudo systemctl enable bluetooth
     sudo systemctl start bluetooth
