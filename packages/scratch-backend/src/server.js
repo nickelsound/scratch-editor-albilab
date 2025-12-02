@@ -1057,7 +1057,11 @@ app.post('/api/deploy-project', async (req, res) => {
         }
         
         // Ulož projekt do AlbiLAB (nasadit)
-        const saved = await saveProject(actualProjectData, projectName, false);
+        // saveProject očekává string, takže převedeme objekt zpět na JSON string
+        const projectDataString = typeof actualProjectData === 'string' 
+            ? actualProjectData 
+            : JSON.stringify(actualProjectData);
+        const saved = await saveProject(projectDataString, projectName, false);
         
         if (saved) {
             const response = { 
