@@ -61,12 +61,22 @@ const AutoLoadHOC = function (WrappedComponent) {
                     if (data.success && data.projectData) {
                         console.log('Načítám uložený projekt do VM:', data.projectData);
                         
-                        // projectData je nyní JSON string (vm.toJSON() vrací string)
-                        // loadProject() může přijmout string nebo objekt
-                        // Předáme string přímo, protože to je formát, který očekává
-                        const projectData = data.projectData;
+                        // projectData může být string (JSON string) nebo už objekt (kvůli escape-ování)
+                        let projectData = data.projectData;
                         
-                        // Načti projekt přímo do VM
+                        // Pokud je to string, použijeme ho přímo (vm.loadProject() přijímá string)
+                        // Pokud je to objekt, převedeme ho na JSON string
+                        if (typeof projectData === 'object' && projectData !== null) {
+                            // Objekt - převedeme na JSON string
+                            projectData = JSON.stringify(projectData);
+                        }
+                        
+                        // Ověř, že projectData je string
+                        if (typeof projectData !== 'string') {
+                            throw new Error('Invalid project data format');
+                        }
+                        
+                        // Načti projekt přímo do VM - loadProject() přijímá JSON string
                         await this.props.vm.loadProject(projectData);
                         
                         // Aktualizuj název projektu

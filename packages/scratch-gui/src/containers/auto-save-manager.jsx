@@ -80,12 +80,75 @@ const AutoSaveManager = (props) => {
             if (response.ok) {
                 const data = await response.json();
                 if (data.success && data.projectData) {
-                    // projectData je nyní JSON string (vm.toJSON() vrací string)
-                    // loadProject() může přijmout string nebo objekt
-                    // Předáme string přímo, protože to je formát, který očekává
-                    const projectData = data.projectData;
+                    // projectData může být string (JSON string) nebo už objekt (kvůli escape-ování)
+                    let projectData = data.projectData;
                     
-                    // Načti projekt do VM
+                    // Pokud je to string, použijeme ho přímo (vm.loadProject() přijímá string)
+                    // Pokud je to objekt, převedeme ho na JSON string
+                    if (typeof projectData === 'object' && projectData !== null) {
+                        // Objekt - převedeme na JSON string
+                        projectData = JSON.stringify(projectData);
+                    }
+                    
+                    // Ověř, že projectData je string
+                    if (typeof projectData !== 'string') {
+                        throw new Error('Invalid project data format');
+                    }
+                    
+                    // Zkontroluj a oprav projekt před načtením
+                    let parsedProject;
+                    try {
+                        parsedProject = JSON.parse(projectData);
+                        console.log('Načtený projekt - validace:', {
+                            hasTargets: !!parsedProject.targets,
+                            targetsCount: parsedProject.targets ? parsedProject.targets.length : 0,
+                            projectVersion: parsedProject.projectVersion,
+                            hasMeta: !!parsedProject.meta
+                        });
+                        
+                        let needsFix = false;
+                        
+                        // Zkontroluj targets a oprav případné problémy
+                        if (parsedProject.targets && Array.isArray(parsedProject.targets)) {
+                            // Najdi stage (měla by být jen jedna a na prvním místě)
+                            let stageIndex = -1;
+                            parsedProject.targets.forEach((target, index) => {
+                                if (target.isStage === true) {
+                                    if (stageIndex === -1) {
+                                        stageIndex = index;
+                                    } else {
+                                        // Více než jedna stage - oprav
+                                        console.warn(`Opravuji duplicitní stage na indexu ${index}: ${target.name}`);
+                                        target.isStage = false;
+                                        needsFix = true;
+                                    }
+                                }
+                            });
+                            
+                            // Oprav všechny sprites - isStage musí být false
+                            parsedProject.targets.forEach((target, index) => {
+                                if (index !== stageIndex && target.isStage !== false) {
+                                    console.warn(`Opravuji isStage pro sprite ${index}: ${target.name}`, {
+                                        oldValue: target.isStage,
+                                        newValue: false
+                                    });
+                                    target.isStage = false;
+                                    needsFix = true;
+                                }
+                            });
+                            
+                            if (needsFix) {
+                                // Přeparsuj opravený projekt
+                                projectData = JSON.stringify(parsedProject);
+                                console.log('Projekt byl opraven před načtením');
+                            }
+                        }
+                    } catch (parseError) {
+                        console.error('Chyba při parsování projektu před načtením:', parseError);
+                        // Pokračujeme i přes chybu - možná to loadProject zvládne
+                    }
+                    
+                    // Načti projekt do VM - loadProject() přijímá JSON string
                     await props.vm.loadProject(projectData);
                     
                     // Aktualizuj název projektu
