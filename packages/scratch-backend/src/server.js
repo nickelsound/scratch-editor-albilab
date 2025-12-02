@@ -83,8 +83,28 @@ async function isProjectDeployed(projectName) {
 // Uložení projektu do trvalého úložiště
 async function saveProject(projectData, projectName, isAutoSave = false) {
     try {
+        // Ověř, že projectData je string (vm.toJSON() vrací string)
+        if (typeof projectData !== 'string') {
+            log(`Error: projectData is not a string when saving project ${projectName}, type: ${typeof projectData}`, 'error');
+            return false;
+        }
+        
+        // Zkontroluj, jestli je to validní JSON string
+        try {
+            const parsed = JSON.parse(projectData);
+            // Pokud se to podařilo parsovat, zkontroluj, jestli to není znovu string (double-encoded)
+            if (typeof parsed === 'string') {
+                log(`Warning: projectData appears to be double-encoded for project ${projectName}`, 'warn');
+                // Použijeme už parsovaný string
+                projectData = parsed;
+            }
+        } catch (parseError) {
+            // Pokud se to nedá parsovat, může to být problém
+            log(`Warning: projectData may not be valid JSON for project ${projectName}: ${parseError.message}`, 'warn');
+        }
+        
         const projectInfo = {
-            projectData: projectData, // Ukládáme jako objekt
+            projectData: projectData, // Ukládáme jako JSON string (vm.toJSON() vrací string)
             projectName: projectName,
             savedAt: new Date().toISOString(),
             version: '1.0',
@@ -105,7 +125,8 @@ async function saveProject(projectData, projectName, isAutoSave = false) {
             filePath = path.join(deployedProjectsDir, safeFileName);
         }
         
-        await fs.writeFile(filePath, JSON.stringify(projectInfo, null, 2));
+        // Ulož pomocí writeJson, který správně zpracuje string v objektu
+        await fs.writeJson(filePath, projectInfo, { spaces: 2 });
         log(`Projekt ${projectName} byl uložen do trvalého úložiště`, 'success', {
             savedAt: projectInfo.savedAt,
             filePath: filePath,
@@ -616,27 +637,30 @@ app.get('/api/saved-project/load', async (req, res) => {
         
         const savedProject = await loadSavedProject();
         if (savedProject) {
-            // Pokud je projectData string (starý formát), parsuj ho
+            // Vracíme projectData jako JSON string, protože vm.toJSON() vrací string
+            // a vm.loadProject() očekává buď string nebo objekt
+            // Pokud je projectData už string, použijeme ho přímo
+            // Pokud je objekt (starý formát), převedeme ho na JSON string
             let actualProjectData = savedProject.projectData;
             
-            // Zajisti, že projectData je vždy objekt, ne string
-            if (typeof actualProjectData === 'string') {
+            if (typeof actualProjectData === 'object' && actualProjectData !== null) {
+                // Starý formát - objekt, převedeme na JSON string
                 try {
-                    actualProjectData = JSON.parse(actualProjectData);
-                    log(`API: Parsed projectData from string to object for saved project`, 'info');
-                } catch (parseError) {
-                    log(`API: Error parsing projectData string for saved project: ${parseError.message}`, 'error');
+                    actualProjectData = JSON.stringify(actualProjectData);
+                    log(`API: Converted projectData from object to JSON string for saved project`, 'info');
+                } catch (stringifyError) {
+                    log(`API: Error stringifying projectData for saved project: ${stringifyError.message}`, 'error');
                     return res.status(500).json({
                         success: false,
-                        error: 'Error parsing project data',
-                        details: parseError.message
+                        error: 'Error converting project data to string',
+                        details: stringifyError.message
                     });
                 }
             }
             
-            // Ověř, že projectData je objekt
-            if (typeof actualProjectData !== 'object' || actualProjectData === null) {
-                log(`API: projectData is not an object for saved project, type: ${typeof actualProjectData}`, 'error');
+            // Ověř, že projectData je string
+            if (typeof actualProjectData !== 'string') {
+                log(`API: projectData is not a string for saved project, type: ${typeof actualProjectData}`, 'error');
                 return res.status(500).json({
                     success: false,
                     error: 'Invalid project data format'
@@ -681,33 +705,53 @@ app.get('/api/saved-project/auto-save/load', async (req, res) => {
         
         const autoSaveProject = await loadAutoSaveProject(projectName);
         if (autoSaveProject) {
-            // Pokud je projectData string (starý formát), parsuj ho
+            // Zpracuj projectData - může být string nebo objekt (kvůli escape-ování v JSON souboru)
             let actualProjectData = autoSaveProject.projectData;
             
-            // Zajisti, že projectData je vždy objekt, ne string
-            if (typeof actualProjectData === 'string') {
+            // Pokud je to objekt, převedeme ho na JSON string
+            if (typeof actualProjectData === 'object' && actualProjectData !== null) {
                 try {
-                    actualProjectData = JSON.parse(actualProjectData);
-                    log(`API: Parsed projectData from string to object for project: ${projectName}`, 'info');
-                } catch (parseError) {
-                    log(`API: Error parsing projectData string for project ${projectName}: ${parseError.message}`, 'error');
+                    actualProjectData = JSON.stringify(actualProjectData);
+                    log(`API: Converted projectData from object to JSON string for project: ${projectName}`, 'info');
+                } catch (stringifyError) {
+                    log(`API: Error stringifying projectData for project ${projectName}: ${stringifyError.message}`, 'error');
                     return res.status(500).json({
                         success: false,
-                        error: 'Error parsing project data',
-                        details: parseError.message
+                        error: 'Error converting project data to string',
+                        details: stringifyError.message
                     });
                 }
             }
             
-            // Ověř, že projectData je objekt
-            if (typeof actualProjectData !== 'object' || actualProjectData === null) {
-                log(`API: projectData is not an object for project ${projectName}, type: ${typeof actualProjectData}`, 'error');
+            // Pokud je to string, zkontroluj, jestli není escape-ovaný (double-encoded)
+            if (typeof actualProjectData === 'string') {
+                // Zkus parsovat - pokud se to podaří a výsledek je znovu string, pak je to double-encoded
+                try {
+                    const parsed = JSON.parse(actualProjectData);
+                    if (typeof parsed === 'string') {
+                        // Double-encoded - použijeme parsovaný string
+                        log(`API: Detected double-encoded projectData for project: ${projectName}, fixing...`, 'info');
+                        actualProjectData = parsed;
+                    }
+                    // Pokud parsed není string, pak actualProjectData už byl objekt, což by nemělo nastat
+                } catch (parseError) {
+                    // Pokud se to nedá parsovat, může to být už správně formátovaný JSON string projektu
+                    // (což je v pořádku - to je to, co chceme)
+                    log(`API: projectData is a JSON string (not double-encoded) for project: ${projectName}`, 'info');
+                }
+            }
+            
+            // Ověř, že projectData je string
+            if (typeof actualProjectData !== 'string') {
+                log(`API: projectData is not a string for project ${projectName}, type: ${typeof actualProjectData}`, 'error');
                 return res.status(500).json({
                     success: false,
                     error: 'Invalid project data format'
                 });
             }
             
+            // Vracíme projectData jako JSON string - Express ho automaticky escape-uje v JSON odpovědi
+            // Frontend ho pak parsuje pomocí response.json() a dostane správný string
             res.json({
                 success: true,
                 projectData: actualProjectData,
@@ -750,11 +794,13 @@ app.post('/api/saved-project/auto-save', async (req, res) => {
         
         const name = projectName || 'Neznámý projekt';
         
-        // Pokud je projectData string (JSON string), parsuj ho na objekt
-        // vm.toJSON() vrací string, ale při JSON.stringify() se to může stát double-encoded
+        // Ukládáme projectData jako string (JSON string), protože vm.toJSON() vrací string
+        // a loadProject() očekává buď string nebo objekt (který se převede na string)
+        // Pokud je projectData už string, použijeme ho přímo
+        // Pokud je objekt, převedeme ho na JSON string
         const actualProjectData = typeof projectData === 'string' 
-            ? JSON.parse(projectData) 
-            : projectData;
+            ? projectData 
+            : JSON.stringify(projectData);
         
         // Ulož projekt bez spuštění služby (auto-save)
         const saved = await saveProject(actualProjectData, name, true);

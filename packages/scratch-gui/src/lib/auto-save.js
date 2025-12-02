@@ -77,10 +77,10 @@ class AutoSaveService {
                 if (result.success && result.projectData) {
                     console.log(`Načítám existující auto-save projekt: ${result.projectName}`);
                     
-                    // Pokud je projectData string (JSON string), parsuj ho na objekt
-                    const projectData = typeof result.projectData === 'string' 
-                        ? JSON.parse(result.projectData) 
-                        : result.projectData;
+                    // projectData je nyní JSON string (vm.toJSON() vrací string)
+                    // loadProject() může přijmout string nebo objekt
+                    // Předáme string přímo, protože to je formát, který očekává
+                    const projectData = result.projectData;
                     
                     // Načti projekt do VM
                     await this.vm.loadProject(projectData);
