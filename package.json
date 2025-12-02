@@ -13,7 +13,7 @@
   "scripts": {
     "refresh-gh-workflow": "ts-node scripts/build-gha-workflows.ts",
     "build-monorepo": "cross-env-shell ./scripts/build-monorepo.sh",
-    "prepare": "husky install",
+    "prepare": "node -e \"try { require.resolve('husky'); require('husky').install(); } catch (e) { if (e.code === 'MODULE_NOT_FOUND') process.exit(0); throw e; }\"",
     "build": "cross-env NODE_ENV=production npm run --workspaces build",
     "clean": "npm run --workspaces clean",
     "test": "npm test --workspaces",

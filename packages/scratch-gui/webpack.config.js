@@ -160,6 +160,15 @@ const buildConfig = baseConfig.clone()
             // would be looked for at the root of the filesystem, which is incorrect.
             // Hence, we're resetting the public path to be relative.
             publicPath: ''
+        },
+        devServer: {
+            hot: true,
+            liveReload: true
+        },
+        watchOptions: {
+            poll: process.platform === 'win32' || process.env.WSL_DISTRO_NAME ? 1000 : false,
+            aggregateTimeout: 300,
+            ignored: /node_modules/
         }
     })
     .addPlugin(new HtmlWebpackPlugin({
