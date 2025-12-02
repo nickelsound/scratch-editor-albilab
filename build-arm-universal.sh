@@ -5,6 +5,13 @@
 
 set -e
 
+# Kontrola parametru pro úplné čištění
+CLEAN_ALL=false
+if [ "$1" = "--clean-all" ] || [ "$1" = "-c" ]; then
+    CLEAN_ALL=true
+    echo "⚠️  Úplné čištění cache zapnuto (build bude pomalejší, ale čistší)"
+fi
+
 # Detekce cílové architektury
 HOST_ARCH=$(uname -m)
 if [ "$HOST_ARCH" = "x86_64" ] || [ "$HOST_ARCH" = "amd64" ]; then
@@ -76,11 +83,24 @@ split_tar() {
 }
 
 # Vyčištění
-echo "🧹 Čistím cache..."
-npm cache clean --force 2>/dev/null || true
-rm -rf ~/.npm/_cacache 2>/dev/null || true
-podman image prune -f 2>/dev/null || true
-podman system prune -f 2>/dev/null || true
+if [ "$CLEAN_ALL" = true ]; then
+    # Úplné čištění - smaže všechny cache pro čistý build
+    echo "🧹 Úplné čištění cache (build bude pomalejší)..."
+    npm cache clean --force 2>/dev/null || true
+    rm -rf ~/.npm/_cacache 2>/dev/null || true
+    podman image prune -f 2>/dev/null || true
+    podman system prune -f 2>/dev/null || true
+else
+    # Optimalizované čištění - ponecháváme build cache pro rychlejší build
+    # Ponecháváme Podman build cache pro urychlení - pokud se nezmění package.json,
+    # Podman použije cached vrstvu s npm install, což výrazně urychlí build
+    echo "🧹 Čistím pouze dangling images (build cache zůstává pro rychlejší build)..."
+    echo "💡 Pro úplné čištění použijte: $0 --clean-all"
+    # Smažeme pouze dangling images (ty s <none> tagem) - ušetří místo, ale neovlivní build cache
+    podman image prune -f 2>/dev/null || true
+    # NEPOUŽÍVÁME: podman system prune - to by smazalo build cache a zpomalilo build
+    # NEPOUŽÍVÁME: npm cache clean - npm cache může urychlit stahování balíčků
+fi
 
 # Build universal image
 echo "🔨 Sestavuji Universal image (frontend + backend)..."
