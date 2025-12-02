@@ -77,12 +77,22 @@ class AutoSaveService {
                 if (result.success && result.projectData) {
                     console.log(`Načítám existující auto-save projekt: ${result.projectName}`);
                     
-                    // projectData je nyní JSON string (vm.toJSON() vrací string)
-                    // loadProject() může přijmout string nebo objekt
-                    // Předáme string přímo, protože to je formát, který očekává
-                    const projectData = result.projectData;
+                    // projectData může být string (JSON string) nebo už objekt (kvůli escape-ování)
+                    let projectData = result.projectData;
                     
-                    // Načti projekt do VM
+                    // Pokud je to string, použijeme ho přímo (vm.loadProject() přijímá string)
+                    // Pokud je to objekt, převedeme ho na JSON string
+                    if (typeof projectData === 'object' && projectData !== null) {
+                        // Objekt - převedeme na JSON string
+                        projectData = JSON.stringify(projectData);
+                    }
+                    
+                    // Ověř, že projectData je string
+                    if (typeof projectData !== 'string') {
+                        throw new Error('Invalid project data format');
+                    }
+                    
+                    // Načti projekt do VM - loadProject() přijímá JSON string
                     await this.vm.loadProject(projectData);
                     
                     // Aktualizuj čas posledního uložení
