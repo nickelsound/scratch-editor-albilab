@@ -32,7 +32,8 @@ class SpriteSelectorItem extends React.PureComponent {
             'handleTouchEnd',
             'handleDeleteButtonClick',
             'handleDeleteSpriteModalClose',
-            'handleDeleteSpriteModalConfirm'
+            'handleDeleteSpriteModalConfirm',
+            'handleResize'
         ]);
 
         this.dragRecognizer = new DragRecognizer({
@@ -44,9 +45,11 @@ class SpriteSelectorItem extends React.PureComponent {
     }
     componentDidMount () {
         document.addEventListener('touchend', this.handleTouchEnd);
+        window.addEventListener('resize', this.handleResize);
     }
     componentWillUnmount () {
         document.removeEventListener('touchend', this.handleTouchEnd);
+        window.removeEventListener('resize', this.handleResize);
         this.dragRecognizer.reset();
     }
     getCostumeData () {
@@ -54,6 +57,9 @@ class SpriteSelectorItem extends React.PureComponent {
         if (!this.props.asset) return null;
 
         return getCostumeUrl(this.props.storage.scratchStorage, this.props.asset);
+    }
+    handleResize () {
+        this.forceUpdate();
     }
     handleDragEnd () {
         if (this.props.dragging) {
@@ -149,6 +155,7 @@ class SpriteSelectorItem extends React.PureComponent {
         } = this.props;
         return (<>
             {this.state.isDeletePromptOpen ? <DeleteConfirmationPrompt
+                key={Date.now()}
                 onOk={this.handleDeleteSpriteModalConfirm}
                 onCancel={this.handleDeleteSpriteModalClose}
                 relativeElemRef={this.ref}
