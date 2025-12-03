@@ -36,7 +36,7 @@ class SpriteSelectorItem extends React.PureComponent {
             'handleDeleteSpriteModalConfirm'
         ]);
 
-        this.handleResize = debounce(this.handleResize.bind(this), 200);
+        this.handleResize = debounce(this.handleResize.bind(this), 50, {leading: true});
 
         this.dragRecognizer = new DragRecognizer({
             onDrag: this.handleDrag,
