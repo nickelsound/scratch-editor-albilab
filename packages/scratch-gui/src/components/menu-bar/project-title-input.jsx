@@ -47,7 +47,7 @@ const ProjectTitleInput = ({
 
             // Získej aktuální data projektu z VM
             const projectData = vm.toJSON();
-            const projectName = projectTitle || 'Neznámý projekt';
+            const projectName = projectTitle || intl.formatMessage({id: 'gui.gui.unknownProject'});
 
             // Nejdříve ulož projekt do auto-save
             const autoSaveUrl = getApiUrl('/saved-project/auto-save');
@@ -80,7 +80,7 @@ const ProjectTitleInput = ({
             if (deployResponse.ok) {
                 const data = await deployResponse.json();
                 if (data.success) {
-                    notificationService.showSuccess(`Aktuální projekt "${projectName}" byl nasazen do AlbiLAB.`);
+                    notificationService.showSuccess(intl.formatMessage({id: 'gui.success.currentProjectDeployed'}, {name: projectName}));
                 } else {
                     notificationService.showError(data.error || intl.formatMessage({id: 'gui.errors.unknownError'}), intl.formatMessage({id: 'gui.errors.deployingProject'}));
                 }
@@ -119,7 +119,7 @@ const ProjectTitleInput = ({
             <button
                 className={styles.manageButton}
                 onClick={handleManageClick}
-                title="Správa projektů"
+                title={intl.formatMessage({id: 'gui.menuBar.autoSaveManager.manageProjects'})}
             >
                 📁
             </button>

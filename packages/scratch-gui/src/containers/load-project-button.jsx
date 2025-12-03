@@ -32,8 +32,7 @@ class LoadProjectButton extends React.Component {
             
             if (!response.ok) {
                 if (response.status === 404) {
-                    // TODO: Přidat lokalizační klíč pro "Žádný uložený projekt nebyl nalezen"
-                    alert('Žádný uložený projekt nebyl nalezen');
+                    alert(this.props.intl.formatMessage({id: 'gui.errors.noSavedProjectFound'}));
                     return;
                 }
                 throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -65,7 +64,7 @@ class LoadProjectButton extends React.Component {
                     this.props.onUpdateProjectTitle(data.projectName);
                 }
                 
-                alert(`Projekt "${data.projectName}" byl úspěšně načten do editoru!`);
+                alert(this.props.intl.formatMessage({id: 'gui.success.projectLoadedToEditor'}, {name: data.projectName}));
             } else {
                 const errorMsg = this.props.intl.formatMessage({id: 'gui.errors.loadingProject'});
                 const unknownError = this.props.intl.formatMessage({id: 'gui.errors.unknownError'});

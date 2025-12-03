@@ -44,7 +44,18 @@ export const cs = {
     'gui.errors.startingService': 'Chyba při spouštění služby',
     'gui.errors.stoppingService': 'Chyba při zastavování služby',
     'gui.errors.processingWebSocket': 'Chyba při zpracování WebSocket zprávy',
-    'gui.errors.error': 'Chyba'
+    'gui.errors.error': 'Chyba',
+    // Success messages
+    'gui.success.projectDeployed': 'Projekt "{name}" byl nasazen.',
+    'gui.success.currentProjectDeployed': 'Aktuální projekt "{name}" byl nasazen do AlbiLAB.',
+    'gui.success.projectLoaded': 'Projekt "{name}" byl úspěšně načten!',
+    'gui.success.projectStarted': 'Projekt "{name}" byl spuštěn.',
+    'gui.success.projectStopped': 'Projekt "{name}" byl zastaven.',
+    'gui.success.projectDeleted': 'Projekt "{name}" byl smazán.',
+    'gui.success.projectLoadedToEditor': 'Projekt "{name}" byl úspěšně načten do editoru!',
+    'gui.menuBar.autoSaveManager.manageProjects': 'Správa projektů',
+    'gui.gui.unknownProject': 'Neznámý projekt',
+    'gui.errors.noSavedProjectFound': 'Žádný uložený projekt nebyl nalezen'
 };
 
 export const en = {
@@ -90,6 +101,17 @@ export const en = {
     'gui.errors.startingService': 'Error starting service',
     'gui.errors.stoppingService': 'Error stopping service',
     'gui.errors.processingWebSocket': 'Error processing WebSocket message',
-    'gui.errors.error': 'Error'
+    'gui.errors.error': 'Error',
+    // Success messages
+    'gui.success.projectDeployed': 'Project "{name}" has been deployed.',
+    'gui.success.currentProjectDeployed': 'Current project "{name}" has been deployed to AlbiLAB.',
+    'gui.success.projectLoaded': 'Project "{name}" has been loaded successfully!',
+    'gui.success.projectStarted': 'Project "{name}" has been started.',
+    'gui.success.projectStopped': 'Project "{name}" has been stopped.',
+    'gui.success.projectDeleted': 'Project "{name}" has been deleted.',
+    'gui.success.projectLoadedToEditor': 'Project "{name}" has been loaded to the editor successfully!',
+    'gui.menuBar.autoSaveManager.manageProjects': 'Manage projects',
+    'gui.gui.unknownProject': 'Unknown project',
+    'gui.errors.noSavedProjectFound': 'No saved project was found'
 };
 
