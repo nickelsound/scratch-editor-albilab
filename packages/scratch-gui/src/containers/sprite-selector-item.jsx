@@ -1,4 +1,5 @@
 import bindAll from 'lodash.bindall';
+import debounce from 'lodash.debounce';
 import PropTypes from 'prop-types';
 import React from 'react';
 import {connect} from 'react-redux';
@@ -32,9 +33,10 @@ class SpriteSelectorItem extends React.PureComponent {
             'handleTouchEnd',
             'handleDeleteButtonClick',
             'handleDeleteSpriteModalClose',
-            'handleDeleteSpriteModalConfirm',
-            'handleResize'
+            'handleDeleteSpriteModalConfirm'
         ]);
+
+        this.handleResize = debounce(this.handleResize.bind(this), 200);
 
         this.dragRecognizer = new DragRecognizer({
             onDrag: this.handleDrag,
@@ -51,6 +53,7 @@ class SpriteSelectorItem extends React.PureComponent {
         document.removeEventListener('touchend', this.handleTouchEnd);
         window.removeEventListener('resize', this.handleResize);
         this.dragRecognizer.reset();
+        this.handleResize.cancel();
     }
     getCostumeData () {
         if (this.props.costumeURL) return this.props.costumeURL;
