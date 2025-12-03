@@ -15,20 +15,31 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 
-// Multer pro upload souborů
-const upload = multer({ 
-    dest: '/app/uploads/',
-    limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
-});
-
 // Globální stav služeb - podpora pro více paralelních služeb
 let runningServices = new Map(); // Map<projectName, serviceInfo>
 let serviceLogs = [];
 
 // Cesta k uloženému projektu - ukládáme do uploads volume, které je trvalé
-// V Docker kontejneru je process.cwd() /app/packages/scratch-backend, ale uploads je mapováno na /app/uploads
-const SAVED_PROJECT_PATH = path.join('/app', 'uploads', 'saved-project.json');
-const AUTO_SAVE_DIR = path.join('/app', 'uploads', 'auto-save');
+// V Docker/Podman kontejneru je process.cwd() /app/packages/scratch-backend, ale uploads je mapováno na /app/uploads
+// Pro lokální spuštění používáme relativní cestu k root projektu
+// __dirname je packages/scratch-backend/src, takže ../../../uploads je root/uploads
+// Detekce kontejneru: zkontroluj existence .dockerenv (Docker) nebo .containerenv (Podman) souboru
+// nebo environment proměnnou IS_CONTAINER, nebo jestli process.cwd() začíná na /app
+const isContainer = fs.existsSync('/.dockerenv') || 
+                    fs.existsSync('/run/.containerenv') ||
+                    process.env.IS_CONTAINER === 'true' ||
+                    process.env.IS_DOCKER === 'true' ||
+                    process.cwd().startsWith('/app');
+const UPLOADS_BASE = isContainer ? '/app/uploads' : path.join(__dirname, '../../../uploads');
+const SAVED_PROJECT_PATH = path.join(UPLOADS_BASE, 'saved-project.json');
+const AUTO_SAVE_DIR = path.join(UPLOADS_BASE, 'auto-save');
+const RUNNING_PROJECTS_PATH = path.join(UPLOADS_BASE, 'running-projects.json');
+
+// Multer pro upload souborů
+const upload = multer({ 
+    dest: UPLOADS_BASE + '/',
+    limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
+});
 
 // WebSocket server
 const wss = new WebSocket.Server({ port: 3002 });
@@ -70,7 +81,7 @@ function sanitizeFileName(projectName) {
 async function isProjectDeployed(projectName) {
     try {
         // Zkontroluj, zda je projekt uložen v AlbiLAB (deployed-projects adresář)
-        const deployedProjectsDir = path.join('/app', 'uploads', 'deployed-projects');
+        const deployedProjectsDir = path.join(UPLOADS_BASE, 'deployed-projects');
         const safeFileName = sanitizeFileName(projectName);
         const deployedProjectPath = path.join(deployedProjectsDir, safeFileName);
         return await fs.pathExists(deployedProjectPath);
@@ -119,7 +130,7 @@ async function saveProject(projectData, projectName, isAutoSave = false) {
             filePath = path.join(AUTO_SAVE_DIR, safeFileName);
         } else {
             // Pro nasazené projekty vytvoř adresář deployed-projects
-            const deployedProjectsDir = path.join('/app', 'uploads', 'deployed-projects');
+            const deployedProjectsDir = path.join(UPLOADS_BASE, 'deployed-projects');
             await fs.ensureDir(deployedProjectsDir);
             const safeFileName = sanitizeFileName(projectName);
             filePath = path.join(deployedProjectsDir, safeFileName);
@@ -259,6 +270,147 @@ async function autoStartSavedProject() {
     }
 }
 
+// Uložení seznamu běžících projektů
+async function saveRunningProjects() {
+    try {
+        // Zajisti, že adresář uploads existuje
+        await fs.ensureDir(UPLOADS_BASE);
+        log(`Adresář uploads zajištěn: ${UPLOADS_BASE}`, 'info');
+        
+        const runningProjectsList = Array.from(runningServices.keys());
+        log(`Běžící projekty: ${JSON.stringify(runningProjectsList)}`, 'info');
+        
+        const data = {
+            projects: runningProjectsList,
+            lastUpdated: new Date().toISOString()
+        };
+        
+        log(`Zapisuji do souboru: ${RUNNING_PROJECTS_PATH}`, 'info');
+        await fs.writeJson(RUNNING_PROJECTS_PATH, data, { spaces: 2 });
+        
+        // Ověř, že soubor skutečně existuje
+        const fileExists = await fs.pathExists(RUNNING_PROJECTS_PATH);
+        if (fileExists) {
+            const fileContent = await fs.readJson(RUNNING_PROJECTS_PATH);
+            log(`Seznam běžících projektů úspěšně uložen do ${RUNNING_PROJECTS_PATH}: ${JSON.stringify(fileContent)}`, 'success');
+        } else {
+            log(`CHYBA: Soubor ${RUNNING_PROJECTS_PATH} se nevytvořil!`, 'error');
+        }
+    } catch (error) {
+        log(`Chyba při ukládání seznamu běžících projektů: ${error.message}`, 'error', {
+            errorName: error.name,
+            errorStack: error.stack,
+            path: RUNNING_PROJECTS_PATH
+        });
+        // Nechceme, aby se server crashoval kvůli chybě při ukládání seznamu
+        // throw error;
+    }
+}
+
+// Načtení seznamu běžících projektů
+async function loadRunningProjects() {
+    try {
+        if (await fs.pathExists(RUNNING_PROJECTS_PATH)) {
+            const data = await fs.readJson(RUNNING_PROJECTS_PATH);
+            return data.projects || [];
+        }
+        return [];
+    } catch (error) {
+        log(`Chyba při načítání seznamu běžících projektů: ${error.message}`, 'error');
+        return [];
+    }
+}
+
+// Automatické spuštění projektů, které byly spuštěné před restartem
+async function autoStartDeployedProjects() {
+    try {
+        log('Kontroluji projekty, které byly spuštěné před restartem...', 'info');
+        
+        // Načti seznam projektů, které byly spuštěné
+        const runningProjectsList = await loadRunningProjects();
+        
+        if (runningProjectsList.length === 0) {
+            log('Žádné projekty k automatickému spuštění (nebyly spuštěné před restartem)', 'info');
+            return 0;
+        }
+        
+        log(`Našel ${runningProjectsList.length} projektů, které byly spuštěné před restartem`, 'info');
+        
+        const deployedProjectsDir = path.join(UPLOADS_BASE, 'deployed-projects');
+        
+        // Zkontroluj, zda adresář existuje
+        if (!await fs.pathExists(deployedProjectsDir)) {
+            log('Adresář deployed-projects neexistuje, žádné projekty k automatickému spuštění', 'info');
+            return 0;
+        }
+        
+        let startedCount = 0;
+        for (const projectName of runningProjectsList) {
+            try {
+                // Načti projekt z deployed-projects nebo auto-save
+                let projectInfo = null;
+                
+                // Nejdříve zkus najít v deployed-projects
+                const safeFileName = sanitizeFileName(projectName);
+                const deployedProjectPath = path.join(deployedProjectsDir, safeFileName);
+                
+                if (await fs.pathExists(deployedProjectPath)) {
+                    projectInfo = await fs.readJson(deployedProjectPath);
+                } else {
+                    // Pokud není v deployed-projects, zkus auto-save
+                    projectInfo = await loadAutoSaveProject(projectName);
+                }
+                
+                if (!projectInfo) {
+                    log(`Projekt ${projectName} nebyl nalezen v deployed-projects ani auto-save, přeskočeno`, 'warn');
+                    continue;
+                }
+                
+                // Zpracuj projectData - může být string nebo objekt
+                let actualProjectData = projectInfo.projectData;
+                if (typeof actualProjectData === 'string') {
+                    try {
+                        actualProjectData = JSON.parse(actualProjectData);
+                    } catch (parseError) {
+                        log(`Chyba při parsování projectData pro ${projectName}: ${parseError.message}`, 'error');
+                        continue;
+                    }
+                }
+                
+                // Validace přítomnosti IP komponenty
+                if (!validateAlbiLABIPComponent(actualProjectData)) {
+                    log(`Projekt ${projectName} nemá AlbiLAB IP komponentu, přeskočeno`, 'warn');
+                    continue;
+                }
+                
+                // Spusť projekt
+                log(`Spouštím automaticky projekt, který byl spuštěný před restartem: ${projectName}`, 'info');
+                await startService(actualProjectData, projectName);
+                startedCount++;
+                
+                // Počkej chvilku mezi spouštěním projektů
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
+            } catch (error) {
+                log(`Chyba při automatickém spuštění projektu ${projectName}: ${error.message}`, 'error', {
+                    errorName: error.name,
+                    errorStack: error.stack
+                });
+            }
+        }
+        
+        log(`Automaticky spuštěno ${startedCount} z ${runningProjectsList.length} projektů, které byly spuštěné před restartem`, startedCount > 0 ? 'success' : 'info');
+        return startedCount;
+        
+    } catch (error) {
+        log(`Chyba při automatickém spuštění projektů: ${error.message}`, 'error', {
+            errorName: error.name,
+            errorStack: error.stack
+        });
+        return 0;
+    }
+}
+
 // Logging funkce
 function log(message, type = 'info', details = null) {
     const timestamp = new Date().toISOString();
@@ -293,7 +445,7 @@ function log(message, type = 'info', details = null) {
 }
 
 // Zastavení konkrétní služby
-async function stopService(projectName) {
+async function stopService(projectName, saveRunningProjectsList = true) {
     const serviceInfo = runningServices.get(projectName);
     if (serviceInfo) {
         try {
@@ -301,6 +453,11 @@ async function stopService(projectName) {
             serviceInfo.vm.stopAll();
             serviceInfo.vm.quit();
             runningServices.delete(projectName);
+            
+            // Ulož aktualizovaný seznam běžících projektů (pouze pokud není vypínání serveru)
+            if (saveRunningProjectsList) {
+                await saveRunningProjects();
+            }
             
             log(`Služba ${projectName} byla zastavena`, 'success');
             broadcast({ type: 'serviceStopped', data: { projectName } });
@@ -314,10 +471,10 @@ async function stopService(projectName) {
 }
 
 // Zastavení všech služeb
-async function stopAllServices() {
+async function stopAllServices(saveRunningProjectsList = true) {
     const projectNames = Array.from(runningServices.keys());
     for (const projectName of projectNames) {
-        await stopService(projectName);
+        await stopService(projectName, saveRunningProjectsList);
     }
 }
 
@@ -373,6 +530,11 @@ async function startService(projectData, projectName) {
             totalRunningServices: runningServices.size
         });
         broadcast({ type: 'serviceStarted', data: { projectName, startTime: serviceInfo.startTime } });
+        
+        // Ulož aktualizovaný seznam běžících projektů
+        log(`Ukládám seznam běžících projektů po spuštění ${projectName}...`, 'info');
+        await saveRunningProjects();
+        log(`Seznam běžících projektů uložen po spuštění ${projectName}`, 'success');
         
         // Sleduj chyby VM
         vm.on('error', (error) => {
@@ -870,6 +1032,12 @@ app.delete('/api/saved-project/auto-save', async (req, res) => {
             });
         }
         
+        // Pokud projekt běží, zastav ho (to aktualizuje seznam běžících projektů)
+        if (runningServices.has(projectName)) {
+            log(`Projekt ${projectName} běží, zastavuji ho před smazáním...`, 'info');
+            await stopService(projectName);
+        }
+        
         // Pokud adresář neexistuje, projekt neexistuje
         if (!await fs.pathExists(AUTO_SAVE_DIR)) {
             return res.json({ success: true, message: `Auto-save projekt "${projectName}" nebyl nalezen` });
@@ -1357,13 +1525,15 @@ wss.on('connection', (ws) => {
 // Graceful shutdown
 process.on('SIGINT', async () => {
     log('Přijat SIGINT, ukončuji server...', 'info');
-    await stopAllServices();
+    // Při vypnutí serveru neukládáme seznam běžících projektů, aby se zachoval pro automatické spuštění po restartu
+    await stopAllServices(false);
     process.exit(0);
 });
 
 process.on('SIGTERM', async () => {
     log('Přijat SIGTERM, ukončuji server...', 'info');
-    await stopAllServices();
+    // Při vypnutí serveru neukládáme seznam běžících projektů, aby se zachoval pro automatické spuštění po restartu
+    await stopAllServices(false);
     process.exit(0);
 });
 
@@ -1378,8 +1548,8 @@ async function runServerStartupScript() {
         // Počkej chvilku, aby se server stabilizoval
         await new Promise(resolve => setTimeout(resolve, 2000));
         
-        // Automatické spuštění uloženého projektu je zakázáno
-        // await autoStartSavedProject();
+        // Automatické spuštění všech nasazených projektů
+        await autoStartDeployedProjects();
         
         log('Startup script dokončen', 'success');
     } catch (error) {

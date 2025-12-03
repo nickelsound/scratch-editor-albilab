@@ -372,7 +372,7 @@ const AutoSaveManager = (props) => {
                     // Zavři manager
                     handleClose();
                     
-                    showSuccess(`Projekt "${data.projectName}" byl úspěšně načten!`);
+                    showSuccess(props.intl.formatMessage({id: 'gui.success.projectLoaded'}, {name: data.projectName}));
                 } else {
                     showError(data.error || props.intl.formatMessage({id: 'gui.errors.unknownError'}), props.intl.formatMessage({id: 'gui.errors.loadingProject'}));
                 }
@@ -407,7 +407,7 @@ const AutoSaveManager = (props) => {
                 if (data.success) {
                     // Aktualizuj seznam projektů
                     loadProjects();
-                    showSuccess(`Projekt "${projectName}" byl nasazen.`);
+                    showSuccess(props.intl.formatMessage({id: 'gui.success.projectDeployed'}, {name: projectName}));
                 } else {
                     showError(data.error || props.intl.formatMessage({id: 'gui.errors.unknownError'}), props.intl.formatMessage({id: 'gui.errors.deployingProject'}));
                 }
@@ -435,7 +435,7 @@ const AutoSaveManager = (props) => {
 
             // Získej aktuální data projektu z VM
             const projectData = props.vm.toJSON();
-            const projectName = props.projectTitle || 'Neznámý projekt';
+            const projectName = props.projectTitle || props.intl.formatMessage({id: 'gui.gui.unknownProject'});
 
             // Nejdříve ulož projekt do auto-save
             const autoSaveUrl = getApiUrl('/saved-project/auto-save');
@@ -470,7 +470,7 @@ const AutoSaveManager = (props) => {
                 if (data.success) {
                     // Aktualizuj seznam projektů
                     loadProjects();
-                    showSuccess(`Aktuální projekt "${projectName}" byl nasazen do AlbiLAB.`);
+                    showSuccess(props.intl.formatMessage({id: 'gui.success.currentProjectDeployed'}, {name: projectName}));
                 } else {
                     showError(data.error || props.intl.formatMessage({id: 'gui.errors.unknownError'}), props.intl.formatMessage({id: 'gui.errors.deployingProject'}));
                 }
@@ -505,7 +505,7 @@ const AutoSaveManager = (props) => {
                 if (data.success) {
                     // Aktualizuj seznam projektů
                     loadProjects();
-                    showSuccess(`Projekt "${projectName}" byl spuštěn.`);
+                    showSuccess(props.intl.formatMessage({id: 'gui.success.projectStarted'}, {name: projectName}));
                 } else {
                     showError(data.error || props.intl.formatMessage({id: 'gui.errors.unknownError'}), props.intl.formatMessage({id: 'gui.errors.startingProject'}));
                 }
@@ -540,7 +540,7 @@ const AutoSaveManager = (props) => {
                 if (data.success) {
                     // Aktualizuj seznam projektů
                     loadProjects();
-                    showSuccess(`Projekt "${projectName}" byl zastaven.`);
+                    showSuccess(props.intl.formatMessage({id: 'gui.success.projectStopped'}, {name: projectName}));
                 } else {
                     showError(data.error || props.intl.formatMessage({id: 'gui.errors.unknownError'}), props.intl.formatMessage({id: 'gui.errors.stoppingProject'}));
                 }
@@ -571,7 +571,7 @@ const AutoSaveManager = (props) => {
                 if (data.success) {
                     // Aktualizuj seznam projektů
                     loadProjects();
-                    showSuccess(`Projekt "${projectName}" byl smazán.`);
+                    showSuccess(props.intl.formatMessage({id: 'gui.success.projectDeleted'}, {name: projectName}));
                 } else {
                     showError(data.error || props.intl.formatMessage({id: 'gui.errors.unknownError'}), props.intl.formatMessage({id: 'gui.errors.deletingProject'}));
                 }
