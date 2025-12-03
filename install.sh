@@ -271,18 +271,21 @@ setup_ble_venv() {
 }
 
 # Function to download and assemble chunked tar archive
+# Parameters: base_name [release_url]
+# If release_url is not provided, uses RELEASE_URL global variable
 download_and_assemble_chunked() {
     local base_name="$1"
+    local release_url="${2:-$RELEASE_URL}"
     local full_tar="${base_name}-arm64.tar"
     
     print_info "Downloading ${base_name}..."
     
     # Try to download the full tar first
-    if wget --spider "${RELEASE_URL}/${full_tar}" 2>/dev/null; then
+    if wget --spider "${release_url}/${full_tar}" 2>/dev/null; then
         print_info "Full tar archive exists, downloading..."
         if [ -f "$full_tar" ]; then
             local local_size=$(stat -c%s "$full_tar" 2>/dev/null || echo "0")
-            local remote_size=$(wget --spider --server-response "${RELEASE_URL}/${full_tar}" 2>&1 | grep -i content-length | awk '{print $2}' | tail -1)
+            local remote_size=$(wget --spider --server-response "${release_url}/${full_tar}" 2>&1 | grep -i content-length | awk '{print $2}' | tail -1)
             
             if [ -n "$remote_size" ] && [ "$remote_size" != "0" ] && [ "$local_size" = "$remote_size" ]; then
                 print_info "$full_tar is up to date, skipping download"
@@ -290,13 +293,13 @@ download_and_assemble_chunked() {
             fi
         fi
         
-        wget --progress=bar:force "${RELEASE_URL}/${full_tar}" -O "${full_tar}"
+        wget --progress=bar:force "${release_url}/${full_tar}" -O "${full_tar}"
         print_success "${base_name} downloaded as single file"
         return 0
     fi
     
     # If full doesn't exist, try chunked version
-    print_info "Looking for split parts..."
+    print_info "Full tar archive not found, looking for split parts..."
     
     local part_num=0
     local parts_found=0
@@ -306,7 +309,7 @@ download_and_assemble_chunked() {
     # Find out how many parts exist (try up to 10 parts)
     while [ $part_num -lt 10 ]; do
         local part_file="${base_name}-arm64.tar.$(printf "%02d" $part_num)"
-        local part_url="${RELEASE_URL}/${part_file}"
+        local part_url="${release_url}/${part_file}"
         
         if wget --spider "$part_url" 2>/dev/null; then
             parts_to_download+=("$part_file")
@@ -341,7 +344,7 @@ download_and_assemble_chunked() {
         # Download all parts
         print_info "Downloading $parts_found parts..."
         for part_file in "${parts_to_download[@]}"; do
-            local part_url="${RELEASE_URL}/${part_file}"
+            local part_url="${release_url}/${part_file}"
             print_info "Downloading ${part_file}..."
             wget --progress=bar:force "$part_url" -O "$part_file"
         done
@@ -819,12 +822,9 @@ download_and_update() {
     # Version changed or image doesn't exist - need to download new container
     log "Downloading new version ${version}..."
     
-    # Download tar archive
-    if wget --spider "${release_url}/${tar_file}" 2>/dev/null; then
-        wget --progress=bar:force "${release_url}/${tar_file}" -O "${tar_file}"
-        log "Tar archive downloaded"
-    else
-        log "Error: Tar archive does not exist at ${release_url}/${tar_file}"
+    # Download tar archive (tries full tar first, then split parts if needed)
+    if ! download_and_assemble_chunked "scratch-universal" "${release_url}"; then
+        log "Error: Failed to download universal image"
         return 1
     fi
     
