@@ -155,7 +155,6 @@ class SpriteSelectorItem extends React.PureComponent {
         } = this.props;
         return (<>
             {this.state.isDeletePromptOpen ? <DeleteConfirmationPrompt
-                key={Date.now()}
                 onOk={this.handleDeleteSpriteModalConfirm}
                 onCancel={this.handleDeleteSpriteModalClose}
                 relativeElemRef={this.ref}
