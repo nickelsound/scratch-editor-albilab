@@ -793,69 +793,22 @@ get_installed_version() {
     fi
 }
 
-# Function to download and update
+# Function to download and run install.sh from GitHub
 download_and_update() {
     local version="$1"
-    local release_url="https://github.com/nickelsound/scratch-editor-albilab/releases/download/${version}"
-    local tar_file="scratch-universal-arm64.tar"
     
-    cd "$INSTALL_DIR"
+    log "New version found! Updating from $(get_installed_version) to ${version}..."
+    log "Downloading and running install.sh from GitHub..."
     
-    # Check if podman image already exists AND version matches
-    local installed_version=""
-    if [ -f "$INSTALL_DIR/.installed_version" ]; then
-        installed_version=$(cat "$INSTALL_DIR/.installed_version")
-    fi
-    
-    if podman images | grep -q "scratch-universal" && [ "$installed_version" = "$version" ]; then
-        log "Podman image already exists for version ${version}, skipping download..."
-        log "Restarting service with existing image..."
-        sudo systemctl restart scratch-albilab.service || {
-            log "Error: Failed to restart service"
-            return 1
-        }
-        
-        log "Update to version ${version} completed successfully (using existing image)"
+    # Download and run install.sh from GitHub with the specific version
+    # Set RELEASE_VERSION environment variable so install.sh uses the correct version
+    if curl -sSL "https://raw.githubusercontent.com/nickelsound/scratch-editor-albilab/refs/heads/main/install.sh" | RELEASE_VERSION="$version" bash; then
+        log "Update to version ${version} completed successfully"
         return 0
-    fi
-    
-    # Version changed or image doesn't exist - need to download new container
-    log "Downloading new version ${version}..."
-    
-    # Download tar archive (tries full tar first, then split parts if needed)
-    if ! download_and_assemble_chunked "scratch-universal" "${release_url}"; then
-        log "Error: Failed to download universal image"
+    else
+        log "Error: Failed to run install.sh"
         return 1
     fi
-    
-    # Load new image into Podman
-    log "Loading new image into Podman..."
-    podman load -i "${tar_file}" || {
-        log "Error: Failed to load image"
-        return 1
-    }
-    
-    # Tag image
-    if podman images | grep -q "scratch-universal"; then
-        UNIVERSAL_TAG=$(podman images --format "{{.Repository}}:{{.Tag}}" | grep "scratch-universal" | head -1)
-        podman tag "$UNIVERSAL_TAG" scratch-universal:latest
-        podman tag "$UNIVERSAL_TAG" scratch-gui
-        podman tag "$UNIVERSAL_TAG" scratch-backend
-        log "Image tagged as scratch-universal:latest"
-    fi
-    
-    # Restart service (use sudo because service runs as User)
-    log "Restarting service with new image..."
-    sudo systemctl restart scratch-albilab.service || {
-        log "Error: Failed to restart service"
-        return 1
-    }
-    
-    # Save new version
-    echo "$version" > "$INSTALL_DIR/.installed_version"
-    
-    log "Update to version ${version} completed successfully"
-    return 0
 }
 
 # Main logic
@@ -865,6 +818,12 @@ main() {
     # Check internet connection
     if ! ping -c 1 github.com > /dev/null 2>&1; then
         log "Error: No internet connection"
+        exit 1
+    fi
+    
+    # Check if curl is available
+    if ! command -v curl > /dev/null 2>&1; then
+        log "Error: curl is not installed"
         exit 1
     fi
     
@@ -887,9 +846,7 @@ main() {
         exit 0
     fi
     
-    log "New version found! Updating from ${installed_version} to ${latest_version}..."
-    
-    # Perform update
+    # Perform update by downloading and running install.sh from GitHub
     if download_and_update "$latest_version"; then
         log "Update completed successfully"
         exit 0
