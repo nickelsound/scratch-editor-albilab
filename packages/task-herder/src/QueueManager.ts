@@ -35,7 +35,7 @@ export class QueueManager<T = string> {
   /**
    * Get the task queue for the given identifier.
    * @param id The identifier for the queue.
-   * @returns The TaskQueue queue associated with the given identifier, or undefined if none exists.
+   * @returns The TaskQueue associated with the given identifier, or undefined if none exists.
    */
   public get(id: T): TaskQueue | undefined {
     return this.queues.get(id)
@@ -46,7 +46,7 @@ export class QueueManager<T = string> {
    * @param id The identifier for the queue.
    * @param overrides Optional overrides for the default QueueOptions for this specific queue. Only used if the queue
    * did not already exist.
-   * @returns The TaskQueue queue associated with the given identifier.
+   * @returns The TaskQueue associated with the given identifier.
    */
   public getOrCreate(id: T, overrides: Partial<QueueOptions> = {}): TaskQueue {
     return this.get(id) ?? this.create(id, overrides)
