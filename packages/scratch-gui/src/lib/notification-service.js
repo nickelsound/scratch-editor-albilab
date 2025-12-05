@@ -1,4 +1,4 @@
-// Globální notification služba - nezávislá na React contextu
+// Global notification service - independent of React context
 class NotificationService {
     constructor() {
         this.notifications = [];
@@ -7,7 +7,7 @@ class NotificationService {
     }
 
     init() {
-        // Vytvoř container pro notifikace
+        // Create container for notifications
         this.container = document.createElement('div');
         this.container.id = 'notification-container';
         this.container.style.cssText = `
@@ -38,7 +38,7 @@ class NotificationService {
             font-family: 'Helvetica Neue', Arial, sans-serif;
         `;
 
-        // Nastav barvu podle typu
+        // Set color according to type
         const colors = {
             success: '#4CAF50',
             error: '#f44336',
@@ -90,7 +90,7 @@ class NotificationService {
                     justify-content: center;
                     border-radius: 50%;
                     transition: background-color 0.2s;
-                " onclick="window.notificationService.hideNotification('${id}')" title="Zavřít">
+                " onclick="window.notificationService.hideNotification('${id}')" title="Close">
                     ×
                 </button>
             </div>
@@ -137,7 +137,7 @@ class NotificationService {
     }
 }
 
-// Přidej CSS animace
+// Add CSS animations
 const style = document.createElement('style');
 style.textContent = `
     @keyframes slideIn {
@@ -164,7 +164,7 @@ style.textContent = `
 `;
 document.head.appendChild(style);
 
-// Vytvoř globální instanci
+// Create global instance
 window.notificationService = new NotificationService();
 
 export default window.notificationService;

@@ -28,16 +28,16 @@ class ServiceButton extends React.Component {
             this.setState({ isLoading: true });
             
             if (this.state.isRunning) {
-                // Zastav službu a pak automaticky spusť novou
+                // Stop service and then automatically start new one
                 await this.stopService();
-                // Po zastavení služby automaticky spusť novou
+                // After stopping service, automatically start new one
                 await this.startService();
             } else {
-                // Spusť službu
+                // Start service
                 await this.startService();
             }
         } catch (error) {
-            console.error('Chyba při ovládání služby:', error);
+            console.error('Error controlling service:', error);
             const errorMsg = this.props.intl.formatMessage({id: 'gui.errors.controllingService'});
             alert(`${errorMsg}: ${error.message}`);
         } finally {
@@ -47,16 +47,16 @@ class ServiceButton extends React.Component {
 
     async startService () {
         try {
-            // Zkontroluj, zda VM existuje
+            // Check if VM exists
             if (!this.props.vm) {
-                throw new Error('VM není k dispozici');
+                throw new Error('VM is not available');
             }
             
-            // Získej aktuální projekt jako JSON
+            // Get current project as JSON
             const projectData = this.props.vm.toJSON();
-            const projectName = this.props.projectTitle || 'Neznámý projekt';
+            const projectName = this.props.projectTitle || 'Unknown project';
             
-            // Pošli na backend
+            // Send to backend
             const apiUrl = getApiUrl('/start-service-json');
             const response = await fetch(apiUrl, {
                 method: 'POST',
@@ -78,14 +78,14 @@ class ServiceButton extends React.Component {
             const result = await response.json();
             this.setState({ isRunning: true });
             
-            // Spusť WebSocket připojení pro sledování stavu
+            // Start WebSocket connection for status monitoring
             this.connectWebSocket();
             
-            // Zobraz alert jen při prvním spuštění, ne při restartu
-            alert(`Služba "${projectName}" byla úspěšně spuštěna!`);
+            // Show alert only on first start, not on restart
+            alert(`Service "${projectName}" has been started successfully!`);
             
         } catch (error) {
-            throw new Error(`Nepodařilo se spustit službu: ${error.message}`);
+            throw new Error(`Failed to start service: ${error.message}`);
         }
     }
 
@@ -105,15 +105,15 @@ class ServiceButton extends React.Component {
                 throw new Error(errorData.error || errorMsg);
             }
             
-            // Okamžitě aktualizuj stav - nečekej na WebSocket zprávu
+            // Immediately update state - don't wait for WebSocket message
             this.setState({ isRunning: false });
             this.disconnectWebSocket();
             
-            // Nezobrazuj alert při restartu - jen při manuálním zastavení
-            // alert('Služba byla zastavena.');
+            // Don't show alert on restart - only on manual stop
+            // alert('Service has been stopped.');
             
         } catch (error) {
-            throw new Error(`Nepodařilo se zastavit službu: ${error.message}`);
+            throw new Error(`Failed to stop service: ${error.message}`);
         }
     }
 
@@ -122,13 +122,13 @@ class ServiceButton extends React.Component {
             this.ws.close();
         }
         
-        // Použijeme relativní URL pro WebSocket
+        // Use relative URL for WebSocket
         const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
         const wsHost = window.location.hostname;
         this.ws = new WebSocket(getWebSocketUrl('/ws'));
         
         this.ws.onopen = () => {
-            console.log('WebSocket připojen');
+            console.log('WebSocket connected');
         };
         
         this.ws.onmessage = (event) => {
@@ -152,17 +152,17 @@ class ServiceButton extends React.Component {
                         break;
                 }
             } catch (error) {
-                console.error('Chyba při zpracování WebSocket zprávy:', error);
-                // WebSocket chyby jsou logovány, ale nejsou zobrazovány uživateli
+                console.error('Error processing WebSocket message:', error);
+                // WebSocket errors are logged but not shown to users
             }
         };
         
         this.ws.onclose = () => {
-            console.log('WebSocket odpojen');
+            console.log('WebSocket disconnected');
         };
         
         this.ws.onerror = (error) => {
-            console.error('WebSocket chyba:', error);
+            console.error('WebSocket error:', error);
         };
     }
 
@@ -174,7 +174,7 @@ class ServiceButton extends React.Component {
     }
 
     componentDidMount () {
-        // Zkontroluj stav služby při načtení
+        // Check service status on load
         this.checkServiceStatus();
     }
 
@@ -195,7 +195,7 @@ class ServiceButton extends React.Component {
                 }
             }
         } catch (error) {
-            console.error('Nepodařilo se zkontrolovat stav služby:', error);
+            console.error('Failed to check service status:', error);
         }
     }
 

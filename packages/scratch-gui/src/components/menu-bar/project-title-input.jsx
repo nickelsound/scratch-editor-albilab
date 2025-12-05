@@ -34,7 +34,7 @@ const ProjectTitleInput = ({
     vm
 }) => {
     const handleManageClick = () => {
-        // Vyvolej event pro otevření manageru
+        // Trigger event to open manager
         window.dispatchEvent(new CustomEvent('openAutoSaveManager'));
     };
 
@@ -45,11 +45,11 @@ const ProjectTitleInput = ({
                 return;
             }
 
-            // Získej aktuální data projektu z VM
+            // Get current project data from VM
             const projectData = vm.toJSON();
             const projectName = projectTitle || intl.formatMessage({id: 'gui.gui.unknownProject'});
 
-            // Nejdříve ulož projekt do auto-save
+            // First save project to auto-save
             const autoSaveUrl = getApiUrl('/saved-project/auto-save');
             const autoSaveResponse = await fetch(autoSaveUrl, {
                 method: 'POST',
@@ -67,7 +67,7 @@ const ProjectTitleInput = ({
                 return;
             }
 
-            // Pak nasaď projekt
+            // Then deploy project
             const deployUrl = getApiUrl('deploy-project');
             const deployResponse = await fetch(deployUrl, {
                 method: 'POST',
@@ -93,7 +93,7 @@ const ProjectTitleInput = ({
                 }
             }
         } catch (error) {
-            console.error('Chyba při nasazování aktuálního projektu:', error);
+            console.error('Error deploying current project:', error);
             notificationService.showError(error.message, intl.formatMessage({id: 'gui.errors.deployingCurrentProject'}));
         }
     };

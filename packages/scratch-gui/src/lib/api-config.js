@@ -1,22 +1,22 @@
 /**
- * Konfigurace API URL pro frontend
+ * API URL configuration for frontend
  */
 
 /**
- * Detekuje, zda běžíme ve vývojovém prostředí
+ * Detects if we're running in development environment
  */
 const isDevelopment = () => {
-    // Zkontroluj environment proměnné (pouze pokud process existuje)
+    // Check environment variables (only if process exists)
     if (typeof process !== 'undefined' && process.env && process.env.NODE_ENV === 'development') {
         return true;
     }
     
-    // Zkontroluj, zda máme nastavené development API URL (pouze pokud process existuje)
+    // Check if we have development API URL set (only if process exists)
     if (typeof process !== 'undefined' && process.env && process.env.REACT_APP_API_BASE_URL) {
         return true;
     }
     
-    // Zkontroluj, zda běžíme na localhost (vývojové prostředí)
+    // Check if we're running on localhost (development environment)
     if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
         return true;
     }
@@ -25,32 +25,32 @@ const isDevelopment = () => {
 };
 
 /**
- * Získá základní API URL
+ * Gets base API URL
  */
 export const getApiBaseUrl = () => {
     if (isDevelopment()) {
-        // Vývojové prostředí - připoj se přímo na backend
+        // Development environment - connect directly to backend
         const devApiUrl = (typeof process !== 'undefined' && process.env && process.env.REACT_APP_API_BASE_URL) || 'http://localhost:3001';
-        console.log('Vývojové prostředí - používám API URL:', devApiUrl);
+        console.log('Development environment - using API URL:', devApiUrl);
         return devApiUrl;
     } else {
         // Production environment on Raspberry Pi:
         // Always use backend on port 3001 on the same host as the frontend.
         const apiPort = '3001';
         const apiUrl = `${window.location.protocol}//${window.location.hostname}:${apiPort}`;
-        console.log('Produkční prostředí - používám API URL:', apiUrl);
+        console.log('Production environment - using API URL:', apiUrl);
         return apiUrl;
     }
 };
 
 /**
- * Získá WebSocket URL
+ * Gets WebSocket URL
  */
 export const getWebSocketBaseUrl = () => {
     if (isDevelopment()) {
-        // Vývojové prostředí - připoj se přímo na backend
+        // Development environment - connect directly to backend
         const devWsUrl = (typeof process !== 'undefined' && process.env && process.env.REACT_APP_WS_BASE_URL) || 'ws://localhost:3001';
-        console.log('Vývojové prostředí - používám WebSocket URL:', devWsUrl);
+        console.log('Development environment - using WebSocket URL:', devWsUrl);
         return devWsUrl;
     } else {
         // Production environment on Raspberry Pi:
@@ -58,13 +58,13 @@ export const getWebSocketBaseUrl = () => {
         const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
         const wsPort = '3001';
         const wsUrl = `${wsProtocol}//${window.location.hostname}:${wsPort}`;
-        console.log('Produkční prostředí - používám WebSocket URL:', wsUrl);
+        console.log('Production environment - using WebSocket URL:', wsUrl);
         return wsUrl;
     }
 };
 
 /**
- * Vytvoří kompletní API URL pro daný endpoint
+ * Creates complete API URL for given endpoint
  */
 export const getApiUrl = (endpoint) => {
     const baseUrl = getApiBaseUrl();
@@ -72,7 +72,7 @@ export const getApiUrl = (endpoint) => {
 };
 
 /**
- * Vytvoří kompletní WebSocket URL pro daný endpoint
+ * Creates complete WebSocket URL for given endpoint
  */
 export const getWebSocketUrl = (endpoint) => {
     const baseUrl = getWebSocketBaseUrl();

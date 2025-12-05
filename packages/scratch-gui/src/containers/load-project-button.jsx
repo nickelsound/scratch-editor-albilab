@@ -26,7 +26,7 @@ class LoadProjectButton extends React.Component {
         try {
             this.setState({ isLoading: true });
             
-            // Načti uložený projekt z backend API
+            // Load saved project from backend API
             const apiUrl = getApiUrl('/saved-project/load');
             const response = await fetch(apiUrl);
             
@@ -41,25 +41,25 @@ class LoadProjectButton extends React.Component {
             const data = await response.json();
             
             if (data.success && data.projectData) {
-                // projectData může být string (JSON string) nebo už objekt (kvůli escape-ování)
+                // projectData can be a string (JSON string) or already an object (due to escaping)
                 let projectData = data.projectData;
                 
-                // Pokud je to string, použijeme ho přímo (vm.loadProject() přijímá string)
-                // Pokud je to objekt, převedeme ho na JSON string
+                // If it's a string, use it directly (vm.loadProject() accepts string)
+                // If it's an object, convert it to JSON string
                 if (typeof projectData === 'object' && projectData !== null) {
-                    // Objekt - převedeme na JSON string
+                    // Object - convert to JSON string
                     projectData = JSON.stringify(projectData);
                 }
                 
-                // Ověř, že projectData je string
+                // Verify that projectData is a string
                 if (typeof projectData !== 'string') {
                     throw new Error('Invalid project data format');
                 }
                 
-                // Načti projekt do Scratch VM - loadProject() přijímá JSON string
+                // Load project into Scratch VM - loadProject() accepts JSON string
                 await this.props.vm.loadProject(projectData);
                 
-                // Aktualizuj název projektu
+                // Update project title
                 if (this.props.onUpdateProjectTitle) {
                     this.props.onUpdateProjectTitle(data.projectName);
                 }
@@ -72,7 +72,7 @@ class LoadProjectButton extends React.Component {
             }
             
         } catch (error) {
-            console.error('Chyba při načítání projektu:', error);
+            console.error('Error loading project:', error);
             const errorMsg = this.props.intl.formatMessage({id: 'gui.errors.loadingProject'});
             alert(`${errorMsg}: ${error.message}`);
         } finally {

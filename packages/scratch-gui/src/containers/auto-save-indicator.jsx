@@ -9,27 +9,27 @@ import {setAutoSaveStatus, setLastSaveTime, setSaveError} from '../exported-redu
 class AutoSaveIndicator extends React.Component {
 
     async componentDidMount () {
-        // Inicializuj auto-save službu
+        // Initialize auto-save service
         autoSaveService.initialize(
             this.props.vm,
             this.props.projectTitle,
             this.handleSaveStatusChange
         );
 
-        // Spusť auto-save (asynchronně pro načtení existujícího projektu)
+        // Start auto-save (asynchronously to load existing project)
         await autoSaveService.start();
 
-        // Přidej event listener pro vynucení uložení
+        // Add event listener for forcing save
         window.addEventListener('forceAutoSave', this.handleForceSave);
     }
 
     componentDidUpdate (prevProps) {
-        // Aktualizuj název projektu pokud se změnil
+        // Update project title if it changed
         if (prevProps.projectTitle !== this.props.projectTitle) {
             autoSaveService.setProjectTitle(this.props.projectTitle);
         }
 
-        // Aktualizuj VM pokud se změnila
+        // Update VM if it changed
         if (prevProps.vm !== this.props.vm) {
             autoSaveService.initialize(
                 this.props.vm,
@@ -40,20 +40,20 @@ class AutoSaveIndicator extends React.Component {
     }
 
     componentWillUnmount () {
-        // Zastav auto-save službu
+        // Stop auto-save service
         autoSaveService.stop();
         
-        // Odstraň event listener
+        // Remove event listener
         window.removeEventListener('forceAutoSave', this.handleForceSave);
     }
 
     handleForceSave = () => {
-        // Vynutí okamžité uložení
+        // Force immediate save
         autoSaveService.forceSave();
     };
 
     handleSaveStatusChange = (statusInfo) => {
-        // Aktualizuj Redux state
+        // Update Redux state
         this.props.setAutoSaveStatus(statusInfo.isSaving);
         
         if (statusInfo.status === 'saved') {

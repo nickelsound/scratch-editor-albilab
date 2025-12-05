@@ -79,8 +79,8 @@ import {PLATFORM} from '../../lib/platform';
 import styles from './menu-bar.css';
 
 import helpIcon from '../../lib/assets/icon--tutorials.svg';
-// import mystuffIcon from './icon--mystuff.png'; // nepoužíváno
-// import profileIcon from './icon--profile.png'; // nepoužíváno
+// import mystuffIcon from './icon--mystuff.png'; // not used
+// import profileIcon from './icon--profile.png'; // not used
 import remixIcon from './icon--remix.svg';
 import dropdownCaret from './dropdown-caret.svg';
 import aboutIcon from './icon--about.svg';
@@ -681,7 +681,7 @@ class MenuBar extends React.Component {
                             </span>
                         </div>
                         <div className={classNames(styles.menuBarItem)}>
-                            {/* AutoSaveIndicator - indikátor průběžného ukládání */}
+                            {/* AutoSaveIndicator - continuous saving indicator */}
                             <AutoSaveIndicator />
                         </div>
                     </div>
@@ -700,7 +700,7 @@ class MenuBar extends React.Component {
                         this.props.username ? (
                             // ************ user is logged in ************
                             <React.Fragment>
-                                {/* My Stuff tlačítko - skryto */}
+                                {/* My Stuff button - hidden */}
                                 
                                 <AccountNav
                                     className={classNames(
@@ -777,7 +777,7 @@ class MenuBar extends React.Component {
                     ) : (
                         // ******** no login session is available, so don't show login stuff
                         <React.Fragment>
-                            {/* My Stuff a scratch-cat tlačítka - skryta */}
+                            {/* My Stuff and scratch-cat buttons - hidden */}
                         </React.Fragment>
                     )}
                 </div>

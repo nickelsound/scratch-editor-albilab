@@ -5,7 +5,7 @@ import {setProjectTitle} from '../reducers/project-title';
 import {getApiUrl} from './api-config.js';
 
 /**
- * Higher Order Component pro automatické načtení uloženého projektu při inicializaci
+ * Higher Order Component for automatic loading of saved project on initialization
  */
 const AutoLoadHOC = function (WrappedComponent) {
     class AutoLoadComponent extends React.Component {
@@ -17,7 +17,7 @@ const AutoLoadHOC = function (WrappedComponent) {
         }
 
         async componentDidMount () {
-            // Automatické načítání uloženého projektu je zakázáno
+            // Automatic loading of saved project is disabled
             // await this.checkForSavedProject();
         }
 
@@ -27,7 +27,7 @@ const AutoLoadHOC = function (WrappedComponent) {
             }
 
             try {
-                // Zkontroluj, jestli existuje uložený projekt
+                // Check if saved project exists
                 const apiUrl = getApiUrl('/saved-project');
                 const response = await fetch(apiUrl);
                 
@@ -35,16 +35,16 @@ const AutoLoadHOC = function (WrappedComponent) {
                     const projectInfo = await response.json();
                     
                     if (projectInfo.exists) {
-                        console.log('Našel jsem uložený projekt, načítám...', projectInfo);
+                        console.log('Found saved project, loading...', projectInfo);
                         
-                        // Načti projekt
+                        // Load project
                         await this.loadSavedProject();
                     } else {
-                        console.log('Žádný uložený projekt nenalezen');
+                        console.log('No saved project found');
                     }
                 }
             } catch (error) {
-                console.error('Chyba při kontrole uloženého projektu:', error);
+                console.error('Error checking for saved project:', error);
             } finally {
                 this.setState({ hasCheckedForSavedProject: true });
             }
@@ -59,40 +59,40 @@ const AutoLoadHOC = function (WrappedComponent) {
                     const data = await response.json();
                     
                     if (data.success && data.projectData) {
-                        console.log('Načítám uložený projekt do VM:', data.projectData);
+                        console.log('Loading saved project into VM:', data.projectData);
                         
-                        // projectData může být string (JSON string) nebo už objekt (kvůli escape-ování)
+                        // projectData can be a string (JSON string) or already an object (due to escaping)
                         let projectData = data.projectData;
                         
-                        // Pokud je to string, použijeme ho přímo (vm.loadProject() přijímá string)
-                        // Pokud je to objekt, převedeme ho na JSON string
+                        // If it's a string, use it directly (vm.loadProject() accepts string)
+                        // If it's an object, convert it to JSON string
                         if (typeof projectData === 'object' && projectData !== null) {
-                            // Objekt - převedeme na JSON string
+                            // Object - convert to JSON string
                             projectData = JSON.stringify(projectData);
                         }
                         
-                        // Ověř, že projectData je string
+                        // Verify that projectData is a string
                         if (typeof projectData !== 'string') {
                             throw new Error('Invalid project data format');
                         }
                         
-                        // Načti projekt přímo do VM - loadProject() přijímá JSON string
+                        // Load project directly into VM - loadProject() accepts JSON string
                         await this.props.vm.loadProject(projectData);
                         
-                        // Aktualizuj název projektu
+                        // Update project title
                         if (data.projectName) {
                             this.props.setProjectTitle(data.projectName);
                         }
                         
-                        console.log('Projekt úspěšně načten do VM');
+                        console.log('Project successfully loaded into VM');
                     } else {
-                        console.error('Chyba při načítání projektu:', data.error || 'Neznámá chyba');
+                        console.error('Error loading project:', data.error || 'Unknown error');
                     }
                 } else {
-                    console.error('Chyba při načítání projektu:', response.statusText);
+                    console.error('Error loading project:', response.statusText);
                 }
             } catch (error) {
-                console.error('Chyba při načítání uloženého projektu:', error);
+                console.error('Error loading saved project:', error);
             }
         }
 

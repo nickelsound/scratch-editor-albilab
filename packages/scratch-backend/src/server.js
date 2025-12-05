@@ -15,16 +15,16 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 
-// Globální stav služeb - podpora pro více paralelních služeb
+// Global service state - support for multiple parallel services
 let runningServices = new Map(); // Map<projectName, serviceInfo>
 let serviceLogs = [];
 
-// Cesta k uloženému projektu - ukládáme do uploads volume, které je trvalé
-// V Docker/Podman kontejneru je process.cwd() /app/packages/scratch-backend, ale uploads je mapováno na /app/uploads
-// Pro lokální spuštění používáme relativní cestu k root projektu
-// __dirname je packages/scratch-backend/src, takže ../../../uploads je root/uploads
-// Detekce kontejneru: zkontroluj existence .dockerenv (Docker) nebo .containerenv (Podman) souboru
-// nebo environment proměnnou IS_CONTAINER, nebo jestli process.cwd() začíná na /app
+// Path to saved project - we save to uploads volume, which is persistent
+// In Docker/Podman container, process.cwd() is /app/packages/scratch-backend, but uploads is mapped to /app/uploads
+// For local execution, we use relative path to project root
+// __dirname is packages/scratch-backend/src, so ../../../uploads is root/uploads
+// Container detection: check for existence of .dockerenv (Docker) or .containerenv (Podman) file
+// or environment variable IS_CONTAINER, or if process.cwd() starts with /app
 const isContainer = fs.existsSync('/.dockerenv') || 
                     fs.existsSync('/run/.containerenv') ||
                     process.env.IS_CONTAINER === 'true' ||
@@ -35,7 +35,7 @@ const SAVED_PROJECT_PATH = path.join(UPLOADS_BASE, 'saved-project.json');
 const AUTO_SAVE_DIR = path.join(UPLOADS_BASE, 'auto-save');
 const RUNNING_PROJECTS_PATH = path.join(UPLOADS_BASE, 'running-projects.json');
 
-// Multer pro upload souborů
+// Multer for file uploads
 const upload = multer({ 
     dest: UPLOADS_BASE + '/',
     limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
@@ -44,7 +44,7 @@ const upload = multer({
 // WebSocket server
 const wss = new WebSocket.Server({ port: 3002 });
 
-// Broadcast funkce pro WebSocket
+// Broadcast function for WebSocket
 function broadcast(data) {
     wss.clients.forEach(client => {
         if (client.readyState === WebSocket.OPEN) {
@@ -53,12 +53,12 @@ function broadcast(data) {
     });
 }
 
-// Získání informací o službě
+// Get service information
 function getServiceInfo(projectName) {
     return runningServices.get(projectName);
 }
 
-// Získání seznamu všech běžících služeb
+// Get list of all running services
 function getAllRunningServices() {
     const services = [];
     for (const [projectName, serviceInfo] of runningServices) {
@@ -72,50 +72,50 @@ function getAllRunningServices() {
     return services;
 }
 
-// Pomocná funkce pro sanitizaci názvu souboru (stejná jako při ukládání)
+// Helper function for sanitizing file name (same as when saving)
 function sanitizeFileName(projectName) {
     return projectName.replace(/[^a-zA-Z0-9_-]/g, '_') + '.json';
 }
 
-// Kontrola, zda je služba nasazena (uložena v AlbiLAB)
+// Check if service is deployed (saved in AlbiLAB)
 async function isProjectDeployed(projectName) {
     try {
-        // Zkontroluj, zda je projekt uložen v AlbiLAB (deployed-projects adresář)
+        // Check if project is saved in AlbiLAB (deployed-projects directory)
         const deployedProjectsDir = path.join(UPLOADS_BASE, 'deployed-projects');
         const safeFileName = sanitizeFileName(projectName);
         const deployedProjectPath = path.join(deployedProjectsDir, safeFileName);
         return await fs.pathExists(deployedProjectPath);
     } catch (error) {
-        log(`Chyba při kontrole nasazení projektu ${projectName}: ${error.message}`, 'error');
+        log(`Error checking deployment status for project ${projectName}: ${error.message}`, 'error');
         return false;
     }
 }
 
-// Uložení projektu do trvalého úložiště
+// Save project to persistent storage
 async function saveProject(projectData, projectName, isAutoSave = false) {
     try {
-        // Ověř, že projectData je string (vm.toJSON() vrací string)
+        // Verify that projectData is a string (vm.toJSON() returns string)
         if (typeof projectData !== 'string') {
             log(`Error: projectData is not a string when saving project ${projectName}, type: ${typeof projectData}`, 'error');
             return false;
         }
         
-        // Zkontroluj, jestli je to validní JSON string
+        // Check if it's a valid JSON string
         try {
             const parsed = JSON.parse(projectData);
-            // Pokud se to podařilo parsovat, zkontroluj, jestli to není znovu string (double-encoded)
+            // If parsing succeeded, check if it's not a string again (double-encoded)
             if (typeof parsed === 'string') {
                 log(`Warning: projectData appears to be double-encoded for project ${projectName}`, 'warn');
-                // Použijeme už parsovaný string
+                // Use the already parsed string
                 projectData = parsed;
             }
         } catch (parseError) {
-            // Pokud se to nedá parsovat, může to být problém
+            // If it can't be parsed, it might be a problem
             log(`Warning: projectData may not be valid JSON for project ${projectName}: ${parseError.message}`, 'warn');
         }
         
         const projectInfo = {
-            projectData: projectData, // Ukládáme jako JSON string (vm.toJSON() vrací string)
+            projectData: projectData, // Save as JSON string (vm.toJSON() returns string)
             projectName: projectName,
             savedAt: new Date().toISOString(),
             version: '1.0',
@@ -124,21 +124,21 @@ async function saveProject(projectData, projectName, isAutoSave = false) {
         
         let filePath;
         if (isAutoSave) {
-            // Pro auto-save vytvoř adresář a ulož podle názvu projektu
+            // For auto-save, create directory and save by project name
             await fs.ensureDir(AUTO_SAVE_DIR);
             const safeFileName = sanitizeFileName(projectName);
             filePath = path.join(AUTO_SAVE_DIR, safeFileName);
         } else {
-            // Pro nasazené projekty vytvoř adresář deployed-projects
+            // For deployed projects, create deployed-projects directory
             const deployedProjectsDir = path.join(UPLOADS_BASE, 'deployed-projects');
             await fs.ensureDir(deployedProjectsDir);
             const safeFileName = sanitizeFileName(projectName);
             filePath = path.join(deployedProjectsDir, safeFileName);
         }
         
-        // Ulož pomocí writeJson, který správně zpracuje string v objektu
+        // Save using writeJson, which correctly handles string in object
         await fs.writeJson(filePath, projectInfo, { spaces: 2 });
-        log(`Projekt ${projectName} byl uložen do trvalého úložiště`, 'success', {
+        log(`Project ${projectName} saved to persistent storage`, 'success', {
             savedAt: projectInfo.savedAt,
             filePath: filePath,
             isAutoSave: isAutoSave
@@ -146,7 +146,7 @@ async function saveProject(projectData, projectName, isAutoSave = false) {
         
         return true;
     } catch (error) {
-        log(`Chyba při ukládání projektu: ${error.message}`, 'error', {
+        log(`Error saving project: ${error.message}`, 'error', {
             errorName: error.name,
             errorStack: error.stack,
             projectName,
@@ -156,22 +156,22 @@ async function saveProject(projectData, projectName, isAutoSave = false) {
     }
 }
 
-// Načtení uloženého projektu
+// Load saved project
 async function loadSavedProject() {
     try {
         if (await fs.pathExists(SAVED_PROJECT_PATH)) {
             const projectInfo = await fs.readJson(SAVED_PROJECT_PATH);
-            log(`Načten uložený projekt: ${projectInfo.projectName}`, 'info', {
+            log(`Loaded saved project: ${projectInfo.projectName}`, 'info', {
                 savedAt: projectInfo.savedAt,
                 version: projectInfo.version
             });
             return projectInfo;
         } else {
-            log('Žádný uložený projekt nebyl nalezen', 'info');
+            log('No saved project found', 'info');
             return null;
         }
     } catch (error) {
-        log(`Chyba při načítání uloženého projektu: ${error.message}`, 'error', {
+        log(`Error loading saved project: ${error.message}`, 'error', {
             errorName: error.name,
             errorStack: error.stack
         });
@@ -179,30 +179,30 @@ async function loadSavedProject() {
     }
 }
 
-// Načtení auto-save projektu podle názvu
+// Load auto-save project by name
 async function loadAutoSaveProject(projectName) {
     try {
-        if (!projectName || projectName === 'Neznámý projekt') {
-            log('Název projektu není zadán pro auto-save načtení', 'info');
+        if (!projectName || projectName === 'Unknown project') {
+            log('Project name not provided for auto-save loading', 'info');
             return null;
         }
         
-        // Pokud adresář neexistuje, projekt neexistuje
+        // If directory doesn't exist, project doesn't exist
         if (!await fs.pathExists(AUTO_SAVE_DIR)) {
-            log(`Auto-save projekt ${projectName} nebyl nalezen - adresář neexistuje`, 'info');
+            log(`Auto-save project ${projectName} not found - directory does not exist`, 'info');
             return null;
         }
         
-        // Nejdříve zkus najít soubor přímo podle sanitizovaného názvu (rychlejší)
+        // First try to find file directly by sanitized name (faster)
         const safeFileName = sanitizeFileName(projectName);
         const directFilePath = path.join(AUTO_SAVE_DIR, safeFileName);
         
         if (await fs.pathExists(directFilePath)) {
             try {
                 const projectInfo = await fs.readJson(directFilePath);
-                // Ověř, že originální název v souboru odpovídá hledanému názvu
+                // Verify that original name in file matches searched name
                 if (projectInfo.projectName === projectName) {
-                    log(`Auto-save projekt načten (přímý přístup): ${projectInfo.projectName}`, 'info', {
+                    log(`Auto-save project loaded (direct access): ${projectInfo.projectName}`, 'info', {
                         savedAt: projectInfo.savedAt,
                         version: projectInfo.version,
                         filePath: directFilePath
@@ -210,12 +210,12 @@ async function loadAutoSaveProject(projectName) {
                     return projectInfo;
                 }
             } catch (error) {
-                log(`Chyba při načítání souboru ${safeFileName}: ${error.message}`, 'error');
+                log(`Error loading file ${safeFileName}: ${error.message}`, 'error');
             }
         }
         
-        // Fallback: Projdi všechny soubory a hledej podle originálního názvu
-        // (pro případ, že sanitizace vytvořila duplicitní názvy)
+        // Fallback: Go through all files and search by original name
+        // (in case sanitization created duplicate names)
         const files = await fs.readdir(AUTO_SAVE_DIR);
         
         for (const file of files) {
@@ -224,9 +224,9 @@ async function loadAutoSaveProject(projectName) {
                     const filePath = path.join(AUTO_SAVE_DIR, file);
                     const projectInfo = await fs.readJson(filePath);
                     
-                    // Porovnej originální názvy (case-sensitive)
+                    // Compare original names (case-sensitive)
                     if (projectInfo.projectName === projectName) {
-                        log(`Auto-save projekt načten (fallback): ${projectInfo.projectName}`, 'info', {
+                        log(`Auto-save project loaded (fallback): ${projectInfo.projectName}`, 'info', {
                             savedAt: projectInfo.savedAt,
                             version: projectInfo.version,
                             filePath: filePath
@@ -234,35 +234,35 @@ async function loadAutoSaveProject(projectName) {
                         return projectInfo;
                     }
                 } catch (error) {
-                    log(`Chyba při načítání souboru ${file}: ${error.message}`, 'error');
+                    log(`Error loading file ${file}: ${error.message}`, 'error');
                 }
             }
         }
         
-        log(`Auto-save projekt ${projectName} nebyl nalezen`, 'info');
+        log(`Auto-save project ${projectName} not found`, 'info');
         return null;
     } catch (error) {
-        log(`Chyba při načítání auto-save projektu: ${error.message}`, 'error');
+        log(`Error loading auto-save project: ${error.message}`, 'error');
         return null;
     }
 }
 
-// Automatické spuštění uloženého projektu při startu
+// Automatic startup of saved project on server start
 async function autoStartSavedProject() {
     try {
-        log('Kontroluji uložený projekt pro automatické spuštění...', 'info');
+        log('Checking saved project for automatic startup...', 'info');
         
         const savedProject = await loadSavedProject();
         if (savedProject) {
-            log(`Spouštím automaticky uložený projekt: ${savedProject.projectName}`, 'info');
+            log(`Automatically starting saved project: ${savedProject.projectName}`, 'info');
             await startService(savedProject.projectData, savedProject.projectName);
             return true;
         } else {
-            log('Žádný projekt k automatickému spuštění', 'info');
+            log('No project for automatic startup', 'info');
             return false;
         }
     } catch (error) {
-        log(`Chyba při automatickém spuštění projektu: ${error.message}`, 'error', {
+        log(`Error during automatic project startup: ${error.message}`, 'error', {
             errorName: error.name,
             errorStack: error.stack
         });
@@ -270,44 +270,44 @@ async function autoStartSavedProject() {
     }
 }
 
-// Uložení seznamu běžících projektů
+// Save list of running projects
 async function saveRunningProjects() {
     try {
-        // Zajisti, že adresář uploads existuje
+        // Ensure that uploads directory exists
         await fs.ensureDir(UPLOADS_BASE);
-        log(`Adresář uploads zajištěn: ${UPLOADS_BASE}`, 'info');
+        log(`Uploads directory ensured: ${UPLOADS_BASE}`, 'info');
         
         const runningProjectsList = Array.from(runningServices.keys());
-        log(`Běžící projekty: ${JSON.stringify(runningProjectsList)}`, 'info');
+        log(`Running projects: ${JSON.stringify(runningProjectsList)}`, 'info');
         
         const data = {
             projects: runningProjectsList,
             lastUpdated: new Date().toISOString()
         };
         
-        log(`Zapisuji do souboru: ${RUNNING_PROJECTS_PATH}`, 'info');
+        log(`Writing to file: ${RUNNING_PROJECTS_PATH}`, 'info');
         await fs.writeJson(RUNNING_PROJECTS_PATH, data, { spaces: 2 });
         
-        // Ověř, že soubor skutečně existuje
+        // Verify that file actually exists
         const fileExists = await fs.pathExists(RUNNING_PROJECTS_PATH);
         if (fileExists) {
             const fileContent = await fs.readJson(RUNNING_PROJECTS_PATH);
-            log(`Seznam běžících projektů úspěšně uložen do ${RUNNING_PROJECTS_PATH}: ${JSON.stringify(fileContent)}`, 'success');
+            log(`List of running projects successfully saved to ${RUNNING_PROJECTS_PATH}: ${JSON.stringify(fileContent)}`, 'success');
         } else {
-            log(`CHYBA: Soubor ${RUNNING_PROJECTS_PATH} se nevytvořil!`, 'error');
+            log(`ERROR: File ${RUNNING_PROJECTS_PATH} was not created!`, 'error');
         }
     } catch (error) {
-        log(`Chyba při ukládání seznamu běžících projektů: ${error.message}`, 'error', {
+        log(`Error saving list of running projects: ${error.message}`, 'error', {
             errorName: error.name,
             errorStack: error.stack,
             path: RUNNING_PROJECTS_PATH
         });
-        // Nechceme, aby se server crashoval kvůli chybě při ukládání seznamu
+        // We don't want the server to crash due to error saving the list
         // throw error;
     }
 }
 
-// Načtení seznamu běžících projektů
+// Load list of running projects
 async function loadRunningProjects() {
     try {
         if (await fs.pathExists(RUNNING_PROJECTS_PATH)) {
@@ -316,94 +316,94 @@ async function loadRunningProjects() {
         }
         return [];
     } catch (error) {
-        log(`Chyba při načítání seznamu běžících projektů: ${error.message}`, 'error');
+        log(`Error loading list of running projects: ${error.message}`, 'error');
         return [];
     }
 }
 
-// Automatické spuštění projektů, které byly spuštěné před restartem
+// Automatic startup of projects that were running before restart
 async function autoStartDeployedProjects() {
     try {
-        log('Kontroluji projekty, které byly spuštěné před restartem...', 'info');
+        log('Checking projects that were running before restart...', 'info');
         
-        // Načti seznam projektů, které byly spuštěné
+        // Load list of projects that were running
         const runningProjectsList = await loadRunningProjects();
         
         if (runningProjectsList.length === 0) {
-            log('Žádné projekty k automatickému spuštění (nebyly spuštěné před restartem)', 'info');
+            log('No projects for automatic startup (were not running before restart)', 'info');
             return 0;
         }
         
-        log(`Našel ${runningProjectsList.length} projektů, které byly spuštěné před restartem`, 'info');
+        log(`Found ${runningProjectsList.length} projects that were running before restart`, 'info');
         
         const deployedProjectsDir = path.join(UPLOADS_BASE, 'deployed-projects');
         
-        // Zkontroluj, zda adresář existuje
+        // Check if directory exists
         if (!await fs.pathExists(deployedProjectsDir)) {
-            log('Adresář deployed-projects neexistuje, žádné projekty k automatickému spuštění', 'info');
+            log('deployed-projects directory does not exist, no projects for automatic startup', 'info');
             return 0;
         }
         
         let startedCount = 0;
         for (const projectName of runningProjectsList) {
             try {
-                // Načti projekt z deployed-projects nebo auto-save
+                // Load project from deployed-projects or auto-save
                 let projectInfo = null;
                 
-                // Nejdříve zkus najít v deployed-projects
+                // First try to find in deployed-projects
                 const safeFileName = sanitizeFileName(projectName);
                 const deployedProjectPath = path.join(deployedProjectsDir, safeFileName);
                 
                 if (await fs.pathExists(deployedProjectPath)) {
                     projectInfo = await fs.readJson(deployedProjectPath);
                 } else {
-                    // Pokud není v deployed-projects, zkus auto-save
+                    // If not in deployed-projects, try auto-save
                     projectInfo = await loadAutoSaveProject(projectName);
                 }
                 
                 if (!projectInfo) {
-                    log(`Projekt ${projectName} nebyl nalezen v deployed-projects ani auto-save, přeskočeno`, 'warn');
+                    log(`Project ${projectName} not found in deployed-projects or auto-save, skipped`, 'warn');
                     continue;
                 }
                 
-                // Zpracuj projectData - může být string nebo objekt
+                // Process projectData - can be string or object
                 let actualProjectData = projectInfo.projectData;
                 if (typeof actualProjectData === 'string') {
                     try {
                         actualProjectData = JSON.parse(actualProjectData);
                     } catch (parseError) {
-                        log(`Chyba při parsování projectData pro ${projectName}: ${parseError.message}`, 'error');
+                        log(`Error parsing projectData for ${projectName}: ${parseError.message}`, 'error');
                         continue;
                     }
                 }
                 
-                // Validace přítomnosti IP komponenty
+                // Validate presence of IP component
                 if (!validateAlbiLABIPComponent(actualProjectData)) {
-                    log(`Projekt ${projectName} nemá AlbiLAB IP komponentu, přeskočeno`, 'warn');
+                    log(`Project ${projectName} does not have AlbiLAB IP component, skipped`, 'warn');
                     continue;
                 }
                 
-                // Spusť projekt
-                log(`Spouštím automaticky projekt, který byl spuštěný před restartem: ${projectName}`, 'info');
+                // Start project
+                log(`Automatically starting project that was running before restart: ${projectName}`, 'info');
                 await startService(actualProjectData, projectName);
                 startedCount++;
                 
-                // Počkej chvilku mezi spouštěním projektů
+                // Wait a bit between starting projects
                 await new Promise(resolve => setTimeout(resolve, 500));
                 
             } catch (error) {
-                log(`Chyba při automatickém spuštění projektu ${projectName}: ${error.message}`, 'error', {
+                log(`Error during automatic startup of project ${projectName}: ${error.message}`, 'error', {
                     errorName: error.name,
                     errorStack: error.stack
                 });
             }
         }
         
-        log(`Automaticky spuštěno ${startedCount} z ${runningProjectsList.length} projektů, které byly spuštěné před restartem`, startedCount > 0 ? 'success' : 'info');
+        log(`Automatically started ${startedCount} out of ${runningProjectsList.length} projects that were running before restart`, startedCount > 0 ? 'success' : 'info');
         return startedCount;
         
     } catch (error) {
-        log(`Chyba při automatickém spuštění projektů: ${error.message}`, 'error', {
+        log(`Error during automatic startup of projects: ${error.message}`, 'error', {
             errorName: error.name,
             errorStack: error.stack
         });
@@ -411,24 +411,24 @@ async function autoStartDeployedProjects() {
     }
 }
 
-// Logging funkce
+// Logging function
 function log(message, type = 'info', details = null) {
     const timestamp = new Date().toISOString();
     
-    // Bezpečně serializuj details pro uložení do logů
+    // Safely serialize details for saving to logs
     let safeDetails = null;
     if (details) {
         try {
             safeDetails = JSON.parse(JSON.stringify(details));
         } catch (error) {
-            safeDetails = { error: 'Nelze serializovat details', originalType: typeof details };
+            safeDetails = { error: 'Cannot serialize details', originalType: typeof details };
         }
     }
     
     const logEntry = { timestamp, message, type, details: safeDetails };
     serviceLogs.push(logEntry);
     
-    // Udržuj pouze posledních 100 logů
+    // Keep only last 100 logs
     if (serviceLogs.length > 100) {
         serviceLogs = serviceLogs.slice(-100);
     }
@@ -438,39 +438,39 @@ function log(message, type = 'info', details = null) {
         try {
             console.log(`[${timestamp}] DETAILS:`, JSON.stringify(details, null, 2));
         } catch (error) {
-            console.log(`[${timestamp}] DETAILS: [Cirkulární reference - nelze serializovat]`);
+            console.log(`[${timestamp}] DETAILS: [Circular reference - cannot serialize]`);
         }
     }
     broadcast({ type: 'log', data: logEntry });
 }
 
-// Zastavení konkrétní služby
+// Stop specific service
 async function stopService(projectName, saveRunningProjectsList = true) {
     const serviceInfo = runningServices.get(projectName);
     if (serviceInfo) {
         try {
-            log(`Zastavuji službu: ${projectName}`, 'info');
+            log(`Stopping service: ${projectName}`, 'info');
             serviceInfo.vm.stopAll();
             serviceInfo.vm.quit();
             runningServices.delete(projectName);
             
-            // Ulož aktualizovaný seznam běžících projektů (pouze pokud není vypínání serveru)
+            // Save updated list of running projects (only if not shutting down server)
             if (saveRunningProjectsList) {
                 await saveRunningProjects();
             }
             
-            log(`Služba ${projectName} byla zastavena`, 'success');
+            log(`Service ${projectName} stopped`, 'success');
             broadcast({ type: 'serviceStopped', data: { projectName } });
             return true;
         } catch (error) {
-            log(`Chyba při zastavování služby ${projectName}: ${error.message}`, 'error');
+            log(`Error stopping service ${projectName}: ${error.message}`, 'error');
             return false;
         }
     }
     return false;
 }
 
-// Zastavení všech služeb
+// Stop all services
 async function stopAllServices(saveRunningProjectsList = true) {
     const projectNames = Array.from(runningServices.keys());
     for (const projectName of projectNames) {
@@ -478,45 +478,45 @@ async function stopAllServices(saveRunningProjectsList = true) {
     }
 }
 
-// Spuštění nové služby
+// Start new service
 async function startService(projectData, projectName) {
     try {
-        // Pokud služba už běží, zastav ji
+        // If service is already running, stop it
         if (runningServices.has(projectName)) {
             await stopService(projectName);
         }
         
-        log(`Spouštím službu: ${projectName}`, 'info', { 
+        log(`Starting service: ${projectName}`, 'info', { 
             projectName, 
             projectDataSize: JSON.stringify(projectData).length,
             spritesCount: projectData.targets ? projectData.targets.length : 0,
             runningServicesCount: runningServices.size
         });
         
-        // Vytvoř novou VM instanci
+        // Create new VM instance
         const vm = new VirtualMachine();
-        log(`Virtual Machine instance vytvořena pro ${projectName}`, 'info');
+        log(`Virtual Machine instance created for ${projectName}`, 'info');
         
-        // Připoj AlbiLAB extension
-        log(`Načítám AlbiLAB extension pro ${projectName}...`, 'info');
+        // Attach AlbiLAB extension
+        log(`Loading AlbiLAB extension for ${projectName}...`, 'info');
         await vm.extensionManager.loadExtensionURL('albilab');
-        log(`AlbiLAB extension úspěšně načtena pro ${projectName}`, 'success');
+        log(`AlbiLAB extension successfully loaded for ${projectName}`, 'success');
         
-        // Spusť VM
+        // Start VM
         vm.start();
-        log(`Virtual Machine spuštěna pro ${projectName}`, 'info');
+        log(`Virtual Machine started for ${projectName}`, 'info');
         
-        // Načti projekt
-        log(`Načítám projekt do VM pro ${projectName}...`, 'info');
+        // Load project
+        log(`Loading project into VM for ${projectName}...`, 'info');
         await vm.loadProject(projectData);
-        log(`Projekt úspěšně načten do VM pro ${projectName}`, 'success');
+        log(`Project successfully loaded into VM for ${projectName}`, 'success');
         
-        // Spusť projekt
-        log(`Spouštím projekt (green flag) pro ${projectName}...`, 'info');
+        // Start project
+        log(`Starting project (green flag) for ${projectName}...`, 'info');
         vm.greenFlag();
-        log(`Projekt spuštěn pro ${projectName}`, 'success');
+        log(`Project started for ${projectName}`, 'success');
         
-        // Ulož referenci na službu
+        // Save reference to service
         const serviceInfo = {
             vm: vm,
             projectName: projectName,
@@ -524,21 +524,21 @@ async function startService(projectData, projectName) {
         };
         runningServices.set(projectName, serviceInfo);
         
-        log(`Služba ${projectName} byla úspěšně spuštěna`, 'success', {
+        log(`Service ${projectName} successfully started`, 'success', {
             startTime: serviceInfo.startTime.toISOString(),
             vmState: 'running',
             totalRunningServices: runningServices.size
         });
         broadcast({ type: 'serviceStarted', data: { projectName, startTime: serviceInfo.startTime } });
         
-        // Ulož aktualizovaný seznam běžících projektů
-        log(`Ukládám seznam běžících projektů po spuštění ${projectName}...`, 'info');
+        // Save updated list of running projects
+        log(`Saving list of running projects after starting ${projectName}...`, 'info');
         await saveRunningProjects();
-        log(`Seznam běžících projektů uložen po spuštění ${projectName}`, 'success');
+        log(`List of running projects saved after starting ${projectName}`, 'success');
         
-        // Sleduj chyby VM
+        // Monitor VM errors
         vm.on('error', (error) => {
-            log(`VM chyba pro ${projectName}: ${error.message}`, 'error', {
+            log(`VM error for ${projectName}: ${error.message}`, 'error', {
                 errorName: error.name,
                 errorStack: error.stack,
                 vmState: vm.runtime ? 'running' : 'stopped',
@@ -546,9 +546,9 @@ async function startService(projectData, projectName) {
             });
         });
         
-        // Sleduj ukončení VM
+        // Monitor VM termination
         vm.on('quit', () => {
-            log(`VM byla ukončena pro ${projectName}`, 'info', {
+            log(`VM terminated for ${projectName}`, 'info', {
                 quitTime: new Date().toISOString(),
                 uptime: serviceInfo ? Date.now() - serviceInfo.startTime.getTime() : 0,
                 projectName
@@ -557,23 +557,23 @@ async function startService(projectData, projectName) {
             broadcast({ type: 'serviceStopped', data: { projectName } });
         });
         
-        // Sleduj runtime události
+        // Monitor runtime events
         if (vm.runtime) {
             vm.runtime.on('PROJECT_LOADED', () => {
-                log(`Projekt byl načten do runtime pro ${projectName}`, 'info');
+                log(`Project loaded into runtime for ${projectName}`, 'info');
             });
             
             vm.runtime.on('PROJECT_RUN_START', () => {
-                log(`Projekt začal běžet pro ${projectName}`, 'info');
+                log(`Project started running for ${projectName}`, 'info');
             });
             
             vm.runtime.on('PROJECT_RUN_STOP', () => {
-                log(`Projekt byl zastaven pro ${projectName}`, 'info');
+                log(`Project stopped for ${projectName}`, 'info');
             });
         }
         
     } catch (error) {
-        log(`Chyba při spouštění služby ${projectName}: ${error.message}`, 'error', {
+        log(`Error starting service ${projectName}: ${error.message}`, 'error', {
             errorName: error.name,
             errorStack: error.stack,
             projectName
@@ -584,7 +584,7 @@ async function startService(projectData, projectName) {
 
 // API Routes
 
-// Stav služeb
+// Service status
 app.get('/api/status', (req, res) => {
     const runningServicesList = getAllRunningServices();
     const statusData = {
@@ -602,7 +602,7 @@ app.get('/api/status', (req, res) => {
     res.json(statusData);
 });
 
-// Spuštění služby ze souboru
+// Start service from file
 app.post('/api/start-service', upload.single('project'), async (req, res) => {
     try {
         log('API: Start service from file called', 'info', {
@@ -615,12 +615,12 @@ app.post('/api/start-service', upload.single('project'), async (req, res) => {
         
         if (!req.file) {
             log('API: No file uploaded', 'error');
-            return res.status(400).json({ error: 'Žádný soubor nebyl nahrán' });
+            return res.status(400).json({ error: 'No file uploaded' });
         }
         
-        const projectName = req.body.projectName || req.file.originalname || 'Neznámý projekt';
+        const projectName = req.body.projectName || req.file.originalname || 'Unknown project';
         
-        // Načti projekt ze souboru
+        // Load project from file
         log(`API: Reading project file: ${req.file.path}`, 'info');
         const projectData = await fs.readFile(req.file.path, 'utf8');
         const projectJson = JSON.parse(projectData);
@@ -631,9 +631,9 @@ app.post('/api/start-service', upload.single('project'), async (req, res) => {
             spritesCount: projectJson.targets ? projectJson.targets.length : 0
         });
         
-        // Validace přítomnosti IP komponenty
+        // Validate presence of IP component
         if (!validateAlbiLABIPComponent(projectJson)) {
-            // Smaž dočasný soubor
+            // Delete temporary file
             await fs.remove(req.file.path);
             return res.status(400).json({ 
                 success: false,
@@ -641,16 +641,16 @@ app.post('/api/start-service', upload.single('project'), async (req, res) => {
             });
         }
         
-        // Spusť službu
+        // Start service
         await startService(projectJson, projectName);
         
-        // Smaž dočasný soubor
+        // Delete temporary file
         await fs.remove(req.file.path);
         log(`API: Temporary file removed: ${req.file.path}`, 'info');
         
         const response = { 
             success: true, 
-            message: `Služba ${projectName} byla spuštěna`,
+            message: `Service ${projectName} started`,
             projectName: projectName
         };
         
@@ -670,7 +670,7 @@ app.post('/api/start-service', upload.single('project'), async (req, res) => {
     }
 });
 
-// Spuštění služby z JSON dat
+// Start service from JSON data
 app.post('/api/start-service-json', async (req, res) => {
     try {
         log('API: Start service from JSON called', 'info', {
@@ -687,7 +687,7 @@ app.post('/api/start-service-json', async (req, res) => {
             return res.status(400).json({ error: 'Missing projectData' });
         }
         
-        const name = projectName || 'Neznámý projekt';
+        const name = projectName || 'Unknown project';
         
         log(`API: Starting service with JSON data`, 'info', {
             projectName: name,
@@ -695,7 +695,7 @@ app.post('/api/start-service-json', async (req, res) => {
             spritesCount: projectData.targets ? projectData.targets.length : 0
         });
         
-        // Validace přítomnosti IP komponenty
+        // Validate presence of IP component
         if (!validateAlbiLABIPComponent(projectData)) {
             return res.status(400).json({ 
                 success: false,
@@ -703,12 +703,12 @@ app.post('/api/start-service-json', async (req, res) => {
             });
         }
         
-        // Spusť službu
+        // Start service
         await startService(projectData, name);
         
         const response = { 
             success: true, 
-            message: `Služba ${name} byla spuštěna`,
+            message: `Service ${name} started`,
             projectName: name
         };
         
@@ -728,7 +728,7 @@ app.post('/api/start-service-json', async (req, res) => {
     }
 });
 
-// Zastavení všech služeb
+// Stop all services
 app.post('/api/stop-service', async (req, res) => {
     try {
         log('API: Stop all services called', 'info', {
@@ -738,7 +738,7 @@ app.post('/api/stop-service', async (req, res) => {
         
         await stopAllServices();
         
-        const response = { success: true, message: 'Všechny služby byly zastaveny' };
+        const response = { success: true, message: 'All services stopped' };
         log('API: All services stopped successfully', 'success', response);
         res.json(response);
         
@@ -755,7 +755,7 @@ app.post('/api/stop-service', async (req, res) => {
     }
 });
 
-// Logy služeb
+// Service logs
 app.get('/api/logs', (req, res) => {
     log('API: Logs requested', 'info', {
         logsCount: serviceLogs.length,
@@ -765,7 +765,7 @@ app.get('/api/logs', (req, res) => {
     res.json(serviceLogs);
 });
 
-// Informace o uloženém projektu
+// Information about saved project
 app.get('/api/saved-project', async (req, res) => {
     try {
         log('API: Saved project info requested', 'info');
@@ -792,21 +792,21 @@ app.get('/api/saved-project', async (req, res) => {
     }
 });
 
-// Načtení uloženého projektu pro frontend
+// Load saved project for frontend
 app.get('/api/saved-project/load', async (req, res) => {
     try {
         log('API: Load saved project for frontend requested', 'info');
         
         const savedProject = await loadSavedProject();
         if (savedProject) {
-            // Vracíme projectData jako JSON string, protože vm.toJSON() vrací string
-            // a vm.loadProject() očekává buď string nebo objekt
-            // Pokud je projectData už string, použijeme ho přímo
-            // Pokud je objekt (starý formát), převedeme ho na JSON string
+            // Return projectData as JSON string, because vm.toJSON() returns string
+            // and vm.loadProject() expects either string or object
+            // If projectData is already a string, use it directly
+            // If it's an object (old format), convert it to JSON string
             let actualProjectData = savedProject.projectData;
             
             if (typeof actualProjectData === 'object' && actualProjectData !== null) {
-                // Starý formát - objekt, převedeme na JSON string
+                // Old format - object, convert to JSON string
                 try {
                     actualProjectData = JSON.stringify(actualProjectData);
                     log(`API: Converted projectData from object to JSON string for saved project`, 'info');
@@ -820,7 +820,7 @@ app.get('/api/saved-project/load', async (req, res) => {
                 }
             }
             
-            // Ověř, že projectData je string
+            // Verify that projectData is a string
             if (typeof actualProjectData !== 'string') {
                 log(`API: projectData is not a string for saved project, type: ${typeof actualProjectData}`, 'error');
                 return res.status(500).json({
@@ -839,7 +839,7 @@ app.get('/api/saved-project/load', async (req, res) => {
         } else {
             res.status(404).json({
                 success: false,
-                error: 'Žádný uložený projekt nebyl nalezen'
+                error: 'No saved project found'
             });
         }
     } catch (error) {
@@ -852,7 +852,7 @@ app.get('/api/saved-project/load', async (req, res) => {
     }
 });
 
-// Načtení auto-save projektu pro frontend podle názvu
+// Load auto-save project for frontend by name
 app.get('/api/saved-project/auto-save/load', async (req, res) => {
     try {
         const projectName = req.query.projectName;
@@ -861,16 +861,16 @@ app.get('/api/saved-project/auto-save/load', async (req, res) => {
         if (!projectName) {
             return res.status(400).json({
                 success: false,
-                error: 'Název projektu je povinný'
+                error: 'Project name is required'
             });
         }
         
         const autoSaveProject = await loadAutoSaveProject(projectName);
         if (autoSaveProject) {
-            // Zpracuj projectData - může být string nebo objekt (kvůli escape-ování v JSON souboru)
+            // Process projectData - can be string or object (due to escaping in JSON file)
             let actualProjectData = autoSaveProject.projectData;
             
-            // Pokud je to objekt, převedeme ho na JSON string
+            // If it's an object, convert it to JSON string
             if (typeof actualProjectData === 'object' && actualProjectData !== null) {
                 try {
                     actualProjectData = JSON.stringify(actualProjectData);
@@ -885,25 +885,25 @@ app.get('/api/saved-project/auto-save/load', async (req, res) => {
                 }
             }
             
-            // Pokud je to string, zkontroluj, jestli není escape-ovaný (double-encoded)
+            // If it's a string, check if it's not escaped (double-encoded)
             if (typeof actualProjectData === 'string') {
-                // Zkus parsovat - pokud se to podaří a výsledek je znovu string, pak je to double-encoded
+                // Try to parse - if it succeeds and result is a string again, then it's double-encoded
                 try {
                     const parsed = JSON.parse(actualProjectData);
                     if (typeof parsed === 'string') {
-                        // Double-encoded - použijeme parsovaný string
+                        // Double-encoded - use parsed string
                         log(`API: Detected double-encoded projectData for project: ${projectName}, fixing...`, 'info');
                         actualProjectData = parsed;
                     }
-                    // Pokud parsed není string, pak actualProjectData už byl objekt, což by nemělo nastat
+                    // If parsed is not a string, then actualProjectData was already an object, which shouldn't happen
                 } catch (parseError) {
-                    // Pokud se to nedá parsovat, může to být už správně formátovaný JSON string projektu
-                    // (což je v pořádku - to je to, co chceme)
+                    // If it can't be parsed, it might already be a correctly formatted JSON string of the project
+                    // (which is fine - that's what we want)
                     log(`API: projectData is a JSON string (not double-encoded) for project: ${projectName}`, 'info');
                 }
             }
             
-            // Ověř, že projectData je string
+            // Verify that projectData is a string
             if (typeof actualProjectData !== 'string') {
                 log(`API: projectData is not a string for project ${projectName}, type: ${typeof actualProjectData}`, 'error');
                 return res.status(500).json({
@@ -912,8 +912,8 @@ app.get('/api/saved-project/auto-save/load', async (req, res) => {
                 });
             }
             
-            // Vracíme projectData jako JSON string - Express ho automaticky escape-uje v JSON odpovědi
-            // Frontend ho pak parsuje pomocí response.json() a dostane správný string
+            // Return projectData as JSON string - Express automatically escapes it in JSON response
+            // Frontend then parses it using response.json() and gets the correct string
             res.json({
                 success: true,
                 projectData: actualProjectData,
@@ -925,7 +925,7 @@ app.get('/api/saved-project/auto-save/load', async (req, res) => {
         } else {
             res.status(404).json({
                 success: false,
-                error: `Auto-save projekt "${projectName}" nebyl nalezen`
+                error: `Auto-save project "${projectName}" not found`
             });
         }
     } catch (error) {
@@ -938,7 +938,7 @@ app.get('/api/saved-project/auto-save/load', async (req, res) => {
     }
 });
 
-// Průběžné ukládání projektu (bez spuštění služby)
+// Continuous project saving (without starting service)
 app.post('/api/saved-project/auto-save', async (req, res) => {
     try {
         log('API: Auto-save project requested', 'info', {
@@ -954,23 +954,23 @@ app.post('/api/saved-project/auto-save', async (req, res) => {
             return res.status(400).json({ error: 'Missing projectData' });
         }
         
-        const name = projectName || 'Neznámý projekt';
+        const name = projectName || 'Unknown project';
         
-        // Ukládáme projectData jako string (JSON string), protože vm.toJSON() vrací string
-        // a loadProject() očekává buď string nebo objekt (který se převede na string)
-        // Pokud je projectData už string, použijeme ho přímo
-        // Pokud je objekt, převedeme ho na JSON string
+        // Save projectData as string (JSON string), because vm.toJSON() returns string
+        // and loadProject() expects either string or object (which gets converted to string)
+        // If projectData is already a string, use it directly
+        // If it's an object, convert it to JSON string
         const actualProjectData = typeof projectData === 'string' 
             ? projectData 
             : JSON.stringify(projectData);
         
-        // Ulož projekt bez spuštění služby (auto-save)
+        // Save project without starting service (auto-save)
         const saved = await saveProject(actualProjectData, name, true);
         
         if (saved) {
             const response = { 
                 success: true, 
-                message: `Projekt ${name} byl automaticky uložen`,
+                message: `Project ${name} automatically saved`,
                 projectName: name,
                 savedAt: new Date().toISOString()
             };
@@ -998,17 +998,17 @@ app.post('/api/saved-project/auto-save', async (req, res) => {
     }
 });
 
-// Smazání uloženého projektu
+// Delete saved project
 app.delete('/api/saved-project', async (req, res) => {
     try {
         log('API: Delete saved project requested', 'info');
         
         if (await fs.pathExists(SAVED_PROJECT_PATH)) {
             await fs.remove(SAVED_PROJECT_PATH);
-            log('Uložený projekt byl smazán', 'success');
-            res.json({ success: true, message: 'Uložený projekt byl smazán' });
+            log('Saved project deleted', 'success');
+            res.json({ success: true, message: 'Saved project deleted' });
         } else {
-            res.json({ success: true, message: 'Žádný uložený projekt nebyl nalezen' });
+            res.json({ success: true, message: 'No saved project found' });
         }
     } catch (error) {
         log(`API: Error deleting saved project: ${error.message}`, 'error');
@@ -1019,7 +1019,7 @@ app.delete('/api/saved-project', async (req, res) => {
     }
 });
 
-// Smazání auto-save projektu podle názvu
+// Delete auto-save project by name
 app.delete('/api/saved-project/auto-save', async (req, res) => {
     try {
         const projectName = req.query.projectName;
@@ -1028,40 +1028,40 @@ app.delete('/api/saved-project/auto-save', async (req, res) => {
         if (!projectName) {
             return res.status(400).json({
                 success: false,
-                error: 'Název projektu je povinný'
+                error: 'Project name is required'
             });
         }
         
-        // Pokud projekt běží, zastav ho (to aktualizuje seznam běžících projektů)
+        // If project is running, stop it (this updates the list of running projects)
         if (runningServices.has(projectName)) {
-            log(`Projekt ${projectName} běží, zastavuji ho před smazáním...`, 'info');
+            log(`Project ${projectName} is running, stopping it before deletion...`, 'info');
             await stopService(projectName);
         }
         
-        // Pokud adresář neexistuje, projekt neexistuje
+        // If directory doesn't exist, project doesn't exist
         if (!await fs.pathExists(AUTO_SAVE_DIR)) {
-            return res.json({ success: true, message: `Auto-save projekt "${projectName}" nebyl nalezen` });
+            return res.json({ success: true, message: `Auto-save project "${projectName}" not found` });
         }
         
-        // Nejdříve zkus najít soubor přímo podle sanitizovaného názvu (rychlejší)
+        // First try to find file directly by sanitized name (faster)
         const safeFileName = sanitizeFileName(projectName);
         const directFilePath = path.join(AUTO_SAVE_DIR, safeFileName);
         
         if (await fs.pathExists(directFilePath)) {
             try {
                 const projectInfo = await fs.readJson(directFilePath);
-                // Ověř, že originální název v souboru odpovídá hledanému názvu
+                // Verify that original name in file matches searched name
                 if (projectInfo.projectName === projectName) {
                     await fs.remove(directFilePath);
-                    log(`Auto-save projekt ${projectName} byl smazán (přímý přístup)`, 'success');
-                    return res.json({ success: true, message: `Auto-save projekt "${projectName}" byl smazán` });
+                    log(`Auto-save project ${projectName} deleted (direct access)`, 'success');
+                    return res.json({ success: true, message: `Auto-save project "${projectName}" deleted` });
                 }
             } catch (error) {
-                log(`Chyba při načítání souboru ${safeFileName}: ${error.message}`, 'error');
+                log(`Error loading file ${safeFileName}: ${error.message}`, 'error');
             }
         }
         
-        // Fallback: Projdi všechny soubory a hledej podle originálního názvu
+        // Fallback: Go through all files and search by original name
         const files = await fs.readdir(AUTO_SAVE_DIR);
         
         for (const file of files) {
@@ -1070,19 +1070,19 @@ app.delete('/api/saved-project/auto-save', async (req, res) => {
                     const filePath = path.join(AUTO_SAVE_DIR, file);
                     const projectInfo = await fs.readJson(filePath);
                     
-                    // Porovnej originální názvy (case-sensitive)
+                    // Compare original names (case-sensitive)
                     if (projectInfo.projectName === projectName) {
                         await fs.remove(filePath);
-                        log(`Auto-save projekt ${projectName} byl smazán (fallback)`, 'success');
-                        return res.json({ success: true, message: `Auto-save projekt "${projectName}" byl smazán` });
+                        log(`Auto-save project ${projectName} deleted (fallback)`, 'success');
+                        return res.json({ success: true, message: `Auto-save project "${projectName}" deleted` });
                     }
                 } catch (error) {
-                    log(`Chyba při načítání souboru ${file}: ${error.message}`, 'error');
+                    log(`Error loading file ${file}: ${error.message}`, 'error');
                 }
             }
         }
         
-        res.json({ success: true, message: `Auto-save projekt "${projectName}" nebyl nalezen` });
+        res.json({ success: true, message: `Auto-save project "${projectName}" not found` });
     } catch (error) {
         log(`API: Error deleting auto-save project: ${error.message}`, 'error');
         res.status(500).json({ 
@@ -1092,7 +1092,7 @@ app.delete('/api/saved-project/auto-save', async (req, res) => {
     }
 });
 
-// Seznam všech auto-save projektů
+// List all auto-save projects
 app.get('/api/saved-project/auto-save/list', async (req, res) => {
     try {
         log('API: List auto-save projects requested', 'info');
@@ -1119,12 +1119,12 @@ app.get('/api/saved-project/auto-save/list', async (req, res) => {
                         version: projectInfo.version
                     });
                 } catch (error) {
-                    log(`Chyba při načítání souboru ${file}: ${error.message}`, 'error');
+                    log(`Error loading file ${file}: ${error.message}`, 'error');
                 }
             }
         }
         
-        // Seřaď podle času uložení (nejnovější první)
+        // Sort by save time (newest first)
         projects.sort((a, b) => new Date(b.savedAt) - new Date(a.savedAt));
         
         res.json({
@@ -1142,7 +1142,7 @@ app.get('/api/saved-project/auto-save/list', async (req, res) => {
     }
 });
 
-// Funkce pro kontrolu přítomnosti IP komponenty v projektu
+// Function to check for presence of IP component in project
 function validateAlbiLABIPComponent(projectData) {
     try {
         log(`Validating AlbiLAB IP component`, 'info', {
@@ -1155,19 +1155,19 @@ function validateAlbiLABIPComponent(projectData) {
             return false;
         }
         
-        // Projdi všechny sprites a stage
+        // Iterate through all sprites and stage
         for (const target of projectData.targets) {
             if (target.blocks) {
                 log(`Checking target ${target.name} with ${Object.keys(target.blocks).length} blocks`, 'info');
-                // Projdi všechny bloky
+                // Iterate through all blocks
                 for (const blockId in target.blocks) {
                     const block = target.blocks[blockId];
                     log(`Checking block ${blockId}: opcode=${block.opcode}`, 'info');
-                    // Zkontroluj, zda je to AlbiLAB blok pro nastavení IP
+                    // Check if this is an AlbiLAB block for setting IP
                     if (block.opcode === 'albilab_setDeviceIP' && block.inputs && block.inputs.IP) {
-                        const ipValue = block.inputs.IP[1][1]; // [1][1] pro získání skutečné hodnoty
+                        const ipValue = block.inputs.IP[1][1]; // [1][1] to get the actual value
                         log(`Found AlbiLAB IP block with IP: ${ipValue}`, 'info');
-                        // Zkontroluj, zda má IP hodnotu (není prázdná)
+                        // Check if IP has a value (not empty)
                         if (ipValue && ipValue.trim() !== '') {
                             log(`Validation successful: IP component found with value: ${ipValue}`, 'success');
                             return true;
@@ -1185,7 +1185,7 @@ function validateAlbiLABIPComponent(projectData) {
     }
 }
 
-// Nasazení projektu (uložení do AlbiLAB)
+// Deploy project (save to AlbiLAB)
 app.post('/api/deploy-project', async (req, res) => {
     try {
         const { projectName } = req.body;
@@ -1202,7 +1202,7 @@ app.post('/api/deploy-project', async (req, res) => {
             runningServicesCount: runningServices.size
         });
         
-        // Načti projekt z auto-save
+        // Load project from auto-save
         const projectData = await loadAutoSaveProject(projectName);
         if (!projectData) {
             return res.status(404).json({ 
@@ -1211,8 +1211,8 @@ app.post('/api/deploy-project', async (req, res) => {
             });
         }
         
-        // Validace přítomnosti IP komponenty
-        // Pokud je projectData string, parsuj ho
+        // Validate presence of IP component
+        // If projectData is a string, parse it
         const actualProjectData = typeof projectData.projectData === 'string' 
             ? JSON.parse(projectData.projectData) 
             : projectData.projectData;
@@ -1224,8 +1224,8 @@ app.post('/api/deploy-project', async (req, res) => {
             });
         }
         
-        // Ulož projekt do AlbiLAB (nasadit)
-        // saveProject očekává string, takže převedeme objekt zpět na JSON string
+        // Save project to AlbiLAB (deploy)
+        // saveProject expects a string, so convert object back to JSON string
         const projectDataString = typeof actualProjectData === 'string' 
             ? actualProjectData 
             : JSON.stringify(actualProjectData);
@@ -1234,7 +1234,7 @@ app.post('/api/deploy-project', async (req, res) => {
         if (saved) {
             const response = { 
                 success: true, 
-                message: `Projekt ${projectName} byl nasazen do AlbiLAB`,
+                message: `Project ${projectName} has been deployed to AlbiLAB`,
                 projectName: projectName
             };
             
@@ -1261,7 +1261,7 @@ app.post('/api/deploy-project', async (req, res) => {
     }
 });
 
-// Spuštění nasazeného projektu
+// Start deployed project
 app.post('/api/start-project', async (req, res) => {
     try {
         const { projectName } = req.body;
@@ -1278,7 +1278,7 @@ app.post('/api/start-project', async (req, res) => {
             runningServicesCount: runningServices.size
         });
         
-        // Zkontroluj, zda je projekt nasazen
+        // Check if project is deployed
         const isDeployed = await isProjectDeployed(projectName);
         if (!isDeployed) {
             return res.status(404).json({ 
@@ -1287,7 +1287,7 @@ app.post('/api/start-project', async (req, res) => {
             });
         }
         
-        // Zkontroluj, zda už neběží
+        // Check if it's already running
         if (runningServices.has(projectName)) {
             return res.status(409).json({ 
                 success: false,
@@ -1295,7 +1295,7 @@ app.post('/api/start-project', async (req, res) => {
             });
         }
         
-        // Načti projekt z auto-save
+        // Load project from auto-save
         const projectData = await loadAutoSaveProject(projectName);
         if (!projectData) {
             return res.status(404).json({ 
@@ -1304,8 +1304,8 @@ app.post('/api/start-project', async (req, res) => {
             });
         }
         
-        // Validace přítomnosti IP komponenty
-        // Pokud je projectData.projectData string, parsuj ho
+        // Validate presence of IP component
+        // If projectData.projectData is a string, parse it
         const actualProjectData = typeof projectData.projectData === 'string' 
             ? JSON.parse(projectData.projectData) 
             : projectData.projectData;
@@ -1317,12 +1317,12 @@ app.post('/api/start-project', async (req, res) => {
             });
         }
         
-        // Spusť službu
+        // Start service
         await startService(actualProjectData, projectName);
         
         const response = { 
             success: true, 
-            message: `Projekt ${projectName} byl spuštěn`,
+            message: `Project ${projectName} has been started`,
             projectName: projectName
         };
         
@@ -1343,7 +1343,7 @@ app.post('/api/start-project', async (req, res) => {
     }
 });
 
-// Zastavení konkrétního projektu
+// Stop specific project
 app.post('/api/stop-project', async (req, res) => {
     try {
         const { projectName } = req.body;
@@ -1360,7 +1360,7 @@ app.post('/api/stop-project', async (req, res) => {
             runningServicesCount: runningServices.size
         });
         
-        // Zkontroluj, zda projekt běží
+        // Check if project is running
         if (!runningServices.has(projectName)) {
             return res.status(404).json({ 
                 success: false,
@@ -1368,13 +1368,13 @@ app.post('/api/stop-project', async (req, res) => {
             });
         }
         
-        // Zastav službu
+        // Stop service
         const stopped = await stopService(projectName);
         
         if (stopped) {
             const response = { 
                 success: true, 
-                message: `Projekt ${projectName} byl zastaven`,
+                message: `Project ${projectName} has been stopped`,
                 projectName: projectName
             };
             
@@ -1401,7 +1401,7 @@ app.post('/api/stop-project', async (req, res) => {
     }
 });
 
-// Seznam projektů s jejich stavem
+// List of projects with their status
 app.get('/api/projects-status', async (req, res) => {
     try {
         log('API: Projects status requested', 'info');
@@ -1435,12 +1435,12 @@ app.get('/api/projects-status', async (req, res) => {
                         isDeployed: isDeployed
                     });
                 } catch (error) {
-                    log(`Chyba při načítání souboru ${file}: ${error.message}`, 'error');
+                    log(`Error loading file ${file}: ${error.message}`, 'error');
                 }
             }
         }
         
-        // Seřaď podle času uložení (nejnovější první)
+        // Sort by save time (newest first)
         projects.sort((a, b) => new Date(b.savedAt) - new Date(a.savedAt));
         
         res.json({
@@ -1458,16 +1458,16 @@ app.get('/api/projects-status', async (req, res) => {
     }
 });
 
-// WebSocket připojení
+// WebSocket connection
 wss.on('connection', (ws) => {
     const clientId = Math.random().toString(36).substr(2, 9);
-    log(`Nové WebSocket připojení (ID: ${clientId})`, 'info', {
+    log(`New WebSocket connection (ID: ${clientId})`, 'info', {
         clientId,
         totalConnections: wss.clients.size,
         clientIP: ws._socket ? ws._socket.remoteAddress : 'unknown'
     });
     
-    // Pošli aktuální stav
+    // Send current status
     const runningServicesList = getAllRunningServices();
     const statusData = {
         type: 'status', 
@@ -1479,7 +1479,7 @@ wss.on('connection', (ws) => {
     };
     
     ws.send(JSON.stringify(statusData));
-    log(`Status data odeslána klientovi ${clientId}`, 'info', {
+    log(`Status data sent to client ${clientId}`, 'info', {
         clientId,
         statusType: statusData.type,
         serviceRunning: statusData.data.running,
@@ -1490,13 +1490,13 @@ wss.on('connection', (ws) => {
     ws.on('message', (message) => {
         try {
             const data = JSON.parse(message);
-            log(`WebSocket zpráva od klienta ${clientId}`, 'info', {
+            log(`WebSocket message from client ${clientId}`, 'info', {
                 clientId,
                 messageType: data.type,
                 messageData: data
             });
         } catch (error) {
-            log(`Chyba při parsování WebSocket zprávy od klienta ${clientId}`, 'error', {
+            log(`Error parsing WebSocket message from client ${clientId}`, 'error', {
                 clientId,
                 rawMessage: message.toString(),
                 error: error.message
@@ -1505,7 +1505,7 @@ wss.on('connection', (ws) => {
     });
     
     ws.on('close', (code, reason) => {
-        log(`WebSocket připojení ukončeno (ID: ${clientId})`, 'info', {
+        log(`WebSocket connection closed (ID: ${clientId})`, 'info', {
             clientId,
             closeCode: code,
             closeReason: reason ? reason.toString() : 'no reason',
@@ -1514,7 +1514,7 @@ wss.on('connection', (ws) => {
     });
     
     ws.on('error', (error) => {
-        log(`WebSocket chyba pro klienta ${clientId}`, 'error', {
+        log(`WebSocket error for client ${clientId}`, 'error', {
             clientId,
             error: error.message,
             errorStack: error.stack
@@ -1524,50 +1524,50 @@ wss.on('connection', (ws) => {
 
 // Graceful shutdown
 process.on('SIGINT', async () => {
-    log('Přijat SIGINT, ukončuji server...', 'info');
-    // Při vypnutí serveru neukládáme seznam běžících projektů, aby se zachoval pro automatické spuštění po restartu
+    log('Received SIGINT, shutting down server...', 'info');
+    // When shutting down server, we don't save the list of running projects, to preserve it for automatic startup after restart
     await stopAllServices(false);
     process.exit(0);
 });
 
 process.on('SIGTERM', async () => {
-    log('Přijat SIGTERM, ukončuji server...', 'info');
-    // Při vypnutí serveru neukládáme seznam běžících projektů, aby se zachoval pro automatické spuštění po restartu
+    log('Received SIGTERM, shutting down server...', 'info');
+    // When shutting down server, we don't save the list of running projects, to preserve it for automatic startup after restart
     await stopAllServices(false);
     process.exit(0);
 });
 
-// Startup script - spustí se při každém startu serveru
+// Startup script - runs on every server start
 async function runServerStartupScript() {
     try {
-        log('Spouštím startup script...', 'info');
+        log('Running startup script...', 'info');
         
-        // Spusť externí startup script
+        // Run external startup script
         await runStartupScript();
         
-        // Počkej chvilku, aby se server stabilizoval
+        // Wait a bit for server to stabilize
         await new Promise(resolve => setTimeout(resolve, 2000));
         
-        // Automatické spuštění všech nasazených projektů
+        // Automatic startup of all deployed projects
         await autoStartDeployedProjects();
         
-        log('Startup script dokončen', 'success');
+        log('Startup script completed', 'success');
     } catch (error) {
-        log(`Chyba v startup scriptu: ${error.message}`, 'error', {
+        log(`Error in startup script: ${error.message}`, 'error', {
             errorName: error.name,
             errorStack: error.stack
         });
-        // Nechceme, aby se server nespustil kvůli chybě v auto-startu
-        // throw error; // Zakomentováno - server se spustí i při chybě auto-startu
+        // We don't want the server to fail to start due to auto-start error
+        // throw error; // Commented out - server will start even if auto-start fails
     }
 }
 
-// Spusť server
+// Start server
 app.listen(PORT, async () => {
-    log(`Backend server běží na portu ${PORT}`, 'info');
-    log(`WebSocket server běží na portu 3002`, 'info');
+    log(`Backend server running on port ${PORT}`, 'info');
+    log(`WebSocket server running on port 3002`, 'info');
     
-    // Spusť startup script po spuštění serveru
+    // Run startup script after server starts
     await runServerStartupScript();
 });
 

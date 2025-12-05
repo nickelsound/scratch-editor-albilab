@@ -58,7 +58,7 @@ const AutoSaveIndicator = function (props) {
     };
 
     const handleForceSave = () => {
-        // Vyvolej event pro vynucení uložení
+        // Trigger event to force save
         window.dispatchEvent(new CustomEvent('forceAutoSave'));
     };
 

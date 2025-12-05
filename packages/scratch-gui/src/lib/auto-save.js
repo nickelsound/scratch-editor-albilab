@@ -1,56 +1,56 @@
 import {getApiUrl} from './api-config.js';
 
 /**
- * Auto-save služba pro automatické ukládání projektů
+ * Auto-save service for automatic project saving
  */
 class AutoSaveService {
     constructor() {
         this.isEnabled = true;
-        this.saveInterval = 30000; // 30 sekund
+        this.saveInterval = 30000; // 30 seconds
         this.lastSaveTime = null;
         this.isSaving = false;
         this.saveTimeout = null;
         this.vm = null;
-        this.projectTitle = 'Neznámý projekt';
+        this.projectTitle = 'Unknown project';
         this.onSaveStatusChange = null;
     }
 
     /**
-     * Nastaví VM instanci a callback pro změny stavu
+     * Sets VM instance and callback for status changes
      */
     initialize(vm, projectTitle, onSaveStatusChange = null) {
         this.vm = vm;
-        this.projectTitle = projectTitle || 'Neznámý projekt';
+        this.projectTitle = projectTitle || 'Unknown project';
         this.onSaveStatusChange = onSaveStatusChange;
         
-        console.log('Auto-save služba inicializována', {
+        console.log('Auto-save service initialized', {
             projectTitle: this.projectTitle,
             saveInterval: this.saveInterval
         });
     }
 
     /**
-     * Spustí automatické ukládání
+     * Starts automatic saving
      */
     async start() {
         if (!this.isEnabled || !this.vm) {
-            console.log('Auto-save nelze spustit - není inicializován');
+            console.log('Auto-save cannot be started - not initialized');
             return;
         }
 
-        console.log('Spouštím auto-save službu');
+        console.log('Starting auto-save service');
         
-        // Zkus načíst existující auto-save projekt
+        // Try to load existing auto-save project
         await this.loadExistingProject();
         
         this.scheduleNextSave();
     }
 
     /**
-     * Zastaví automatické ukládání
+     * Stops automatic saving
      */
     stop() {
-        console.log('Zastavuji auto-save službu');
+        console.log('Stopping auto-save service');
         this.isEnabled = false;
         
         if (this.saveTimeout) {
@@ -60,11 +60,11 @@ class AutoSaveService {
     }
 
     /**
-     * Načte existující auto-save projekt podle názvu
+     * Loads existing auto-save project by name
      */
     async loadExistingProject() {
-        if (!this.projectTitle || this.projectTitle === 'Neznámý projekt') {
-            console.log('Název projektu není zadán - nelze načíst auto-save projekt');
+        if (!this.projectTitle || this.projectTitle === 'Unknown project') {
+            console.log('Project name not provided - cannot load auto-save project');
             return;
         }
 
@@ -75,44 +75,44 @@ class AutoSaveService {
             if (response.ok) {
                 const result = await response.json();
                 if (result.success && result.projectData) {
-                    console.log(`Načítám existující auto-save projekt: ${result.projectName}`);
+                    console.log(`Loading existing auto-save project: ${result.projectName}`);
                     
-                    // projectData může být string (JSON string) nebo už objekt (kvůli escape-ování)
+                    // projectData can be a string (JSON string) or already an object (due to escaping)
                     let projectData = result.projectData;
                     
-                    // Pokud je to string, použijeme ho přímo (vm.loadProject() přijímá string)
-                    // Pokud je to objekt, převedeme ho na JSON string
+                    // If it's a string, use it directly (vm.loadProject() accepts string)
+                    // If it's an object, convert it to JSON string
                     if (typeof projectData === 'object' && projectData !== null) {
-                        // Objekt - převedeme na JSON string
+                        // Object - convert to JSON string
                         projectData = JSON.stringify(projectData);
                     }
                     
-                    // Ověř, že projectData je string
+                    // Verify that projectData is a string
                     if (typeof projectData !== 'string') {
                         throw new Error('Invalid project data format');
                     }
                     
-                    // Načti projekt do VM - loadProject() přijímá JSON string
+                    // Load project into VM - loadProject() accepts JSON string
                     await this.vm.loadProject(projectData);
                     
-                    // Aktualizuj čas posledního uložení
+                    // Update last save time
                     this.lastSaveTime = new Date(result.savedAt);
                     this.updateSaveStatus('loaded');
                     
-                    console.log('Auto-save projekt úspěšně načten');
+                    console.log('Auto-save project successfully loaded');
                 } else {
-                    console.log('Žádný auto-save projekt nebyl nalezen pro:', this.projectTitle);
+                    console.log('No auto-save project found for:', this.projectTitle);
                 }
             } else {
-                console.log('Auto-save projekt nebyl nalezen pro:', this.projectTitle);
+                console.log('Auto-save project not found for:', this.projectTitle);
             }
         } catch (error) {
-            console.error('Chyba při načítání auto-save projektu:', error);
+            console.error('Error loading auto-save project:', error);
         }
     }
 
     /**
-     * Naplánuje další uložení
+     * Schedules next save
      */
     scheduleNextSave() {
         if (!this.isEnabled) return;
@@ -123,7 +123,7 @@ class AutoSaveService {
     }
 
     /**
-     * Provede automatické uložení
+     * Performs automatic save
      */
     async performAutoSave() {
         if (this.isSaving || !this.vm) {
@@ -135,12 +135,12 @@ class AutoSaveService {
             this.isSaving = true;
             this.updateSaveStatus('saving');
 
-            console.log('Provádím automatické uložení projektu...');
+            console.log('Performing automatic project save...');
             
-            // Získej aktuální data projektu z VM jako JSON
+            // Get current project data from VM as JSON
             const projectData = this.vm.toJSON();
             
-            // Pošli na backend
+            // Send to backend
             const apiUrl = getApiUrl('/saved-project/auto-save');
             const response = await fetch(apiUrl, {
                 method: 'POST',
@@ -156,17 +156,17 @@ class AutoSaveService {
             if (response.ok) {
                 const result = await response.json();
                 this.lastSaveTime = new Date();
-                console.log('Projekt automaticky uložen:', result);
+                console.log('Project automatically saved:', result);
                 this.isSaving = false;
                 this.updateSaveStatus('saved');
             } else {
-                console.error('Chyba při automatickém ukládání:', response.status, response.statusText);
+                console.error('Error during automatic save:', response.status, response.statusText);
                 this.isSaving = false;
                 this.updateSaveStatus('error');
             }
 
         } catch (error) {
-            console.error('Chyba při automatickém ukládání:', error);
+            console.error('Error during automatic save:', error);
             this.isSaving = false;
             this.updateSaveStatus('error');
         } finally {
@@ -175,7 +175,7 @@ class AutoSaveService {
     }
 
     /**
-     * Aktualizuje stav ukládání
+     * Updates save status
      */
     updateSaveStatus(status) {
         if (this.onSaveStatusChange) {
@@ -188,37 +188,37 @@ class AutoSaveService {
     }
 
     /**
-     * Nastaví název projektu
+     * Sets project title
      */
     setProjectTitle(title) {
-        this.projectTitle = title || 'Neznámý projekt';
-        console.log('Název projektu aktualizován:', this.projectTitle);
+        this.projectTitle = title || 'Unknown project';
+        console.log('Project title updated:', this.projectTitle);
     }
 
     /**
-     * Nastaví interval ukládání (v milisekundách)
+     * Sets save interval (in milliseconds)
      */
     setSaveInterval(interval) {
-        this.saveInterval = Math.max(5000, interval); // Minimálně 5 sekund
-        console.log('Interval ukládání nastaven na:', this.saveInterval, 'ms');
+        this.saveInterval = Math.max(5000, interval); // Minimum 5 seconds
+        console.log('Save interval set to:', this.saveInterval, 'ms');
     }
 
     /**
-     * Vynutí okamžité uložení
+     * Forces immediate save
      */
     async forceSave() {
         if (this.isSaving) {
-            console.log('Ukládání již probíhá...');
+            console.log('Save already in progress...');
             return false;
         }
 
-        console.log('Vynucuji okamžité uložení...');
+        console.log('Forcing immediate save...');
         await this.performAutoSave();
         return true;
     }
 
     /**
-     * Získá informace o stavu auto-save
+     * Gets auto-save status information
      */
     getStatus() {
         return {
@@ -231,7 +231,7 @@ class AutoSaveService {
     }
 }
 
-// Vytvoř globální instanci
+// Create global instance
 const autoSaveService = new AutoSaveService();
 
 export default autoSaveService;

@@ -74,7 +74,7 @@
 }
 
 .menu-bar-item.growable {
-    /* Odstraněno max-width a flex omezení pro lepší zobrazení */
+    /* Removed max-width and flex constraints for better display */
 }
 
 .title-field-growable {
@@ -279,9 +279,9 @@
     }
 }
 
-/* Load Project Button používá stejné styly jako Service Button */
+/* Load Project Button uses same styles as Service Button */
 
-/* Větší mezera mezi tlačítky */
+/* Larger spacing between buttons */
 .menuBarButton + .menuBarButton {
     margin-left: 1rem;
 }

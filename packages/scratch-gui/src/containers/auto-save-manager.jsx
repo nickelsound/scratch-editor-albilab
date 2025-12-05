@@ -11,14 +11,14 @@ const AutoSaveManager = (props) => {
     const [isOpen, setIsOpen] = React.useState(false);
     const [projects, setProjects] = React.useState([]);
     const [isLoading, setIsLoading] = React.useState(false);
-    // Použij globální notification službu
+    // Use global notification service
     const showSuccess = notificationService.showSuccess.bind(notificationService);
     const showError = notificationService.showError.bind(notificationService);
     const showWarning = notificationService.showWarning.bind(notificationService);
     const showInfo = notificationService.showInfo.bind(notificationService);
 
     React.useEffect(() => {
-        // Přidej event listener pro otevření manageru
+        // Add event listener for opening manager
         const handleOpenEvent = () => {
             setIsOpen(true);
             loadProjects();
@@ -44,27 +44,27 @@ const AutoSaveManager = (props) => {
         
         try {
             const apiUrl = getApiUrl('projects-status');
-            console.log('Načítám projekty z URL:', apiUrl);
+            console.log('Loading projects from URL:', apiUrl);
             const response = await fetch(apiUrl);
             
             if (response.ok) {
                 const data = await response.json();
-                console.log('API odpověď:', data);
+                console.log('API response:', data);
                 if (data.success) {
-                    console.log('Načteno projektů:', data.projects.length);
+                    console.log('Loaded projects:', data.projects.length);
                     setProjects(data.projects);
                 } else {
-                    console.error('Chyba při načítání seznamu projektů:', data.error);
+                    console.error('Error loading project list:', data.error);
                     setProjects([]);
                     showError(data.error || props.intl.formatMessage({id: 'gui.errors.loadingProjects'}), props.intl.formatMessage({id: 'gui.errors.error'}));
                 }
             } else {
-                console.error('Chyba při načítání seznamu projektů:', response.statusText);
+                console.error('Error loading project list:', response.statusText);
                 setProjects([]);
                 showError(props.intl.formatMessage({id: 'gui.errors.loadingProjectsWithDetails'}, {details: response.statusText}), props.intl.formatMessage({id: 'gui.errors.error'}));
             }
         } catch (error) {
-            console.error('Chyba při načítání seznamu projektů:', error);
+            console.error('Error loading project list:', error);
             setProjects([]);
             showError(props.intl.formatMessage({id: 'gui.errors.loadingProjectsWithDetails'}, {details: error.message}), props.intl.formatMessage({id: 'gui.errors.error'}));
         } finally {
@@ -80,41 +80,41 @@ const AutoSaveManager = (props) => {
             if (response.ok) {
                 const data = await response.json();
                 if (data.success && data.projectData) {
-                    // projectData může být string (JSON string) nebo už objekt (kvůli escape-ování)
+                    // projectData can be a string (JSON string) or already an object (due to escaping)
                     let projectData = data.projectData;
                     
-                    // Pokud je to string, použijeme ho přímo (vm.loadProject() přijímá string)
-                    // Pokud je to objekt, převedeme ho na JSON string
+                    // If it's a string, use it directly (vm.loadProject() accepts string)
+                    // If it's an object, convert it to JSON string
                     if (typeof projectData === 'object' && projectData !== null) {
-                        // Objekt - převedeme na JSON string
+                        // Object - convert to JSON string
                         projectData = JSON.stringify(projectData);
                     }
                     
-                    // Ověř, že projectData je string
+                    // Verify that projectData is a string
                     if (typeof projectData !== 'string') {
                         throw new Error('Invalid project data format');
                     }
                     
-                    // Zkontroluj a oprav projekt před načtením
+                    // Check and fix project before loading
                     let parsedProject;
                     try {
                         parsedProject = JSON.parse(projectData);
-                        console.log('Načtený projekt - validace:', {
+                        console.log('Loaded project - validation:', {
                             hasTargets: !!parsedProject.targets,
                             targetsCount: parsedProject.targets ? parsedProject.targets.length : 0,
                             projectVersion: parsedProject.projectVersion,
                             hasMeta: !!parsedProject.meta
                         });
                         
-                        // Zajisti, že projekt má projectVersion = 3 (SB3 formát)
+                        // Ensure project has projectVersion = 3 (SB3 format)
                         if (!parsedProject.projectVersion) {
-                            console.warn('Projekt nemá projectVersion, nastavuji na 3');
+                            console.warn('Project does not have projectVersion, setting to 3');
                             parsedProject.projectVersion = 3;
                         }
                         
-                        // Zajisti, že projekt má meta objekt
+                        // Ensure project has meta object
                         if (!parsedProject.meta) {
-                            console.warn('Projekt nemá meta objekt, vytvářím ho');
+                            console.warn('Project does not have meta object, creating it');
                             parsedProject.meta = {
                                 semver: '3.0.0',
                                 vm: '0.2.0',
@@ -124,10 +124,10 @@ const AutoSaveManager = (props) => {
                         
                         let needsFix = false;
                         
-                        // Zkontroluj targets a oprav případné problémy
+                        // Check targets and fix any problems
                         if (!parsedProject.targets || !Array.isArray(parsedProject.targets) || parsedProject.targets.length === 0) {
-                            console.warn('Projekt nemá žádné targets! Vytvářím minimální validní projekt s stage.');
-                            // Vytvoř minimální validní projekt s stage
+                            console.warn('Project has no targets! Creating minimal valid project with stage.');
+                            // Create minimal valid project with stage
                             parsedProject.targets = [{
                                 isStage: true,
                                 name: 'Stage',
@@ -151,38 +151,38 @@ const AutoSaveManager = (props) => {
                         }
                         
                         if (parsedProject.targets && Array.isArray(parsedProject.targets) && parsedProject.targets.length > 0) {
-                            // Najdi stage (měla by být jen jedna a na prvním místě)
+                            // Find stage (should be only one and at first position)
                             let stageIndex = -1;
                             let stageTarget = null;
                             
-                            // Najdi stage
+                            // Find stage
                             parsedProject.targets.forEach((target, index) => {
                                 if (target.isStage === true) {
                                     if (stageIndex === -1) {
                                         stageIndex = index;
                                         stageTarget = target;
                                     } else {
-                                        // Více než jedna stage - oprav
-                                        console.warn(`Opravuji duplicitní stage na indexu ${index}: ${target.name}`);
+                                        // More than one stage - fix
+                                        console.warn(`Fixing duplicate stage at index ${index}: ${target.name}`);
                                         target.isStage = false;
                                         needsFix = true;
                                     }
                                 }
                             });
                             
-                            // Pokud není stage, vytvoř ji z prvního targetu nebo přidej novou
+                            // If stage doesn't exist, create it from first target or add new one
                             if (stageIndex === -1) {
-                                console.warn('Stage nebyla nalezena, vytvářím ji z prvního targetu');
+                                console.warn('Stage not found, creating it from first target');
                                 if (parsedProject.targets.length > 0) {
-                                    // Použij první target jako stage
+                                    // Use first target as stage
                                     parsedProject.targets[0].isStage = true;
                                     parsedProject.targets[0].name = 'Stage';
                                     stageIndex = 0;
                                     stageTarget = parsedProject.targets[0];
                                     needsFix = true;
                                 } else {
-                                    console.error('Projekt nemá žádné targets! Vytvářím novou stage.');
-                                    // Vytvoř novou stage
+                                    console.error('Project has no targets! Creating new stage.');
+                                    // Create new stage
                                     const newStage = {
                                         isStage: true,
                                         name: 'Stage',
@@ -209,46 +209,46 @@ const AutoSaveManager = (props) => {
                                 }
                             }
                             
-                            // Zajisti, že stage je na prvním místě
+                            // Ensure stage is at first position
                             if (stageIndex > 0 && stageTarget) {
-                                console.warn(`Přesouvám stage z indexu ${stageIndex} na index 0`);
+                                console.warn(`Moving stage from index ${stageIndex} to index 0`);
                                 parsedProject.targets.splice(stageIndex, 1);
                                 parsedProject.targets.unshift(stageTarget);
                                 stageIndex = 0;
                                 needsFix = true;
                             }
                             
-                            // Zajisti, že stage má isStage = true
+                            // Ensure stage has isStage = true
                             if (stageTarget && stageTarget.isStage !== true) {
-                                console.warn('Opravuji isStage pro stage na true');
+                                console.warn('Fixing isStage for stage to true');
                                 stageTarget.isStage = true;
                                 needsFix = true;
                             }
                             
-                            // Zajisti, že stage má všechny potřebné vlastnosti
+                            // Ensure stage has all necessary properties
                             if (stageTarget) {
                                 if (!stageTarget.variables) {
-                                    console.warn('Přidávám prázdné variables do stage');
+                                    console.warn('Adding empty variables to stage');
                                     stageTarget.variables = {};
                                     needsFix = true;
                                 }
                                 if (!stageTarget.lists) {
-                                    console.warn('Přidávám prázdné lists do stage');
+                                    console.warn('Adding empty lists to stage');
                                     stageTarget.lists = {};
                                     needsFix = true;
                                 }
                                 if (!stageTarget.broadcasts) {
-                                    console.warn('Přidávám prázdné broadcasts do stage');
+                                    console.warn('Adding empty broadcasts to stage');
                                     stageTarget.broadcasts = {};
                                     needsFix = true;
                                 }
                                 if (!stageTarget.blocks) {
-                                    console.warn('Přidávám prázdné blocks do stage');
+                                    console.warn('Adding empty blocks to stage');
                                     stageTarget.blocks = {};
                                     needsFix = true;
                                 }
                                 if (!stageTarget.costumes || !Array.isArray(stageTarget.costumes) || stageTarget.costumes.length === 0) {
-                                    console.warn('Přidávám výchozí costume do stage');
+                                    console.warn('Adding default costume to stage');
                                     if (!stageTarget.costumes) {
                                         stageTarget.costumes = [];
                                     }
@@ -267,10 +267,10 @@ const AutoSaveManager = (props) => {
                                 }
                             }
                             
-                            // Oprav všechny sprites - isStage musí být false
+                            // Fix all sprites - isStage must be false
                             parsedProject.targets.forEach((target, index) => {
                                 if (index !== 0 && target.isStage !== false) {
-                                    console.warn(`Opravuji isStage pro sprite ${index}: ${target.name}`, {
+                                    console.warn(`Fixing isStage for sprite ${index}: ${target.name}`, {
                                         oldValue: target.isStage,
                                         newValue: false
                                     });
@@ -280,23 +280,23 @@ const AutoSaveManager = (props) => {
                             });
                             
                             if (needsFix) {
-                                // Přeparsuj opravený projekt
+                                // Re-parse fixed project
                                 projectData = JSON.stringify(parsedProject);
-                                console.log('Projekt byl opraven před načtením');
+                                console.log('Project was fixed before loading');
                             }
                             
-                            // Finální kontrola - zkontroluj, že stage existuje a má všechny potřebné vlastnosti
+                            // Final check - verify that stage exists and has all necessary properties
                             const finalStage = parsedProject.targets && parsedProject.targets.length > 0 && parsedProject.targets[0].isStage === true
                                 ? parsedProject.targets[0]
                                 : null;
                             
                             if (!finalStage) {
-                                throw new Error('Projekt nemá validní stage na prvním místě. Nelze načíst projekt.');
+                                throw new Error('Project does not have valid stage at first position. Cannot load project.');
                             }
                             
-                            // Zkontroluj, že stage má všechny kritické vlastnosti
+                            // Check that stage has all critical properties
                             if (!finalStage.variables || !finalStage.lists || !finalStage.broadcasts || !finalStage.blocks) {
-                                console.warn('Stage nemá všechny potřebné vlastnosti, doplňuji je...');
+                                console.warn('Stage does not have all necessary properties, adding them...');
                                 finalStage.variables = finalStage.variables || {};
                                 finalStage.lists = finalStage.lists || {};
                                 finalStage.broadcasts = finalStage.broadcasts || {};
@@ -305,7 +305,7 @@ const AutoSaveManager = (props) => {
                             }
                             
                             if (!finalStage.costumes || !Array.isArray(finalStage.costumes) || finalStage.costumes.length === 0) {
-                                console.warn('Stage nemá costumes, přidávám výchozí...');
+                                console.warn('Stage does not have costumes, adding default...');
                                 finalStage.costumes = [{
                                     assetId: 'cd21514d0531fdffb22204e0ec5ed84a',
                                     name: 'backdrop1',
@@ -318,8 +318,8 @@ const AutoSaveManager = (props) => {
                                 projectData = JSON.stringify(parsedProject);
                             }
                         } else {
-                            // Pokud targets neexistují, vytvoř minimální projekt
-                            console.warn('Projekt nemá targets pole, vytvářím minimální validní projekt');
+                            // If targets don't exist, create minimal project
+                            console.warn('Project does not have targets array, creating minimal valid project');
                             parsedProject.targets = [{
                                 isStage: true,
                                 name: 'Stage',
@@ -342,34 +342,34 @@ const AutoSaveManager = (props) => {
                             projectData = JSON.stringify(parsedProject);
                         }
                     } catch (parseError) {
-                        console.error('Chyba při parsování projektu před načtením:', parseError);
-                        throw new Error(`Chyba při parsování projektu: ${parseError.message}`);
+                        console.error('Error parsing project before loading:', parseError);
+                        throw new Error(`Error parsing project: ${parseError.message}`);
                     }
                     
-                    // Načti projekt do VM - loadProject() přijímá JSON string
+                    // Load project into VM - loadProject() accepts JSON string
                     try {
                         await props.vm.loadProject(projectData);
                     } catch (loadError) {
-                        console.error('Chyba při načítání projektu do VM:', loadError);
-                        // Zkusíme zkontrolovat, zda je problém s stage
+                        console.error('Error loading project into VM:', loadError);
+                        // Try to check if problem is with stage
                         try {
                             const parsed = JSON.parse(projectData);
                             if (parsed.targets && parsed.targets.length > 0) {
                                 const firstTarget = parsed.targets[0];
                                 if (!firstTarget.isStage) {
-                                    throw new Error('První target není stage. Projekt má nevalidní strukturu.');
+                                    throw new Error('First target is not stage. Project has invalid structure.');
                                 }
                             }
                         } catch (checkError) {
-                            console.error('Chyba při kontrole struktury projektu:', checkError);
+                            console.error('Error checking project structure:', checkError);
                         }
                         throw loadError;
                     }
                     
-                    // Aktualizuj název projektu
+                    // Update project title
                     props.setProjectTitle(data.projectName);
                     
-                    // Zavři manager
+                    // Close manager
                     handleClose();
                     
                     showSuccess(props.intl.formatMessage({id: 'gui.success.projectLoaded'}, {name: data.projectName}));
@@ -377,7 +377,7 @@ const AutoSaveManager = (props) => {
                     showError(data.error || props.intl.formatMessage({id: 'gui.errors.unknownError'}), props.intl.formatMessage({id: 'gui.errors.loadingProject'}));
                 }
             } else {
-                // Pokus se načíst chybovou zprávu z response body
+                // Try to load error message from response body
                 try {
                     const errorData = await response.json();
                     showError(errorData.error || response.statusText, props.intl.formatMessage({id: 'gui.errors.loadingProject'}));
@@ -386,7 +386,7 @@ const AutoSaveManager = (props) => {
                 }
             }
         } catch (error) {
-            console.error('Chyba při načítání projektu:', error);
+            console.error('Error loading project:', error);
             showError(error.message, props.intl.formatMessage({id: 'gui.errors.loadingProject'}));
         }
     };
@@ -405,14 +405,14 @@ const AutoSaveManager = (props) => {
             if (response.ok) {
                 const data = await response.json();
                 if (data.success) {
-                    // Aktualizuj seznam projektů
+                    // Update project list
                     loadProjects();
                     showSuccess(props.intl.formatMessage({id: 'gui.success.projectDeployed'}, {name: projectName}));
                 } else {
                     showError(data.error || props.intl.formatMessage({id: 'gui.errors.unknownError'}), props.intl.formatMessage({id: 'gui.errors.deployingProject'}));
                 }
             } else {
-                // Pokus se načíst chybovou zprávu z response body
+                // Try to load error message from response body
                 try {
                     const errorData = await response.json();
                     showError(errorData.error || response.statusText, props.intl.formatMessage({id: 'gui.errors.deployingProject'}));
@@ -421,7 +421,7 @@ const AutoSaveManager = (props) => {
                 }
             }
         } catch (error) {
-            console.error('Chyba při nasazování projektu:', error);
+            console.error('Error deploying project:', error);
             showError(error.message, props.intl.formatMessage({id: 'gui.errors.deployingProject'}));
         }
     };
@@ -433,11 +433,11 @@ const AutoSaveManager = (props) => {
                 return;
             }
 
-            // Získej aktuální data projektu z VM
+            // Get current project data from VM
             const projectData = props.vm.toJSON();
             const projectName = props.projectTitle || props.intl.formatMessage({id: 'gui.gui.unknownProject'});
 
-            // Nejdříve ulož projekt do auto-save
+            // First save project to auto-save
             const autoSaveUrl = getApiUrl('/saved-project/auto-save');
             const autoSaveResponse = await fetch(autoSaveUrl, {
                 method: 'POST',
@@ -455,7 +455,7 @@ const AutoSaveManager = (props) => {
                 return;
             }
 
-            // Pak nasaď projekt
+            // Then deploy project
             const deployUrl = getApiUrl('deploy-project');
             const deployResponse = await fetch(deployUrl, {
                 method: 'POST',
@@ -468,14 +468,14 @@ const AutoSaveManager = (props) => {
             if (deployResponse.ok) {
                 const data = await deployResponse.json();
                 if (data.success) {
-                    // Aktualizuj seznam projektů
+                    // Update project list
                     loadProjects();
                     showSuccess(props.intl.formatMessage({id: 'gui.success.currentProjectDeployed'}, {name: projectName}));
                 } else {
                     showError(data.error || props.intl.formatMessage({id: 'gui.errors.unknownError'}), props.intl.formatMessage({id: 'gui.errors.deployingProject'}));
                 }
             } else {
-                // Pokus se načíst chybovou zprávu z response body
+                // Try to load error message from response body
                 try {
                     const errorData = await deployResponse.json();
                     showError(errorData.error || deployResponse.statusText, props.intl.formatMessage({id: 'gui.errors.deployingProject'}));
@@ -484,7 +484,7 @@ const AutoSaveManager = (props) => {
                 }
             }
         } catch (error) {
-            console.error('Chyba při nasazování aktuálního projektu:', error);
+            console.error('Error deploying current project:', error);
             showError(error.message, props.intl.formatMessage({id: 'gui.errors.deployingCurrentProject'}));
         }
     };
@@ -503,14 +503,14 @@ const AutoSaveManager = (props) => {
             if (response.ok) {
                 const data = await response.json();
                 if (data.success) {
-                    // Aktualizuj seznam projektů
+                    // Update project list
                     loadProjects();
                     showSuccess(props.intl.formatMessage({id: 'gui.success.projectStarted'}, {name: projectName}));
                 } else {
                     showError(data.error || props.intl.formatMessage({id: 'gui.errors.unknownError'}), props.intl.formatMessage({id: 'gui.errors.startingProject'}));
                 }
             } else {
-                // Pokus se načíst chybovou zprávu z response body
+                // Try to load error message from response body
                 try {
                     const errorData = await response.json();
                     showError(errorData.error || response.statusText, props.intl.formatMessage({id: 'gui.errors.startingProject'}));
@@ -519,7 +519,7 @@ const AutoSaveManager = (props) => {
                 }
             }
         } catch (error) {
-            console.error('Chyba při spouštění projektu:', error);
+            console.error('Error starting project:', error);
             showError(error.message, props.intl.formatMessage({id: 'gui.errors.startingProject'}));
         }
     };
@@ -538,14 +538,14 @@ const AutoSaveManager = (props) => {
             if (response.ok) {
                 const data = await response.json();
                 if (data.success) {
-                    // Aktualizuj seznam projektů
+                    // Update project list
                     loadProjects();
                     showSuccess(props.intl.formatMessage({id: 'gui.success.projectStopped'}, {name: projectName}));
                 } else {
                     showError(data.error || props.intl.formatMessage({id: 'gui.errors.unknownError'}), props.intl.formatMessage({id: 'gui.errors.stoppingProject'}));
                 }
             } else {
-                // Pokus se načíst chybovou zprávu z response body
+                // Try to load error message from response body
                 try {
                     const errorData = await response.json();
                     showError(errorData.error || response.statusText, props.intl.formatMessage({id: 'gui.errors.stoppingProject'}));
@@ -554,7 +554,7 @@ const AutoSaveManager = (props) => {
                 }
             }
         } catch (error) {
-            console.error('Chyba při zastavování projektu:', error);
+            console.error('Error stopping project:', error);
             showError(error.message, props.intl.formatMessage({id: 'gui.errors.stoppingProject'}));
         }
     };
@@ -569,14 +569,14 @@ const AutoSaveManager = (props) => {
             if (response.ok) {
                 const data = await response.json();
                 if (data.success) {
-                    // Aktualizuj seznam projektů
+                    // Update project list
                     loadProjects();
                     showSuccess(props.intl.formatMessage({id: 'gui.success.projectDeleted'}, {name: projectName}));
                 } else {
                     showError(data.error || props.intl.formatMessage({id: 'gui.errors.unknownError'}), props.intl.formatMessage({id: 'gui.errors.deletingProject'}));
                 }
             } else {
-                // Pokus se načíst chybovou zprávu z response body
+                // Try to load error message from response body
                 try {
                     const errorData = await response.json();
                     showError(errorData.error || response.statusText, props.intl.formatMessage({id: 'gui.errors.deletingProject'}));
@@ -585,7 +585,7 @@ const AutoSaveManager = (props) => {
                 }
             }
         } catch (error) {
-            console.error('Chyba při mazání projektu:', error);
+            console.error('Error deleting project:', error);
             showError(error.message, props.intl.formatMessage({id: 'gui.errors.deletingProject'}));
         }
     };
