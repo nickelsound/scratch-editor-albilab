@@ -321,6 +321,44 @@ async function loadRunningProjects() {
     }
 }
 
+// Remove project from running-projects.json file (even if not in runningServices map)
+async function removeProjectFromRunningProjects(projectName) {
+    try {
+        if (!await fs.pathExists(RUNNING_PROJECTS_PATH)) {
+            log(`running-projects.json does not exist, nothing to remove`, 'info');
+            return true;
+        }
+        
+        const data = await fs.readJson(RUNNING_PROJECTS_PATH);
+        const projects = data.projects || [];
+        
+        // Remove project from list if it exists
+        const index = projects.indexOf(projectName);
+        if (index !== -1) {
+            projects.splice(index, 1);
+            
+            const updatedData = {
+                projects: projects,
+                lastUpdated: new Date().toISOString()
+            };
+            
+            await fs.writeJson(RUNNING_PROJECTS_PATH, updatedData, { spaces: 2 });
+            log(`Project ${projectName} removed from running-projects.json`, 'success');
+            return true;
+        } else {
+            log(`Project ${projectName} not found in running-projects.json`, 'info');
+            return true; // Not an error if project is not in the list
+        }
+    } catch (error) {
+        log(`Error removing project from running-projects.json: ${error.message}`, 'error', {
+            errorName: error.name,
+            errorStack: error.stack,
+            projectName
+        });
+        return false;
+    }
+}
+
 // Automatic startup of projects that were running before restart
 async function autoStartDeployedProjects() {
     try {
@@ -466,8 +504,15 @@ async function stopService(projectName, saveRunningProjectsList = true) {
             log(`Error stopping service ${projectName}: ${error.message}`, 'error');
             return false;
         }
+    } else {
+        // Project is not in runningServices map, but might be in running-projects.json
+        // Remove it from the file if it exists there
+        if (saveRunningProjectsList) {
+            log(`Project ${projectName} not in runningServices map, removing from running-projects.json if present`, 'info');
+            await removeProjectFromRunningProjects(projectName);
+        }
+        return true; // Return true even if not in map, as we've handled the file update
     }
-    return false;
 }
 
 // Stop all services
@@ -547,6 +592,9 @@ async function startService(projectData, projectName) {
         });
         
         // Monitor VM termination
+        // Note: When VM terminates, we remove it from runningServices map for consistency,
+        // but we do NOT update running-projects.json file. The project should remain in the file
+        // unless explicitly stopped via STOP or DELETE command.
         vm.on('quit', () => {
             log(`VM terminated for ${projectName}`, 'info', {
                 quitTime: new Date().toISOString(),
@@ -554,6 +602,8 @@ async function startService(projectData, projectName) {
                 projectName
             });
             runningServices.delete(projectName);
+            // Do NOT call saveRunningProjects() here - project should remain in running-projects.json
+            // It will only be removed when user explicitly stops or deletes it
             broadcast({ type: 'serviceStopped', data: { projectName } });
         });
         
@@ -1036,6 +1086,11 @@ app.delete('/api/saved-project/auto-save', async (req, res) => {
         if (runningServices.has(projectName)) {
             log(`Project ${projectName} is running, stopping it before deletion...`, 'info');
             await stopService(projectName);
+        } else {
+            // Even if project is not running, remove it from running-projects.json
+            // (it might have been terminated but still be in the file)
+            log(`Project ${projectName} not running, removing from running-projects.json if present...`, 'info');
+            await removeProjectFromRunningProjects(projectName);
         }
         
         // If directory doesn't exist, project doesn't exist
@@ -1360,21 +1415,13 @@ app.post('/api/stop-project', async (req, res) => {
             runningServicesCount: runningServices.size
         });
         
-        // Check if project is running
-        if (!runningServices.has(projectName)) {
-            return res.status(404).json({ 
-                success: false,
-                error: `Project ${projectName} is not running` 
-            });
-        }
-        
-        // Stop service
+        // Stop service (this will handle both running services and projects in running-projects.json)
         const stopped = await stopService(projectName);
         
         if (stopped) {
             const response = { 
                 success: true, 
-                message: `Project ${projectName} has been stopped`,
+                message: `Project ${projectName} has been stopped and removed from running projects`,
                 projectName: projectName
             };
             

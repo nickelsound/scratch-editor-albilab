@@ -40,7 +40,7 @@ Perfektní pro děti, rodiče a pedagogy, kteří chtějí spojit praktickou vě
 - **Docker** nebo **Podman** nainstalovaný v systému
 - **Docker Compose** nebo **Podman Compose** nainstalovaný
 - Minimálně 2GB volného místa na disku
-- Porty 3000 a 3001 dostupné v systému
+- Porty 8601 a 3001 dostupné v systému
 
 ### Spuštění
 
@@ -63,7 +63,7 @@ Perfektní pro děti, rodiče a pedagogy, kteří chtějí spojit praktickou vě
    ```
 
 3. **Otevřete aplikaci v prohlížeči:**
-   - Scratch Editor: http://localhost:3000
+   - Scratch Editor: http://localhost:8601
    - Backend API: http://localhost:3001
 
 ## 📋 Funkce
@@ -96,7 +96,7 @@ Perfektní pro děti, rodiče a pedagogy, kteří chtějí spojit praktickou vě
 
 ### Služby
 
-1. **scratch-gui-app** (Port 3000)
+1. **scratch-gui** (Port 8601)
    - React frontend aplikace
    - Scratch editor interface
    - WebSocket připojení k backendu
@@ -109,7 +109,7 @@ Perfektní pro děti, rodiče a pedagogy, kteří chtějí spojit praktickou vě
 
 ### Datové svazky (Volumes)
 
-- **scratch-uploads**: Trvalé uložení projektů a konfigurace
+- **./uploads**: Trvalé uložení projektů a konfigurace (bind mount)
   - `saved-project.json` - aktuálně uložený projekt
   - `uploads/` - složka pro nahrávané soubory
 
@@ -121,9 +121,10 @@ Perfektní pro děti, rodiče a pedagogy, kteří chtějí spojit praktickou vě
 
 ### Environment proměnné
 
-**scratch-gui-app:**
+**scratch-gui:**
 ```yaml
 REACT_APP_BACKEND_URL: http://localhost:3001
+PORT: 8601
 ```
 
 **scratch-backend-app:**
@@ -134,15 +135,16 @@ WEBSOCKET_PORT: 3002
 
 ### Porty
 
-- **3000**: Frontend aplikace (Scratch Editor)
+- **8601**: Frontend aplikace (Scratch Editor)
 - **3001**: Backend API
 - **3002**: WebSocket server (interní komunikace)
 
 ## 📡 API Endpoints
 
 ### Projekty
-- `POST /api/start` - Spuštění nového projektu
-- `POST /api/stop` - Zastavení běžícího projektu
+- `POST /api/start-service-json` - Spuštění nového projektu (JSON data)
+- `POST /api/start-service` - Spuštění nového projektu (nahrání souboru)
+- `POST /api/stop-service` - Zastavení běžícího projektu
 - `GET /api/status` - Stav služby
 - `GET /api/logs` - Logy služby
 
@@ -169,7 +171,7 @@ WEBSOCKET_PORT: 3002
 
 2. **Spusťte v development módu:**
    ```bash
-   # Frontend (port 3000)
+   # Frontend (port 8601)
    cd packages/scratch-gui
    npm start
    
@@ -206,7 +208,7 @@ scratch-editor-albilab/
 │       ├── src/
 │       │   ├── server.js            # Hlavní server
 │       │   └── startup.js           # Startup skripty
-│       └── Dockerfile.backend
+│       └── Dockerfile.universal
 ├── docker-compose.yml               # Orchestrace služeb
 └── README.md
 ```
@@ -218,7 +220,7 @@ scratch-editor-albilab/
 1. **Porty jsou obsazené:**
    ```bash
    # Zkontrolujte obsazené porty
-   netstat -tulpn | grep :3000
+   netstat -tulpn | grep :8601
    netstat -tulpn | grep :3001
    
    # Zastavte konflikující služby nebo změňte porty v docker-compose.yml
@@ -261,7 +263,7 @@ scratch-editor-albilab/
 docker-compose logs -f
 
 # Konkrétní služba
-docker-compose logs -f scratch-gui-app
+docker-compose logs -f scratch-gui
 docker-compose logs -f scratch-backend-app
 
 # Posledních 50 řádků
@@ -291,10 +293,10 @@ docker-compose logs --tail=50
 
 ```bash
 # Zálohování uploads složky
-docker run --rm -v scratch-editor-albilab_scratch-uploads:/data -v $(pwd):/backup alpine tar czf /backup/uploads-backup.tar.gz -C /data .
+tar czf uploads-backup.tar.gz -C ./uploads .
 
 # Obnovení zálohy
-docker run --rm -v scratch-editor-albilab_scratch-uploads:/data -v $(pwd):/backup alpine tar xzf /backup/uploads-backup.tar.gz -C /data
+tar xzf uploads-backup.tar.gz -C ./uploads
 ```
 
 ## 🍓 ARM procesory (Raspberry Pi)
@@ -373,13 +375,13 @@ Pokud preferujete manuální instalaci nebo potřebujete sestavit kontejnery sam
 #### ARM specifické konfigurace
 
 **Porty pro ARM verzi:**
-- **8601**: Frontend aplikace (místo 3000)
+- **8601**: Frontend aplikace
 - **3001**: Backend API
 - **3002**: WebSocket server
 
 **Environment proměnné pro ARM:**
 ```yaml
-# scratch-gui-app (ARM)
+# scratch-gui (ARM)
 REACT_APP_BACKEND_URL: http://localhost:3001
 PORT: 8601
 
@@ -452,7 +454,7 @@ Pro podrobné instalační instrukce viz [README-INSTALL.md](README-INSTALL.md).
        server_name your-domain.com;
        
        location / {
-           proxy_pass http://localhost:3000;
+           proxy_pass http://localhost:8601;
            proxy_set_header Host $host;
            proxy_set_header X-Real-IP $remote_addr;
        }

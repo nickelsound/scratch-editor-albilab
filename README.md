@@ -41,7 +41,7 @@ Perfect for children, parents, and educators who want to combine hands-on scienc
 - **Docker** or **Podman** installed in the system
 - **Docker Compose** or **Podman Compose** installed
 - At least 2GB of free disk space
-- Ports 3000 and 3001 available in the system
+- Ports 8601 and 3001 available in the system
 
 ### Running the Application
 
@@ -64,7 +64,7 @@ Perfect for children, parents, and educators who want to combine hands-on scienc
    ```
 
 3. **Open the application in your browser:**
-   - Scratch Editor: http://localhost:3000
+   - Scratch Editor: http://localhost:8601
    - Backend API: http://localhost:3001
 
 ## 📋 Features
@@ -97,7 +97,7 @@ Perfect for children, parents, and educators who want to combine hands-on scienc
 
 ### Services
 
-1. **scratch-gui-app** (Port 3000)
+1. **scratch-gui** (Port 8601)
    - React frontend application
    - Scratch editor interface
    - WebSocket connection to backend
@@ -110,7 +110,7 @@ Perfect for children, parents, and educators who want to combine hands-on scienc
 
 ### Data Volumes
 
-- **scratch-uploads**: Persistent storage for projects and configuration
+- **./uploads**: Persistent storage for projects and configuration (bind mount)
   - `saved-project.json` - currently saved project
   - `uploads/` - folder for uploaded files
 
@@ -122,9 +122,10 @@ Perfect for children, parents, and educators who want to combine hands-on scienc
 
 ### Environment Variables
 
-**scratch-gui-app:**
+**scratch-gui:**
 ```yaml
 REACT_APP_BACKEND_URL: http://localhost:3001
+PORT: 8601
 ```
 
 **scratch-backend-app:**
@@ -135,15 +136,16 @@ WEBSOCKET_PORT: 3002
 
 ### Ports
 
-- **3000**: Frontend application (Scratch Editor)
+- **8601**: Frontend application (Scratch Editor)
 - **3001**: Backend API
 - **3002**: WebSocket server (internal communication)
 
 ## 📡 API Endpoints
 
 ### Projects
-- `POST /api/start` - Start new project
-- `POST /api/stop` - Stop running project
+- `POST /api/start-service-json` - Start new project (JSON data)
+- `POST /api/start-service` - Start new project (file upload)
+- `POST /api/stop-service` - Stop running project
 - `GET /api/status` - Service status
 - `GET /api/logs` - Service logs
 
@@ -170,7 +172,7 @@ WEBSOCKET_PORT: 3002
 
 2. **Run in development mode:**
    ```bash
-   # Frontend (port 3000)
+   # Frontend (port 8601)
    cd packages/scratch-gui
    npm start
    
@@ -207,7 +209,7 @@ scratch-editor-albilab/
 │       ├── src/
 │       │   ├── server.js            # Main server
 │       │   └── startup.js           # Startup scripts
-│       └── Dockerfile.backend
+│       └── Dockerfile.universal
 ├── docker-compose.yml               # Service orchestration
 └── README.md
 ```
@@ -219,7 +221,7 @@ scratch-editor-albilab/
 1. **Ports are occupied:**
    ```bash
    # Check occupied ports
-   netstat -tulpn | grep :3000
+   netstat -tulpn | grep :8601
    netstat -tulpn | grep :3001
    
    # Stop conflicting services or change ports in docker-compose.yml
@@ -262,7 +264,7 @@ scratch-editor-albilab/
 docker-compose logs -f
 
 # Specific service
-docker-compose logs -f scratch-gui-app
+docker-compose logs -f scratch-gui
 docker-compose logs -f scratch-backend-app
 
 # Last 50 lines
@@ -292,10 +294,10 @@ docker-compose logs --tail=50
 
 ```bash
 # Backup uploads folder
-docker run --rm -v scratch-editor-albilab_scratch-uploads:/data -v $(pwd):/backup alpine tar czf /backup/uploads-backup.tar.gz -C /data .
+tar czf uploads-backup.tar.gz -C ./uploads .
 
 # Restore backup
-docker run --rm -v scratch-editor-albilab_scratch-uploads:/data -v $(pwd):/backup alpine tar xzf /backup/uploads-backup.tar.gz -C /data
+tar xzf uploads-backup.tar.gz -C ./uploads
 ```
 
 ## 🍓 ARM Processors (Raspberry Pi)
@@ -374,13 +376,13 @@ If you prefer manual installation or need to build containers yourself:
 #### ARM specific configurations
 
 **Ports for ARM version:**
-- **8601**: Frontend application (instead of 3000)
+- **8601**: Frontend application
 - **3001**: Backend API
 - **3002**: WebSocket server
 
 **Environment variables for ARM:**
 ```yaml
-# scratch-gui-app (ARM)
+# scratch-gui (ARM)
 REACT_APP_BACKEND_URL: http://localhost:3001
 PORT: 8601
 
@@ -453,7 +455,7 @@ For detailed installation instructions, see [README-INSTALL.md](README-INSTALL.m
        server_name your-domain.com;
        
        location / {
-           proxy_pass http://localhost:3000;
+           proxy_pass http://localhost:8601;
            proxy_set_header Host $host;
            proxy_set_header X-Real-IP $remote_addr;
        }
