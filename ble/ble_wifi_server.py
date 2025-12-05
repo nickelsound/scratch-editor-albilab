@@ -587,18 +587,50 @@ def check_containers_status():
     }
     
     try:
+        # Try to find the user who owns the installation directory
+        # Containers are typically run by the user who owns the install directory
+        import pwd
+        import stat
+        
+        try:
+            install_stat = os.stat(INSTALL_DIR)
+            install_uid = install_stat.st_uid
+            install_user = pwd.getpwuid(install_uid).pw_name
+            logger.info(f"Install directory owned by user: {install_user}")
+        except Exception as e:
+            logger.warning(f"Could not determine install directory owner: {e}")
+            install_user = None
+        
         # Check if containers are running using podman
-        check_result = subprocess.run(
-            ['podman', 'ps', '--format', '{{.Names}}'],
-            capture_output=True,
-            text=True,
-            timeout=5
-        )
+        # If we're running as root but containers run under another user,
+        # try to run podman as that user
+        if install_user and os.geteuid() == 0 and install_user != 'root':
+            # Running as root, but containers are under another user
+            # Try to run podman as that user
+            logger.info(f"Running podman as user {install_user}")
+            check_result = subprocess.run(
+                ['su', '-', install_user, '-c', 'podman ps --format "{{.Names}}"'],
+                capture_output=True,
+                text=True,
+                timeout=5
+            )
+        else:
+            # Run podman normally (as current user)
+            check_result = subprocess.run(
+                ['podman', 'ps', '--format', '{{.Names}}'],
+                capture_output=True,
+                text=True,
+                timeout=5
+            )
         
         if check_result.returncode == 0:
-            running_containers = check_result.stdout.strip().split('\n')
-            result["gui_running"] = "scratch-gui-app" in running_containers
-            result["backend_running"] = "scratch-backend-app" in running_containers
+            # Parse output - filter out empty lines and strip whitespace
+            running_containers = [line.strip() for line in check_result.stdout.strip().split('\n') if line.strip()]
+            logger.info(f"Found running containers: {running_containers}")
+            
+            # Check for both containers
+            result["gui_running"] = any("scratch-gui-app" in name for name in running_containers)
+            result["backend_running"] = any("scratch-backend-app" in name for name in running_containers)
             result["running"] = result["gui_running"] and result["backend_running"]
             
             if result["running"]:
@@ -609,7 +641,7 @@ def check_containers_status():
                 result["message"] = "Scratch služba není spuštěna"
         else:
             result["message"] = f"Chyba při kontrole kontejnerů: {check_result.stderr}"
-            logger.error(result["message"])
+            logger.error(f"podman ps failed: returncode={check_result.returncode}, stderr={check_result.stderr}, stdout={check_result.stdout}")
     except Exception as e:
         result["message"] = f"Chyba při kontrole kontejnerů: {str(e)}"
         logger.error(result["message"], exc_info=True)
