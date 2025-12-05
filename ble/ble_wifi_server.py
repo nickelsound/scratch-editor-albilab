@@ -18,6 +18,7 @@ import threading
 import subprocess
 import time
 import json
+import os
 
 # BLE Service and Characteristic UUIDs
 # Using custom UUIDs to avoid conflicts with standard Bluetooth services
@@ -27,6 +28,9 @@ WIFI_PASSWORD_CHAR_UUID = "12345678-1234-1234-1234-123456789abe"
 STATUS_CHAR_UUID = "12345678-1234-1234-1234-123456789abf"
 IP_ADDRESS_CHAR_UUID = "12345678-1234-1234-1234-123456789ac0"
 WIFI_SCAN_CHAR_UUID = "12345678-1234-1234-1234-123456789ac1"
+CONTAINER_STATUS_CHAR_UUID = "12345678-1234-1234-1234-123456789ac2"
+START_CONTAINERS_CHAR_UUID = "12345678-1234-1234-1234-123456789ac3"
+CONTAINER_LOGS_CHAR_UUID = "12345678-1234-1234-1234-123456789ac4"
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -457,6 +461,261 @@ class WiFiScanCharacteristic(Characteristic):
             return self.value
 
 
+class ContainerStatusCharacteristic(Characteristic):
+    """Characteristic for checking container status"""
+    
+    def __init__(self, bus, index, service, wifi_server):
+        Characteristic.__init__(
+            self, bus, index,
+            CONTAINER_STATUS_CHAR_UUID,
+            ['read'],
+            service)
+        self.wifi_server = wifi_server
+        self.value = dbus.Array([], signature=dbus.Signature('y'))
+    
+    @dbus.service.method(GATT_CHRC_IFACE,
+                         in_signature='a{sv}',
+                         out_signature='ay')
+    def ReadValue(self, options):
+        """Read container status - checks if both containers are running"""
+        logger.info('=== ContainerStatusCharacteristic.ReadValue CALLED ===')
+        
+        try:
+            status = check_containers_status()
+            status_json = json.dumps(status, ensure_ascii=False)
+            logger.info(f'Container status: {status_json}')
+            
+            self.value = dbus.Array([dbus.Byte(ord(c)) for c in status_json], signature=dbus.Signature('y'))
+            return self.value
+        except Exception as e:
+            logger.error(f'Error in ContainerStatusCharacteristic.ReadValue: {e}', exc_info=True)
+            error_json = json.dumps({"error": str(e), "running": False})
+            self.value = dbus.Array([dbus.Byte(ord(c)) for c in error_json], signature=dbus.Signature('y'))
+            return self.value
+
+
+class StartContainersCharacteristic(Characteristic):
+    """Characteristic for starting containers"""
+    
+    def __init__(self, bus, index, service, wifi_server):
+        Characteristic.__init__(
+            self, bus, index,
+            START_CONTAINERS_CHAR_UUID,
+            ['write', 'write-without-response'],
+            service)
+        self.wifi_server = wifi_server
+    
+    def handle_write(self, value):
+        """Handle write to start containers"""
+        try:
+            command = bytes(value).decode('utf-8').strip()
+            logger.info(f"Received start containers command: {command}")
+            
+            if command == "start":
+                result = start_containers()
+                logger.info(f"Start containers result: {result}")
+            else:
+                logger.warning(f"Unknown command: {command}")
+        except Exception as e:
+            logger.error(f"Error handling start containers write: {e}")
+
+
+class ContainerLogsCharacteristic(Characteristic):
+    """Characteristic for reading container logs"""
+    
+    def __init__(self, bus, index, service, wifi_server):
+        Characteristic.__init__(
+            self, bus, index,
+            CONTAINER_LOGS_CHAR_UUID,
+            ['read'],
+            service)
+        self.wifi_server = wifi_server
+        self.value = dbus.Array([], signature=dbus.Signature('y'))
+    
+    @dbus.service.method(GATT_CHRC_IFACE,
+                         in_signature='a{sv}',
+                         out_signature='ay')
+    def ReadValue(self, options):
+        """Read container logs from RPi"""
+        logger.info('=== ContainerLogsCharacteristic.ReadValue CALLED ===')
+        
+        try:
+            logs = get_container_logs()
+            # Limit log size to avoid BLE size limits (512 bytes)
+            if len(logs) > 500:
+                logs = logs[-500:]  # Take last 500 characters
+                logger.warning(f'Logs truncated to 500 characters')
+            
+            logger.info(f'Returning {len(logs)} characters of logs')
+            self.value = dbus.Array([dbus.Byte(ord(c)) for c in logs], signature=dbus.Signature('y'))
+            return self.value
+        except Exception as e:
+            logger.error(f'Error in ContainerLogsCharacteristic.ReadValue: {e}', exc_info=True)
+            error_msg = f"Error getting logs: {str(e)}"
+            self.value = dbus.Array([dbus.Byte(ord(c)) for c in error_msg], signature=dbus.Signature('y'))
+            return self.value
+
+
+def check_containers_status():
+    """
+    Check if both scratch containers are running
+    
+    Returns:
+        Dictionary with status information
+    """
+    INSTALL_DIR = "/opt/scratch-albilab"
+    result = {
+        "running": False,
+        "gui_running": False,
+        "backend_running": False,
+        "message": ""
+    }
+    
+    try:
+        # Check if containers are running using podman
+        check_result = subprocess.run(
+            ['podman', 'ps', '--format', '{{.Names}}'],
+            capture_output=True,
+            text=True,
+            timeout=5
+        )
+        
+        if check_result.returncode == 0:
+            running_containers = check_result.stdout.strip().split('\n')
+            result["gui_running"] = "scratch-gui-app" in running_containers
+            result["backend_running"] = "scratch-backend-app" in running_containers
+            result["running"] = result["gui_running"] and result["backend_running"]
+            
+            if result["running"]:
+                result["message"] = "Scratch služba funguje"
+            elif result["gui_running"] or result["backend_running"]:
+                result["message"] = "Scratch služba částečně spuštěna"
+            else:
+                result["message"] = "Scratch služba není spuštěna"
+        else:
+            result["message"] = f"Chyba při kontrole kontejnerů: {check_result.stderr}"
+            logger.error(result["message"])
+    except Exception as e:
+        result["message"] = f"Chyba při kontrole kontejnerů: {str(e)}"
+        logger.error(result["message"], exc_info=True)
+    
+    return result
+
+
+def start_containers():
+    """
+    Start scratch containers using podman-compose-wrapper.sh
+    
+    Returns:
+        Dictionary with result information
+    """
+    INSTALL_DIR = "/opt/scratch-albilab"
+    WRAPPER_SCRIPT = f"{INSTALL_DIR}/podman-compose-wrapper.sh"
+    result = {
+        "success": False,
+        "message": "",
+        "logs": ""
+    }
+    
+    try:
+        # Check if wrapper script exists
+        if not os.path.exists(WRAPPER_SCRIPT):
+            result["message"] = "Wrapper script not found"
+            logger.error(result["message"])
+            return result
+        
+        # Start containers using wrapper script
+        start_result = subprocess.run(
+            ['sudo', WRAPPER_SCRIPT, 'start'],
+            capture_output=True,
+            text=True,
+            timeout=60
+        )
+        
+        result["logs"] = start_result.stdout + start_result.stderr
+        
+        if start_result.returncode == 0:
+            result["success"] = True
+            result["message"] = "Kontejnery byly spuštěny"
+            logger.info(result["message"])
+        else:
+            result["message"] = f"Chyba při spouštění kontejnerů: {start_result.stderr}"
+            logger.error(result["message"])
+    except subprocess.TimeoutExpired:
+        result["message"] = "Timeout při spouštění kontejnerů"
+        logger.error(result["message"])
+    except Exception as e:
+        result["message"] = f"Chyba při spouštění kontejnerů: {str(e)}"
+        logger.error(result["message"], exc_info=True)
+    
+    return result
+
+
+def get_container_logs():
+    """
+    Get logs from container monitoring and wrapper script
+    
+    Returns:
+        String with logs
+    """
+    INSTALL_DIR = "/opt/scratch-albilab"
+    LOG_FILES = [
+        f"{INSTALL_DIR}/container-monitor.log",
+        f"{INSTALL_DIR}/update-check.log"
+    ]
+    
+    logs = []
+    logs.append(f"=== Container Logs from RPi ===\n")
+    logs.append(f"Timestamp: {time.strftime('%Y-%m-%d %H:%M:%S')}\n\n")
+    
+    # Get container status
+    try:
+        status_result = subprocess.run(
+            ['podman', 'ps', '-a', '--format', '{{.Names}}: {{.Status}}'],
+            capture_output=True,
+            text=True,
+            timeout=5
+        )
+        if status_result.returncode == 0:
+            logs.append("Container Status:\n")
+            logs.append(status_result.stdout)
+            logs.append("\n")
+    except Exception as e:
+        logs.append(f"Error getting container status: {str(e)}\n")
+    
+    # Read log files
+    for log_file in LOG_FILES:
+        if os.path.exists(log_file):
+            try:
+                with open(log_file, 'r', encoding='utf-8') as f:
+                    file_content = f.read()
+                    # Get last 50 lines
+                    lines = file_content.split('\n')
+                    last_lines = '\n'.join(lines[-50:])
+                    logs.append(f"=== {os.path.basename(log_file)} (last 50 lines) ===\n")
+                    logs.append(last_lines)
+                    logs.append("\n")
+            except Exception as e:
+                logs.append(f"Error reading {log_file}: {str(e)}\n")
+    
+    # Get recent journalctl logs for scratch services
+    try:
+        journal_result = subprocess.run(
+            ['journalctl', '-u', 'scratch-albilab.service', '-n', '20', '--no-pager'],
+            capture_output=True,
+            text=True,
+            timeout=5
+        )
+        if journal_result.returncode == 0:
+            logs.append("=== Systemd Service Logs (last 20 lines) ===\n")
+            logs.append(journal_result.stdout)
+            logs.append("\n")
+    except Exception as e:
+        logs.append(f"Error getting journalctl logs: {str(e)}\n")
+    
+    return ''.join(logs)
+
+
 class WiFiConfigServer:
     """BLE Server for WiFi configuration"""
     
@@ -703,6 +962,9 @@ def main():
     status_char = StatusCharacteristic(bus, 2, service, wifi_server)
     ip_char = IPAddressCharacteristic(bus, 3, service, wifi_server)
     scan_char = WiFiScanCharacteristic(bus, 4, service, wifi_server)
+    container_status_char = ContainerStatusCharacteristic(bus, 5, service, wifi_server)
+    start_containers_char = StartContainersCharacteristic(bus, 6, service, wifi_server)
+    container_logs_char = ContainerLogsCharacteristic(bus, 7, service, wifi_server)
     
     logger.info(f"Created characteristics:")
     logger.info(f"  SSID: {WIFI_SSID_CHAR_UUID}")
@@ -710,6 +972,9 @@ def main():
     logger.info(f"  Status: {STATUS_CHAR_UUID}")
     logger.info(f"  IP Address: {IP_ADDRESS_CHAR_UUID}")
     logger.info(f"  WiFi Scan: {WIFI_SCAN_CHAR_UUID}")
+    logger.info(f"  Container Status: {CONTAINER_STATUS_CHAR_UUID}")
+    logger.info(f"  Start Containers: {START_CONTAINERS_CHAR_UUID}")
+    logger.info(f"  Container Logs: {CONTAINER_LOGS_CHAR_UUID}")
     
     wifi_server.status_char = status_char
     wifi_server.ip_char = ip_char
@@ -719,6 +984,9 @@ def main():
     service.add_characteristic(status_char)
     service.add_characteristic(ip_char)
     service.add_characteristic(scan_char)
+    service.add_characteristic(container_status_char)
+    service.add_characteristic(start_containers_char)
+    service.add_characteristic(container_logs_char)
     
     logger.info(f"Added {len(service.characteristics)} characteristics to service")
     
