@@ -1223,6 +1223,24 @@ start_service() {
 start_ble_service() {
     print_step "13a" "Starting BLE WiFi server service..."
     
+    BLE_DIR="$INSTALL_DIR/ble"
+    BLE_PYTHON="$BLE_DIR/venv/bin/python3"
+    
+    # Ensure venv exists before starting service
+    if [ ! -f "$BLE_PYTHON" ]; then
+        print_info "BLE virtual environment not found, recreating..."
+        setup_ble_venv
+    fi
+    
+    # Verify venv exists
+    if [ ! -f "$BLE_PYTHON" ]; then
+        print_error "Failed to create BLE virtual environment"
+        print_info "Cannot start BLE service without virtual environment"
+        # Don't exit on BLE service failure, just warn
+        print_info "Continuing installation despite BLE service failure..."
+        return 1
+    fi
+    
     # If service is already running, restart it (for update)
     if sudo systemctl is-active --quiet rpi-ble-wifi.service 2>/dev/null; then
         print_info "BLE service is already running, restarting to apply update..."
