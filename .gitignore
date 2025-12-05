@@ -143,3 +143,5 @@ uploads/deployed-projects/
 uploads/saved-project.json
 
 uploads/
+
+.cursor/rules/permanent.mdc
