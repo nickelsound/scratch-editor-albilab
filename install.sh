@@ -287,9 +287,18 @@ download_and_assemble_chunked() {
             local local_size=$(stat -c%s "$full_tar" 2>/dev/null || echo "0")
             local remote_size=$(wget --spider --server-response "${release_url}/${full_tar}" 2>&1 | grep -i content-length | awk '{print $2}' | tail -1)
             
+            # Only skip download if we can reliably verify the file is up to date
+            # If remote_size cannot be determined, force download to be safe
             if [ -n "$remote_size" ] && [ "$remote_size" != "0" ] && [ "$local_size" = "$remote_size" ]; then
                 print_info "$full_tar is up to date, skipping download"
                 return 0
+            else
+                # Size mismatch or cannot verify - force download
+                if [ -n "$remote_size" ] && [ "$remote_size" != "0" ]; then
+                    print_info "File size mismatch (local: $local_size, remote: $remote_size), downloading new version..."
+                else
+                    print_info "Cannot verify file version, downloading to ensure it's up to date..."
+                fi
             fi
         fi
         
@@ -388,6 +397,13 @@ download_containers() {
                 print_success "Using existing container image"
                 return 0
             fi
+        else
+            # Different version detected - remove old tar file to force download
+            print_info "Version change detected: $INSTALLED_VERSION -> $RELEASE_VERSION"
+            if [ -f "scratch-universal-arm64.tar" ]; then
+                print_info "Removing old tar file to force download of new version..."
+                rm -f "scratch-universal-arm64.tar"
+            fi
         fi
     fi
     
@@ -410,8 +426,25 @@ load_containers() {
         podman-compose down 2>/dev/null || true
     fi
     
-    # Check if image already exists in Podman
-    if podman images | grep -q "scratch-universal"; then
+    # Check if we need to update the image based on version
+    NEEDS_UPDATE=false
+    if [ -f "$INSTALL_DIR/.installed_version" ]; then
+        INSTALLED_VERSION=$(cat "$INSTALL_DIR/.installed_version")
+        if [ "$INSTALLED_VERSION" != "$RELEASE_VERSION" ]; then
+            NEEDS_UPDATE=true
+            print_info "Version change detected: $INSTALLED_VERSION -> $RELEASE_VERSION"
+            print_info "Removing old container images to force reload..."
+            # Remove old images
+            podman rmi scratch-universal:latest 2>/dev/null || true
+            podman rmi scratch-gui 2>/dev/null || true
+            podman rmi scratch-backend 2>/dev/null || true
+            # Remove any other scratch-universal images
+            podman images --format "{{.Repository}}:{{.Tag}}" | grep "scratch-universal" | xargs -r podman rmi 2>/dev/null || true
+        fi
+    fi
+    
+    # Check if image already exists in Podman (and we don't need to update)
+    if [ "$NEEDS_UPDATE" = false ] && podman images | grep -q "scratch-universal"; then
         print_info "Universal image already exists in Podman, skipping load..."
         
         # Prepare image for running (ensure tags are correct)
@@ -429,7 +462,7 @@ load_containers() {
         return 0
     fi
     
-    # Image doesn't exist, check if tar file exists
+    # Image doesn't exist or needs update, check if tar file exists
     if [ ! -f "scratch-universal-arm64.tar" ]; then
         print_error "Container image not found in Podman and tar file doesn't exist"
         print_info "Please run the installation again or download the container manually"
