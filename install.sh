@@ -591,6 +591,11 @@ INSTALL_DIR="/opt/scratch-albilab"
 PODMAN_COMPOSE_PATH=$(which podman-compose)
 COMPOSE_FILE="$INSTALL_DIR/docker-compose.yml"
 
+# Logging function
+log() {
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" >&2
+}
+
 # Function to check if containers are running
 containers_running() {
     cd "$INSTALL_DIR" 2>/dev/null || return 1
@@ -604,50 +609,123 @@ containers_running() {
 
 # Function to start containers
 start_containers() {
-    cd "$INSTALL_DIR" || return 1
+    log "Starting containers..."
+    
+    cd "$INSTALL_DIR" || {
+        log "ERROR: Cannot change to $INSTALL_DIR"
+        return 1
+    }
+    
+    # Verify docker-compose.yml exists
+    if [ ! -f "docker-compose.yml" ]; then
+        log "ERROR: docker-compose.yml not found in $INSTALL_DIR"
+        return 1
+    fi
+    
+    # Verify podman-compose is available
+    if [ ! -x "$PODMAN_COMPOSE_PATH" ]; then
+        log "ERROR: podman-compose not found or not executable: $PODMAN_COMPOSE_PATH"
+        return 1
+    fi
     
     # If containers are already running, return success
     if containers_running; then
-        echo "Containers are already running"
+        log "Containers are already running"
         return 0
     fi
     
-    # Try to start containers, but ignore some errors
+    # Verify that the image exists
+    if ! podman images | grep -q "scratch-universal"; then
+        log "ERROR: scratch-universal image not found in Podman"
+        log "Available images:"
+        podman images | while IFS= read -r line; do
+            log "  $line"
+        done
+        return 1
+    fi
+    
+    # Clean up any broken pods first
+    log "Cleaning up any broken pods and containers..."
     set +e
-    $PODMAN_COMPOSE_PATH up -d 2>&1
+    # Remove all pods (podman-compose creates pods that can cause issues)
+    for pod_id in $(podman pod ls -q 2>/dev/null); do
+        log "Removing pod: $pod_id"
+        podman pod rm -f "$pod_id" 2>/dev/null || true
+    done
+    # Remove any existing containers
+    podman rm -f scratch-gui-app scratch-backend-app 2>/dev/null || true
+    # Also try to remove by container name pattern
+    podman rm -f $(podman ps -a --format "{{.Names}}" | grep -E "(scratch-gui|scratch-backend)" || true) 2>/dev/null || true
+    set -e
+    log "Cleanup completed"
+    
+    # Try to start containers with podman-compose
+    # Use --no-pod flag if available, otherwise try to work around pod issues
+    log "Running: $PODMAN_COMPOSE_PATH up -d"
+    set +e
+    
+    # First, try to stop any existing compose setup
+    $PODMAN_COMPOSE_PATH down 2>/dev/null || true
+    
+    # Try to start with podman-compose
+    local output
+    output=$($PODMAN_COMPOSE_PATH up -d 2>&1)
     local exit_code=$?
     set -e
     
-    # Check if containers are running despite the error
-    sleep 2
+    # Always show output for debugging
+    log "podman-compose output:"
+    echo "$output" | while IFS= read -r line; do
+        log "$line"
+    done
+    
+    # Wait a bit for containers to start
+    log "Waiting for containers to start..."
+    sleep 3
+    
+    # Check if containers are actually running
     if containers_running; then
-        echo "Containers are running"
-        return 0
-    elif [ $exit_code -eq 0 ]; then
-        echo "Containers started successfully"
+        log "SUCCESS: Containers are running"
+        podman ps --format "{{.Names}}: {{.Status}}" | grep -E "(scratch-gui-app|scratch-backend-app)" | while IFS= read -r line; do
+            log "Container: $line"
+        done
         return 0
     else
-        echo "Failed to start containers (exit code: $exit_code)"
+        # Containers didn't start - podman-compose failed
+        log "ERROR: podman-compose failed to start containers (exit code: $exit_code)"
+        log "Checking all container status..."
+        podman ps -a --format "{{.Names}}: {{.Status}}" | while IFS= read -r line; do
+            log "Container: $line"
+        done
+        log "Please check podman-compose configuration and logs"
         return 1
     fi
 }
 
 # Function to stop containers
 stop_containers() {
+    log "Stopping containers..."
     cd "$INSTALL_DIR" || return 0
     
     # If containers are not running, return success
     if ! containers_running; then
-        echo "Containers are not running"
+        log "Containers are not running"
         return 0
     fi
     
-    # Stop containers (ignore errors)
+    # Stop containers using podman-compose
     set +e
     $PODMAN_COMPOSE_PATH down 2>&1
+    local exit_code=$?
     set -e
-    echo "Containers stopped"
-    return 0
+    
+    if [ $exit_code -eq 0 ]; then
+        log "Containers stopped"
+        return 0
+    else
+        log "ERROR: podman-compose failed to stop containers (exit code: $exit_code)"
+        return 1
+    fi
 }
 
 # Function to restart containers
@@ -1097,9 +1175,37 @@ start_service() {
     # Wait for startup
     sleep 5
     
-    # Check status
-    if sudo systemctl is-active --quiet scratch-albilab.service; then
-        print_success "Service started/restarted successfully"
+    # Check if containers are actually running (not just service status)
+    if podman ps --format "{{.Names}}" 2>/dev/null | grep -qE "(scratch-gui-app|scratch-backend-app)"; then
+        print_success "Service started/restarted successfully - containers are running"
+    elif sudo systemctl is-active --quiet scratch-albilab.service; then
+        # Service says it's active, but containers aren't running
+        print_error "Service reports as active, but containers are not running"
+        print_info "This may indicate a problem with podman-compose"
+        print_info "Trying to start containers manually..."
+        
+        # Try to start containers directly
+        if [ -f "$INSTALL_DIR/podman-compose-wrapper.sh" ]; then
+            "$INSTALL_DIR/podman-compose-wrapper.sh" start
+            sleep 3
+            if podman ps --format "{{.Names}}" 2>/dev/null | grep -qE "(scratch-gui-app|scratch-backend-app)"; then
+                print_success "Containers started manually"
+            else
+                print_error "Failed to start containers even manually"
+                print_info "Check logs: sudo journalctl -u scratch-albilab.service"
+                print_info "Check status: sudo systemctl status scratch-albilab.service"
+                print_info "Check podman: podman ps -a"
+                
+                # Show last logs
+                print_info "Last service logs:"
+                sudo journalctl -u scratch-albilab.service --no-pager -n 20
+                
+                exit 1
+            fi
+        else
+            print_error "Wrapper script not found"
+            exit 1
+        fi
     else
         print_error "Failed to start service"
         print_info "Check logs: sudo journalctl -u scratch-albilab.service"
@@ -1107,7 +1213,7 @@ start_service() {
         
         # Show last logs
         print_info "Last logs:"
-        sudo journalctl -u scratch-albilab.service --no-pager -n 10
+        sudo journalctl -u scratch-albilab.service --no-pager -n 20
         
         exit 1
     fi
