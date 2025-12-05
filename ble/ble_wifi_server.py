@@ -258,7 +258,8 @@ class Characteristic(dbus.service.Object):
             current_ip = get_current_ip_address()
             if current_ip:
                 logger.info(f'IPAddressCharacteristic.ReadValue: value was empty, getting current IP: {current_ip}')
-                self.value = dbus.Array([dbus.Byte(ord(c)) for c in current_ip], signature=dbus.Signature('y'))
+                ip_bytes = current_ip.encode('utf-8')
+                self.value = dbus.Array([dbus.Byte(b) for b in ip_bytes], signature=dbus.Signature('y'))
                 value_str = current_ip
         logger.info(f'ReadValue returning: UUID={self.uuid}, value length={len(self.value)}, value="{value_str}"')
         if self.uuid == IP_ADDRESS_CHAR_UUID:
@@ -353,11 +354,13 @@ class StatusCharacteristic(Characteristic):
             ['read', 'notify'],
             service)
         self.wifi_server = wifi_server
-        self.value = dbus.Array([dbus.Byte(ord(c)) for c in "idle"], signature=dbus.Signature('y'))
+        idle_bytes = "idle".encode('utf-8')
+        self.value = dbus.Array([dbus.Byte(b) for b in idle_bytes], signature=dbus.Signature('y'))
 
     def update_status(self, status):
         """Update status value and notify"""
-        self.value = dbus.Array([dbus.Byte(ord(c)) for c in status], signature=dbus.Signature('y'))
+        status_bytes = status.encode('utf-8')
+        self.value = dbus.Array([dbus.Byte(b) for b in status_bytes], signature=dbus.Signature('y'))
         self.PropertiesChanged(
             GATT_CHRC_IFACE,
             {'Value': self.value},
@@ -377,7 +380,8 @@ class IPAddressCharacteristic(Characteristic):
         # Try to get IP address immediately if available
         initial_ip = get_current_ip_address()
         if initial_ip:
-            self.value = dbus.Array([dbus.Byte(ord(c)) for c in initial_ip], signature=dbus.Signature('y'))
+            ip_bytes = initial_ip.encode('utf-8')
+            self.value = dbus.Array([dbus.Byte(b) for b in ip_bytes], signature=dbus.Signature('y'))
             logger.info(f'IPAddressCharacteristic initialized with IP: {initial_ip}')
         else:
             self.value = dbus.Array([], signature=dbus.Signature('y'))
@@ -386,7 +390,8 @@ class IPAddressCharacteristic(Characteristic):
     def update_ip(self, ip):
         """Update IP address value and notify"""
         logger.info(f'IPAddressCharacteristic.update_ip called with IP: {ip}')
-        self.value = dbus.Array([dbus.Byte(ord(c)) for c in ip], signature=dbus.Signature('y'))
+        ip_bytes = ip.encode('utf-8')
+        self.value = dbus.Array([dbus.Byte(b) for b in ip_bytes], signature=dbus.Signature('y'))
         logger.info(f'IPAddressCharacteristic value updated, length: {len(self.value)}')
         self.PropertiesChanged(
             GATT_CHRC_IFACE,
@@ -448,16 +453,18 @@ class WiFiScanCharacteristic(Characteristic):
                     json_size = len(json_data)
                 logger.info(f'Truncated to {len(simplified_networks)} networks, size: {json_size} bytes')
             
-            # Convert to byte array
-            self.value = dbus.Array([dbus.Byte(ord(c)) for c in json_data], signature=dbus.Signature('y'))
+            # Convert to byte array using UTF-8 encoding
+            json_bytes = json_data.encode('utf-8')
+            self.value = dbus.Array([dbus.Byte(b) for b in json_bytes], signature=dbus.Signature('y'))
             logger.info(f'WiFiScanCharacteristic returning {len(self.value)} bytes')
             
             return self.value
         except Exception as e:
             logger.error(f'Error in WiFiScanCharacteristic.ReadValue: {e}', exc_info=True)
             # Return empty array on error
-            error_json = json.dumps([{"error": str(e)}])
-            self.value = dbus.Array([dbus.Byte(ord(c)) for c in error_json], signature=dbus.Signature('y'))
+            error_json = json.dumps([{"error": str(e)}], ensure_ascii=False)
+            error_bytes = error_json.encode('utf-8')
+            self.value = dbus.Array([dbus.Byte(b) for b in error_bytes], signature=dbus.Signature('y'))
             return self.value
 
 
@@ -485,12 +492,16 @@ class ContainerStatusCharacteristic(Characteristic):
             status_json = json.dumps(status, ensure_ascii=False)
             logger.info(f'Container status: {status_json}')
             
-            self.value = dbus.Array([dbus.Byte(ord(c)) for c in status_json], signature=dbus.Signature('y'))
+            # Convert JSON string to bytes using UTF-8 encoding
+            status_bytes = status_json.encode('utf-8')
+            self.value = dbus.Array([dbus.Byte(b) for b in status_bytes], signature=dbus.Signature('y'))
             return self.value
         except Exception as e:
             logger.error(f'Error in ContainerStatusCharacteristic.ReadValue: {e}', exc_info=True)
-            error_json = json.dumps({"error": str(e), "running": False})
-            self.value = dbus.Array([dbus.Byte(ord(c)) for c in error_json], signature=dbus.Signature('y'))
+            error_json = json.dumps({"error": str(e), "running": False}, ensure_ascii=False)
+            # Convert JSON string to bytes using UTF-8 encoding
+            error_bytes = error_json.encode('utf-8')
+            self.value = dbus.Array([dbus.Byte(b) for b in error_bytes], signature=dbus.Signature('y'))
             return self.value
 
 
@@ -542,17 +553,21 @@ class ContainerLogsCharacteristic(Characteristic):
         try:
             logs = get_container_logs()
             # Limit log size to avoid BLE size limits (512 bytes)
-            if len(logs) > 500:
-                logs = logs[-500:]  # Take last 500 characters
-                logger.warning(f'Logs truncated to 500 characters')
+            # Convert to bytes first to get accurate byte count
+            logs_bytes = logs.encode('utf-8')
+            if len(logs_bytes) > 500:
+                logs_bytes = logs_bytes[-500:]  # Take last 500 bytes
+                logger.warning(f'Logs truncated to 500 bytes')
             
-            logger.info(f'Returning {len(logs)} characters of logs')
-            self.value = dbus.Array([dbus.Byte(ord(c)) for c in logs], signature=dbus.Signature('y'))
+            logger.info(f'Returning {len(logs_bytes)} bytes of logs')
+            self.value = dbus.Array([dbus.Byte(b) for b in logs_bytes], signature=dbus.Signature('y'))
             return self.value
         except Exception as e:
             logger.error(f'Error in ContainerLogsCharacteristic.ReadValue: {e}', exc_info=True)
             error_msg = f"Error getting logs: {str(e)}"
-            self.value = dbus.Array([dbus.Byte(ord(c)) for c in error_msg], signature=dbus.Signature('y'))
+            # Convert error message to bytes using UTF-8 encoding
+            error_bytes = error_msg.encode('utf-8')
+            self.value = dbus.Array([dbus.Byte(b) for b in error_bytes], signature=dbus.Signature('y'))
             return self.value
 
 
