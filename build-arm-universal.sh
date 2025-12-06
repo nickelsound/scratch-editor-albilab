@@ -103,7 +103,9 @@ else
 fi
 
 # Build universal image
+# Použijeme BuildKit pro lepší cache a rychlejší buildy
 echo "🔨 Sestavuji Universal image (frontend + backend)..."
+echo "💡 Používám BuildKit cache pro rychlejší inkrementální buildy"
 podman build --platform $TARGET_PLATFORM \
     --ulimit nofile=65536:65536 \
     -f Dockerfile.universal \

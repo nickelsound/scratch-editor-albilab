@@ -1,0 +1,35 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "globalDependencies": ["package.json", "package-lock.json"],
+  "pipeline": {
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": [
+        "dist/**",
+        "build/**",
+        "playground/**",
+        "*.js.map"
+      ],
+      "env": [
+        "NODE_ENV",
+        "BUILD_TYPE",
+        "BUILD_MODE",
+        "REACT_APP_API_PORT",
+        "REACT_APP_WS_PORT"
+      ],
+      "cache": true
+    },
+    "clean": {
+      "cache": false
+    },
+    "test": {
+      "dependsOn": ["build"],
+      "outputs": ["test-results/**"],
+      "cache": true
+    },
+    "prepare": {
+      "cache": false
+    }
+  }
+}
+
