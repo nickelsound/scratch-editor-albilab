@@ -359,50 +359,77 @@ async function removeProjectFromRunningProjects(projectName) {
     }
 }
 
-// Automatic startup of projects that were running before restart
-async function autoStartDeployedProjects() {
+// Check and start projects that should be running but aren't
+// This function is used both at startup and in periodic checks
+async function checkAndStartMissingProjects() {
     try {
-        log('Checking projects that were running before restart...', 'info');
+        log('Checking for projects that should be running...', 'info');
         
-        // Load list of projects that were running
+        // Load list of projects that should be running
         const runningProjectsList = await loadRunningProjects();
         
         if (runningProjectsList.length === 0) {
-            log('No projects for automatic startup (were not running before restart)', 'info');
+            log('No projects in running-projects.json', 'info');
             return 0;
         }
         
-        log(`Found ${runningProjectsList.length} projects that were running before restart`, 'info');
+        log(`Found ${runningProjectsList.length} project(s) that should be running`, 'info');
         
+        // Check which projects are already running
+        const missingProjectNames = runningProjectsList.filter(name => !runningServices.has(name));
+        
+        if (missingProjectNames.length === 0) {
+            log(`All ${runningProjectsList.length} project(s) are already running`, 'info');
+            return 0;
+        }
+        
+        log(`${missingProjectNames.length} project(s) should be running but aren't: ${missingProjectNames.join(', ')}`, 'info');
+        
+        // Search for projects by looking into JSON files in deployed-projects (not by filename)
+        // Projects in running-projects.json must be deployed, so we only check deployed-projects
         const deployedProjectsDir = path.join(UPLOADS_BASE, 'deployed-projects');
         
-        // Check if directory exists
         if (!await fs.pathExists(deployedProjectsDir)) {
-            log('deployed-projects directory does not exist, no projects for automatic startup', 'info');
+            log('deployed-projects directory does not exist', 'info');
             return 0;
         }
         
-        let startedCount = 0;
-        for (const projectName of runningProjectsList) {
-            try {
-                // Load project from deployed-projects or auto-save
-                let projectInfo = null;
-                
-                // First try to find in deployed-projects
-                const safeFileName = sanitizeFileName(projectName);
-                const deployedProjectPath = path.join(deployedProjectsDir, safeFileName);
-                
-                if (await fs.pathExists(deployedProjectPath)) {
-                    projectInfo = await fs.readJson(deployedProjectPath);
-                } else {
-                    // If not in deployed-projects, try auto-save
-                    projectInfo = await loadAutoSaveProject(projectName);
+        // Create a map of projectName -> projectInfo from all files in deployed-projects
+        const availableProjects = new Map();
+        
+        try {
+            const files = await fs.readdir(deployedProjectsDir);
+            for (const file of files) {
+                if (file.endsWith('.json')) {
+                    try {
+                        const filePath = path.join(deployedProjectsDir, file);
+                        const projectInfo = await fs.readJson(filePath);
+                        if (projectInfo && projectInfo.projectName) {
+                            availableProjects.set(projectInfo.projectName, projectInfo);
+                            log(`Found project "${projectInfo.projectName}" in deployed-projects/${file}`, 'info');
+                        }
+                    } catch (error) {
+                        log(`Error reading file ${file}: ${error.message}`, 'error');
+                    }
                 }
+            }
+        } catch (error) {
+            log(`Error reading deployed-projects directory: ${error.message}`, 'error');
+            return 0;
+        }
+        
+        // Now try to start missing projects
+        let startedCount = 0;
+        for (const projectName of missingProjectNames) {
+            try {
+                const projectInfo = availableProjects.get(projectName);
                 
                 if (!projectInfo) {
-                    log(`Project ${projectName} not found in deployed-projects or auto-save, skipped`, 'warn');
+                    log(`Project "${projectName}" not found in deployed-projects, skipped`, 'warn');
                     continue;
                 }
+                
+                log(`Project "${projectName}" found, processing...`, 'info');
                 
                 // Process projectData - can be string or object
                 let actualProjectData = projectInfo.projectData;
@@ -422,26 +449,27 @@ async function autoStartDeployedProjects() {
                 }
                 
                 // Start project
-                log(`Automatically starting project that was running before restart: ${projectName}`, 'info');
+                log(`Starting project ${projectName}...`, 'info');
                 await startService(actualProjectData, projectName);
                 startedCount++;
+                log(`Project ${projectName} started successfully`, 'success');
                 
                 // Wait a bit between starting projects
                 await new Promise(resolve => setTimeout(resolve, 500));
                 
             } catch (error) {
-                log(`Error during automatic startup of project ${projectName}: ${error.message}`, 'error', {
+                log(`Error starting project ${projectName}: ${error.message}`, 'error', {
                     errorName: error.name,
                     errorStack: error.stack
                 });
             }
         }
         
-        log(`Automatically started ${startedCount} out of ${runningProjectsList.length} projects that were running before restart`, startedCount > 0 ? 'success' : 'info');
+        log(`Started ${startedCount} out of ${missingProjectNames.length} missing project(s)`, startedCount > 0 ? 'success' : 'info');
         return startedCount;
         
     } catch (error) {
-        log(`Error during automatic startup of projects: ${error.message}`, 'error', {
+        log(`Error during check: ${error.message}`, 'error', {
             errorName: error.name,
             errorStack: error.stack
         });
@@ -1596,7 +1624,7 @@ async function runServerStartupScript() {
         await new Promise(resolve => setTimeout(resolve, 2000));
         
         // Automatic startup of all deployed projects
-        await autoStartDeployedProjects();
+        await checkAndStartMissingProjects();
         
         log('Startup script completed', 'success');
     } catch (error) {
@@ -1609,114 +1637,6 @@ async function runServerStartupScript() {
     }
 }
 
-// Periodic check for projects that should be running but aren't
-async function checkAndStartMissingProjects() {
-    try {
-        log('Periodic check: Checking for projects that should be running...', 'info');
-        
-        // Load list of projects that should be running
-        const runningProjectsList = await loadRunningProjects();
-        
-        if (runningProjectsList.length === 0) {
-            log('Periodic check: No projects in running-projects.json', 'info');
-            return;
-        }
-        
-        log(`Periodic check: Looking for ${runningProjectsList.length} project(s) that should be running`, 'info');
-        
-        // Check which projects are already running
-        const runningProjectNames = new Set(runningProjectsList.filter(name => runningServices.has(name)));
-        const missingProjectNames = runningProjectsList.filter(name => !runningServices.has(name));
-        
-        if (missingProjectNames.length === 0) {
-            log(`Periodic check: All ${runningProjectsList.length} project(s) are already running`, 'info');
-            return;
-        }
-        
-        log(`Periodic check: ${missingProjectNames.length} project(s) should be running but aren't: ${missingProjectNames.join(', ')}`, 'info');
-        
-        // Search for projects by looking into JSON files in deployed-projects (not by filename)
-        // Projects in running-projects.json must be deployed, so we only check deployed-projects
-        const deployedProjectsDir = path.join(UPLOADS_BASE, 'deployed-projects');
-        
-        if (!await fs.pathExists(deployedProjectsDir)) {
-            log('Periodic check: deployed-projects directory does not exist', 'info');
-            return;
-        }
-        
-        // Create a map of projectName -> projectInfo from all files in deployed-projects
-        const availableProjects = new Map();
-        
-        try {
-            const files = await fs.readdir(deployedProjectsDir);
-            for (const file of files) {
-                if (file.endsWith('.json')) {
-                    try {
-                        const filePath = path.join(deployedProjectsDir, file);
-                        const projectInfo = await fs.readJson(filePath);
-                        if (projectInfo && projectInfo.projectName) {
-                            availableProjects.set(projectInfo.projectName, projectInfo);
-                            log(`Periodic check: Found project "${projectInfo.projectName}" in deployed-projects/${file}`, 'info');
-                        }
-                    } catch (error) {
-                        log(`Periodic check: Error reading file ${file}: ${error.message}`, 'error');
-                    }
-                }
-            }
-        } catch (error) {
-            log(`Periodic check: Error reading deployed-projects directory: ${error.message}`, 'error');
-            return;
-        }
-        
-        // Now try to start missing projects
-        for (const projectName of missingProjectNames) {
-            try {
-                const projectInfo = availableProjects.get(projectName);
-                
-                if (!projectInfo) {
-                    log(`Periodic check: Project "${projectName}" not found in any JSON files, skipped`, 'warn');
-                    continue;
-                }
-                
-                log(`Periodic check: Project "${projectName}" found, processing...`, 'info');
-                
-                // Process projectData - can be string or object
-                let actualProjectData = projectInfo.projectData;
-                if (typeof actualProjectData === 'string') {
-                    try {
-                        actualProjectData = JSON.parse(actualProjectData);
-                    } catch (parseError) {
-                        log(`Periodic check: Error parsing projectData for ${projectName}: ${parseError.message}`, 'error');
-                        continue;
-                    }
-                }
-                
-                // Validate presence of IP component
-                if (!validateAlbiLABIPComponent(actualProjectData)) {
-                    log(`Periodic check: Project ${projectName} does not have AlbiLAB IP component, skipped`, 'warn');
-                    continue;
-                }
-                
-                // Start project
-                log(`Periodic check: Starting project ${projectName}...`, 'info');
-                await startService(actualProjectData, projectName);
-                log(`Periodic check: Project ${projectName} started successfully`, 'success');
-                
-            } catch (error) {
-                log(`Periodic check: Error starting project ${projectName}: ${error.message}`, 'error', {
-                    errorName: error.name,
-                    errorStack: error.stack
-                });
-            }
-        }
-        
-    } catch (error) {
-        log(`Periodic check: Error during check: ${error.message}`, 'error', {
-            errorName: error.name,
-            errorStack: error.stack
-        });
-    }
-}
 
 // Start server
 app.listen(PORT, async () => {
@@ -1728,6 +1648,7 @@ app.listen(PORT, async () => {
     
     // Start periodic check for missing projects (every 5 minutes)
     setInterval(async () => {
+        log('Periodic check: Running scheduled check...', 'info');
         await checkAndStartMissingProjects();
     }, 5 * 60 * 1000); // 5 minutes = 300000 ms
     
