@@ -652,12 +652,14 @@ def check_containers_status():
 def start_containers():
     """
     Start scratch containers using podman-compose-wrapper.sh
+    Note: Must run as user 'pi' (not root!), because podman runs rootless
     
     Returns:
         Dictionary with result information
     """
     INSTALL_DIR = "/opt/scratch-albilab"
     WRAPPER_SCRIPT = f"{INSTALL_DIR}/podman-compose-wrapper.sh"
+    service_user = 'pi'  # Service runs under user 'pi'
     result = {
         "success": False,
         "message": "",
@@ -671,9 +673,11 @@ def start_containers():
             logger.error(result["message"])
             return result
         
-        # Start containers using wrapper script
+        # Start containers using wrapper script as user 'pi' (not root!)
+        # Wrapper script internally calls podman-compose, which must run as non-root
+        logger.info(f"Starting containers as user: {service_user}")
         start_result = subprocess.run(
-            ['sudo', WRAPPER_SCRIPT, 'start'],
+            ['su', '-', service_user, '-c', f'{WRAPPER_SCRIPT} start'],
             capture_output=True,
             text=True,
             timeout=60
@@ -826,6 +830,93 @@ class WiFiConfigServer:
             if self.ip_char:
                 self.ip_char.update_ip(ip_address)
             logger.info(f"WiFi configured successfully. IP: {ip_address}")
+            
+            # After successful WiFi configuration, restart containers
+            # This is important because on first boot, containers may not have started
+            # due to missing network connection
+            logger.info("WiFi configured - restarting containers to ensure they're running...")
+            try:
+                # Wait a moment for network to stabilize
+                time.sleep(3)
+                
+                # Service runs under user 'pi' (not root!)
+                # Podman must run as non-root user
+                service_user = 'pi'
+                
+                # First, clean up broken pods and containers (like install.sh does)
+                # This is important because podman-compose can leave broken pods
+                # But we must run podman commands as the service user, not root!
+                logger.info("Cleaning up broken pods and containers...")
+                try:
+                    # Remove all pods (podman-compose creates pods that can cause issues)
+                    # Run as service user 'pi', not root
+                    pod_list_result = subprocess.run(
+                        ['su', '-', service_user, '-c', 'podman pod ls -q'],
+                        capture_output=True,
+                        text=True,
+                        timeout=10
+                    )
+                    if pod_list_result.returncode == 0 and pod_list_result.stdout.strip():
+                        for pod_id in pod_list_result.stdout.strip().split('\n'):
+                            if pod_id.strip():
+                                logger.info(f"Removing pod: {pod_id}")
+                                subprocess.run(
+                                    ['su', '-', service_user, '-c', f'podman pod rm -f {pod_id.strip()}'],
+                                    capture_output=True,
+                                    timeout=10
+                                )
+                    
+                    # Remove any existing containers (as service user 'pi')
+                    subprocess.run(
+                        ['su', '-', service_user, '-c', 'podman rm -f scratch-gui-app scratch-backend-app'],
+                        capture_output=True,
+                        timeout=10
+                    )
+                    logger.info("Cleanup completed")
+                except Exception as cleanup_error:
+                    logger.warning(f"Cleanup warning (non-fatal): {cleanup_error}")
+                
+                # Stop any existing compose setup (as service user 'pi')
+                logger.info("Stopping existing compose setup...")
+                subprocess.run(
+                    ['su', '-', service_user, '-c', 'cd /opt/scratch-albilab && podman-compose down'],
+                    capture_output=True,
+                    timeout=30
+                )
+                
+                # Restart systemd service (which will restart containers with clean state)
+                # This is the safest way - systemd service runs under user 'pi'
+                logger.info("Restarting systemd service...")
+                restart_result = subprocess.run(
+                    ['systemctl', 'restart', 'scratch-albilab.service'],
+                    capture_output=True,
+                    text=True,
+                    timeout=30
+                )
+                
+                if restart_result.returncode == 0:
+                    logger.info("Containers restarted successfully after WiFi configuration")
+                    # Wait a bit and verify containers are running
+                    time.sleep(5)
+                    # Check as service user 'pi'
+                    verify_result = subprocess.run(
+                        ['su', '-', service_user, '-c', 'podman ps --format "{{.Names}}"'],
+                        capture_output=True,
+                        text=True,
+                        timeout=10
+                    )
+                    
+                    if verify_result.returncode == 0:
+                        running_containers = [line.strip() for line in verify_result.stdout.strip().split('\n') if line.strip()]
+                        if any('scratch-gui-app' in name or 'scratch-backend-app' in name for name in running_containers):
+                            logger.info(f"Verified: Containers are running: {running_containers}")
+                        else:
+                            logger.warning("Containers may not be running after restart")
+                else:
+                    logger.warning(f"Failed to restart containers via systemctl: {restart_result.stderr}")
+                    logger.error("Systemctl restart failed - manual intervention may be required")
+            except Exception as e:
+                logger.error(f"Error restarting containers after WiFi configuration: {e}", exc_info=True)
         else:
             if self.status_char:
                 self.status_char.update_status("error")
