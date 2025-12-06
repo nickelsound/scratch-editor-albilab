@@ -43,11 +43,11 @@
     "prettier": "3.7.4",
     "typescript": "5.9.3",
     "unplugin-dts": "1.0.0-beta.6",
-    "vite": "npm:rolldown-vite@7.2.9",
+    "vite": "npm:rolldown-vite@7.2.10",
     "vitest": "4.0.15"
   },
   "overrides": {
-    "vite": "npm:rolldown-vite@7.2.9"
+    "vite": "npm:rolldown-vite@7.2.10"
   },
   "dependencies": {
     "p-limit": "7.2.0"
