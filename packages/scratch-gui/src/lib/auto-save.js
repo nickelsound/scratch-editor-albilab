@@ -132,13 +132,20 @@ class AutoSaveService {
         }
 
         try {
+            // Get current project data from VM as JSON
+            const projectData = this.vm.toJSON();
+            
+            // Check if project is empty (has no blocks) - if so, skip saving
+            if (this.isProjectEmpty(projectData)) {
+                console.log('Project is empty (no blocks) - skipping auto-save');
+                this.scheduleNextSave();
+                return;
+            }
+
             this.isSaving = true;
             this.updateSaveStatus('saving');
 
             console.log('Performing automatic project save...');
-            
-            // Get current project data from VM as JSON
-            const projectData = this.vm.toJSON();
             
             // Send to backend
             const apiUrl = getApiUrl('/saved-project/auto-save');
@@ -184,6 +191,38 @@ class AutoSaveService {
                 lastSaveTime: this.lastSaveTime,
                 isSaving: status === 'saving' ? true : false
             });
+        }
+    }
+
+    /**
+     * Checks if project is empty (has no blocks)
+     */
+    isProjectEmpty(projectData) {
+        try {
+            // Parse project data if it's a string
+            const parsed = typeof projectData === 'string' ? JSON.parse(projectData) : projectData;
+            
+            if (!parsed || !parsed.targets || !Array.isArray(parsed.targets)) {
+                return true;
+            }
+            
+            // Check all targets for blocks
+            for (const target of parsed.targets) {
+                if (target.blocks && typeof target.blocks === 'object') {
+                    const blockKeys = Object.keys(target.blocks);
+                    // If there are any blocks, project is not empty
+                    if (blockKeys.length > 0) {
+                        return false;
+                    }
+                }
+            }
+            
+            // No blocks found in any target
+            return true;
+        } catch (error) {
+            console.error('Error checking if project is empty:', error);
+            // If we can't parse, assume it's not empty to be safe
+            return false;
         }
     }
 
