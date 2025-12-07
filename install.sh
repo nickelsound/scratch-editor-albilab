@@ -798,7 +798,12 @@ EOF
     sudo systemctl daemon-reload
     sudo systemctl enable scratch-albilab.service
     
+    # Enable linger for user to allow rootless podman to work without SSH login
+    # This creates a persistent user session that survives logout
+    sudo loginctl enable-linger $USER
+    
     print_success "Systemd service created and enabled"
+    print_info "User linger enabled for rootless podman support"
 }
 
 # Create BLE systemd service
