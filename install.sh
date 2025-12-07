@@ -772,8 +772,8 @@ create_systemd_service() {
     sudo tee /etc/systemd/system/scratch-albilab.service > /dev/null << EOF
 [Unit]
 Description=Scratch Editor AlbiLAB
-After=network.target podman.service
-Wants=network.target
+After=network-online.target podman.service
+Wants=network-online.target
 Requires=podman.service
 
 [Service]
@@ -1058,8 +1058,8 @@ create_monitoring_timer() {
     sudo tee /etc/systemd/system/scratch-albilab-monitor.service > /dev/null << EOF
 [Unit]
 Description=Scratch Editor AlbiLAB - Container Health Monitor
-After=network.target podman.service scratch-albilab.service
-Wants=network.target
+After=network-online.target podman.service scratch-albilab.service
+Wants=network-online.target
 
 [Service]
 Type=oneshot
