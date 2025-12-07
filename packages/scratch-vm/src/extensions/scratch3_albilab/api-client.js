@@ -16,10 +16,12 @@ class AlbiLABAPIClient {
      * Make HTTP request to AlbiLAB device
      * @param {string} endpoint - API endpoint
      * @param {object} params - Query parameters
+     * @param {?string} ipAddress - Optional IP address to use instead of baseURL
      * @returns {Promise<object>} Response data
      */
-    async makeRequest(endpoint, params = {}) {
-        const url = new URL(endpoint, this.baseURL);
+    async makeRequest(endpoint, params = {}, ipAddress = null) {
+        const baseURL = ipAddress ? `http://${ipAddress}` : this.baseURL;
+        const url = new URL(endpoint, baseURL);
         
         // Add query parameters
         Object.keys(params).forEach(key => {
@@ -91,10 +93,12 @@ class AlbiLABAPIClient {
 
     /**
      * Get device information with caching
+     * @param {?string} ipAddress - IP address to use for the request
      * @returns {Promise<object>} Device info
      */
-    async getDeviceInfo() {
-        const cacheKey = 'deviceInfo';
+    async getDeviceInfo(ipAddress = null) {
+        // Use IP address as part of cache key to cache per device
+        const cacheKey = `deviceInfo_${ipAddress || 'default'}`;
         const cached = this.cache.get(cacheKey);
         
         if (cached && Date.now() - cached.timestamp < this.cacheDuration) {
@@ -102,9 +106,9 @@ class AlbiLABAPIClient {
         }
 
         try {
-            const data = await this.makeRequest(AlbiLABConfig.endpoints.info);
+            const data = await this.makeRequest(AlbiLABConfig.endpoints.info, {}, ipAddress);
             
-            // Cache the result
+            // Cache the result keyed by IP address
             this.cache.set(cacheKey, {
                 data: data,
                 timestamp: Date.now()
@@ -122,9 +126,10 @@ class AlbiLABAPIClient {
      * Control pump
      * @param {string} action - 'start', 'stop', or 'timed'
      * @param {number} duration - Duration in seconds (for timed action)
+     * @param {?string} ipAddress - Optional IP address to use instead of baseURL
      * @returns {Promise<object>} Response
      */
-    async controlPump(action, duration = null) {
+    async controlPump(action, duration = null, ipAddress = null) {
         console.log(`[${new Date().toISOString()}] [AlbiLAB API] Control pump called with action: ${action}, duration: ${duration}`);
         
         const params = { action };
@@ -135,7 +140,7 @@ class AlbiLABAPIClient {
         }
 
         try {
-            const response = await this.makeRequest(AlbiLABConfig.endpoints.pump, params);
+            const response = await this.makeRequest(AlbiLABConfig.endpoints.pump, params, ipAddress);
             console.log(`[${new Date().toISOString()}] [AlbiLAB API] Pump control successful:`, response);
             this.clearCache(); // Clear cache after state change
             return response;
@@ -149,9 +154,10 @@ class AlbiLABAPIClient {
      * Control fan
      * @param {string} action - 'start', 'stop', or 'timed'
      * @param {number} duration - Duration in seconds (for timed action)
+     * @param {?string} ipAddress - Optional IP address to use instead of baseURL
      * @returns {Promise<object>} Response
      */
-    async controlFan(action, duration = null) {
+    async controlFan(action, duration = null, ipAddress = null) {
         const params = { action };
         
         if (action === 'timed' && duration) {
@@ -159,7 +165,7 @@ class AlbiLABAPIClient {
         }
 
         try {
-            const response = await this.makeRequest(AlbiLABConfig.endpoints.fan, params);
+            const response = await this.makeRequest(AlbiLABConfig.endpoints.fan, params, ipAddress);
             this.clearCache(); // Clear cache after state change
             return response;
         } catch (error) {
@@ -172,9 +178,10 @@ class AlbiLABAPIClient {
      * Control lights
      * @param {string} action - 'on', 'off', or 'custom'
      * @param {object} colors - Color settings for custom action
+     * @param {?string} ipAddress - Optional IP address to use instead of baseURL
      * @returns {Promise<object>} Response
      */
-    async controlLights(action, colors = {}) {
+    async controlLights(action, colors = {}, ipAddress = null) {
         const params = { action };
         
         if (action === 'custom') {
@@ -184,7 +191,7 @@ class AlbiLABAPIClient {
         }
 
         try {
-            const response = await this.makeRequest(AlbiLABConfig.endpoints.lights, params);
+            const response = await this.makeRequest(AlbiLABConfig.endpoints.lights, params, ipAddress);
             this.clearCache(); // Clear cache after state change
             return response;
         } catch (error) {
@@ -195,10 +202,11 @@ class AlbiLABAPIClient {
 
     /**
      * Get sensor data from device info
+     * @param {?string} ipAddress - Optional IP address to use instead of baseURL
      * @returns {Promise<object>} Sensor data
      */
-    async getSensorData() {
-        const deviceInfo = await this.getDeviceInfo();
+    async getSensorData(ipAddress = null) {
+        const deviceInfo = await this.getDeviceInfo(ipAddress);
         
         return {
             temperature: this.extractTemperature(deviceInfo),
