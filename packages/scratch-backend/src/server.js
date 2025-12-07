@@ -361,6 +361,7 @@ async function removeProjectFromRunningProjects(projectName) {
 
 // Check and start projects that should be running but aren't
 // This function is used both at startup and in periodic checks
+// Uses the same method as GUI start-project endpoint for consistency
 async function checkAndStartMissingProjects() {
     try {
         log('Checking for projects that should be running...', 'info');
@@ -385,70 +386,38 @@ async function checkAndStartMissingProjects() {
         
         log(`${missingProjectNames.length} project(s) should be running but aren't: ${missingProjectNames.join(', ')}`, 'info');
         
-        // Search for projects by looking into JSON files in deployed-projects (not by filename)
-        // Projects in running-projects.json must be deployed, so we only check deployed-projects
-        const deployedProjectsDir = path.join(UPLOADS_BASE, 'deployed-projects');
-        
-        if (!await fs.pathExists(deployedProjectsDir)) {
-            log('deployed-projects directory does not exist', 'info');
-            return 0;
-        }
-        
-        // Create a map of projectName -> projectInfo from all files in deployed-projects
-        const availableProjects = new Map();
-        
-        try {
-            const files = await fs.readdir(deployedProjectsDir);
-            for (const file of files) {
-                if (file.endsWith('.json')) {
-                    try {
-                        const filePath = path.join(deployedProjectsDir, file);
-                        const projectInfo = await fs.readJson(filePath);
-                        if (projectInfo && projectInfo.projectName) {
-                            availableProjects.set(projectInfo.projectName, projectInfo);
-                            log(`Found project "${projectInfo.projectName}" in deployed-projects/${file}`, 'info');
-                        }
-                    } catch (error) {
-                        log(`Error reading file ${file}: ${error.message}`, 'error');
-                    }
-                }
-            }
-        } catch (error) {
-            log(`Error reading deployed-projects directory: ${error.message}`, 'error');
-            return 0;
-        }
-        
-        // Now try to start missing projects
+        // Now try to start missing projects using the same method as GUI start-project endpoint
         let startedCount = 0;
         for (const projectName of missingProjectNames) {
             try {
-                const projectInfo = availableProjects.get(projectName);
+                log(`Processing project "${projectName}"...`, 'info');
                 
-                if (!projectInfo) {
-                    log(`Project "${projectName}" not found in deployed-projects, skipped`, 'warn');
+                // Check if project is deployed (same check as GUI endpoint)
+                const isDeployed = await isProjectDeployed(projectName);
+                if (!isDeployed) {
+                    log(`Project "${projectName}" is not deployed, skipped`, 'warn');
                     continue;
                 }
                 
-                log(`Project "${projectName}" found, processing...`, 'info');
-                
-                // Process projectData - can be string or object
-                let actualProjectData = projectInfo.projectData;
-                if (typeof actualProjectData === 'string') {
-                    try {
-                        actualProjectData = JSON.parse(actualProjectData);
-                    } catch (parseError) {
-                        log(`Error parsing projectData for ${projectName}: ${parseError.message}`, 'error');
-                        continue;
-                    }
+                // Load project from auto-save (same method as GUI endpoint)
+                const projectData = await loadAutoSaveProject(projectName);
+                if (!projectData) {
+                    log(`Project "${projectName}" not found in auto-save, skipped`, 'warn');
+                    continue;
                 }
                 
-                // Validate presence of IP component
+                // Validate presence of IP component (same validation as GUI endpoint)
+                // If projectData.projectData is a string, parse it
+                const actualProjectData = typeof projectData.projectData === 'string' 
+                    ? JSON.parse(projectData.projectData) 
+                    : projectData.projectData;
+                
                 if (!validateAlbiLABIPComponent(actualProjectData)) {
                     log(`Project ${projectName} does not have AlbiLAB IP component, skipped`, 'warn');
                     continue;
                 }
                 
-                // Start project
+                // Start project using the same startService method as GUI endpoint
                 log(`Starting project ${projectName}...`, 'info');
                 await startService(actualProjectData, projectName);
                 startedCount++;
