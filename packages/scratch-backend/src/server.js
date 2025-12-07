@@ -412,11 +412,6 @@ async function checkAndStartMissingProjects() {
                     ? JSON.parse(projectData.projectData) 
                     : projectData.projectData;
                 
-                if (!validateAlbiLABIPComponent(actualProjectData)) {
-                    log(`Project ${projectName} does not have AlbiLAB IP component, skipped`, 'warn');
-                    continue;
-                }
-                
                 // Start project using the same startService method as GUI endpoint
                 log(`Starting project ${projectName}...`, 'info');
                 await startService(actualProjectData, projectName);
@@ -678,16 +673,6 @@ app.post('/api/start-service', upload.single('project'), async (req, res) => {
             spritesCount: projectJson.targets ? projectJson.targets.length : 0
         });
         
-        // Validate presence of IP component
-        if (!validateAlbiLABIPComponent(projectJson)) {
-            // Delete temporary file
-            await fs.remove(req.file.path);
-            return res.status(400).json({ 
-                success: false,
-                error: 'Missing AlbiLAB IP address component. Add the "set AlbiLAB IP address to [IP]" block to your project.' 
-            });
-        }
-        
         // Start service
         await startService(projectJson, projectName);
         
@@ -741,14 +726,6 @@ app.post('/api/start-service-json', async (req, res) => {
             projectDataSize: JSON.stringify(projectData).length,
             spritesCount: projectData.targets ? projectData.targets.length : 0
         });
-        
-        // Validate presence of IP component
-        if (!validateAlbiLABIPComponent(projectData)) {
-            return res.status(400).json({ 
-                success: false,
-                error: 'Missing AlbiLAB IP address component. Add the "set AlbiLAB IP address to [IP]" block to your project.' 
-            });
-        }
         
         // Start service
         await startService(projectData, name);
@@ -1194,49 +1171,6 @@ app.get('/api/saved-project/auto-save/list', async (req, res) => {
     }
 });
 
-// Function to check for presence of IP component in project
-function validateAlbiLABIPComponent(projectData) {
-    try {
-        log(`Validating AlbiLAB IP component`, 'info', {
-            hasProjectData: !!projectData,
-            hasTargets: projectData && projectData.targets ? projectData.targets.length : 0
-        });
-        
-        if (!projectData || !projectData.targets) {
-            log(`Validation failed: No project data or targets`, 'error');
-            return false;
-        }
-        
-        // Iterate through all sprites and stage
-        for (const target of projectData.targets) {
-            if (target.blocks) {
-                log(`Checking target ${target.name} with ${Object.keys(target.blocks).length} blocks`, 'info');
-                // Iterate through all blocks
-                for (const blockId in target.blocks) {
-                    const block = target.blocks[blockId];
-                    log(`Checking block ${blockId}: opcode=${block.opcode}`, 'info');
-                    // Check if this is an AlbiLAB block for setting IP
-                    if (block.opcode === 'albilab_setDeviceIP' && block.inputs && block.inputs.IP) {
-                        const ipValue = block.inputs.IP[1][1]; // [1][1] to get the actual value
-                        log(`Found AlbiLAB IP block with IP: ${ipValue}`, 'info');
-                        // Check if IP has a value (not empty)
-                        if (ipValue && ipValue.trim() !== '') {
-                            log(`Validation successful: IP component found with value: ${ipValue}`, 'success');
-                            return true;
-                        }
-                    }
-                }
-            }
-        }
-        
-        log(`Validation failed: No AlbiLAB IP component found`, 'error');
-        return false;
-    } catch (error) {
-        log(`Error validating AlbiLAB IP component: ${error.message}`, 'error');
-        return false;
-    }
-}
-
 // Deploy project (save to AlbiLAB)
 app.post('/api/deploy-project', async (req, res) => {
     try {
@@ -1268,13 +1202,6 @@ app.post('/api/deploy-project', async (req, res) => {
         const actualProjectData = typeof projectData.projectData === 'string' 
             ? JSON.parse(projectData.projectData) 
             : projectData.projectData;
-        
-        if (!validateAlbiLABIPComponent(actualProjectData)) {
-            return res.status(400).json({ 
-                success: false,
-                error: 'Missing AlbiLAB IP address component. Add the "set AlbiLAB IP address to [IP]" block to your project.' 
-            });
-        }
         
         // Save project to AlbiLAB (deploy)
         // saveProject expects a string, so convert object back to JSON string
@@ -1361,13 +1288,6 @@ app.post('/api/start-project', async (req, res) => {
         const actualProjectData = typeof projectData.projectData === 'string' 
             ? JSON.parse(projectData.projectData) 
             : projectData.projectData;
-        
-        if (!validateAlbiLABIPComponent(actualProjectData)) {
-            return res.status(400).json({ 
-                success: false,
-                error: 'Missing AlbiLAB IP address component. Add the "set AlbiLAB IP address to [IP]" block to your project.' 
-            });
-        }
         
         // Start service
         await startService(actualProjectData, projectName);

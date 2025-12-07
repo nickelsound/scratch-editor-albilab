@@ -6,21 +6,20 @@ const AlbiLABAPIClient = require('./api-client');
 // Czech translations for AlbiLAB blocks
 const csTranslations = {
     'albilab.categoryName': 'AlbiLAB',
-    'albilab.lightsOn': 'zapnout světla',
-    'albilab.lightsOff': 'vypnout světla',
-    'albilab.lightsCustom': 'rozsvítit světla červená [RED]% modrá [BLUE]% bílá [WHITE]%',
-    'albilab.pumpOn': 'zapnout čerpadlo',
-    'albilab.pumpOff': 'vypnout čerpadlo',
-    'albilab.pumpOnFor': 'zapnout čerpadlo na [SECONDS] sekund',
-    'albilab.pumpOffFor': 'vypnout čerpadlo na [SECONDS] sekund',
-    'albilab.fanOn': 'zapnout větrák',
-    'albilab.fanOff': 'vypnout větrák',
-    'albilab.fanOnFor': 'zapnout větrák na [SECONDS] sekund',
-    'albilab.getTemperature': 'teplota vzduchu',
-    'albilab.getHumidity': 'vlhkost vzduchu',
-    'albilab.getSoilMoisture': 'vlhkost půdy',
-    'albilab.getWaterLevel': 'přítomnost vody v nádrži',
-    'albilab.setDeviceIP': 'nastavit IP adresu AlbiLAB na [IP]'
+    'albilab.lightsOn': 'zapnout světla [ALBILAB]',
+    'albilab.lightsOff': 'vypnout světla [ALBILAB]',
+    'albilab.lightsCustom': 'rozsvítit světla červená [RED]% modrá [BLUE]% bílá [WHITE]% [ALBILAB]',
+    'albilab.pumpOn': 'zapnout čerpadlo [ALBILAB]',
+    'albilab.pumpOff': 'vypnout čerpadlo [ALBILAB]',
+    'albilab.pumpOnFor': 'zapnout čerpadlo na [SECONDS] sekund [ALBILAB]',
+    'albilab.pumpOffFor': 'vypnout čerpadlo na [SECONDS] sekund [ALBILAB]',
+    'albilab.fanOn': 'zapnout větrák [ALBILAB]',
+    'albilab.fanOff': 'vypnout větrák [ALBILAB]',
+    'albilab.fanOnFor': 'zapnout větrák na [SECONDS] sekund [ALBILAB]',
+    'albilab.getTemperature': 'teplota vzduchu [ALBILAB]',
+    'albilab.getHumidity': 'vlhkost vzduchu [ALBILAB]',
+    'albilab.getSoilMoisture': 'vlhkost půdy [ALBILAB]',
+    'albilab.getWaterLevel': 'přítomnost vody v nádrži [ALBILAB]'
 };
 
 // Setup formatMessage with Czech translations on module load
@@ -123,25 +122,37 @@ class Scratch3AlbiLABBlocks {
                     blockType: BlockType.COMMAND,
                     text: formatMessage({
                         id: 'albilab.lightsOn',
-                        default: 'turn on lights',
+                        default: 'turn on lights [ALBILAB]',
                         description: 'Turn on lights'
-                    })
+                    }),
+                    arguments: {
+                        ALBILAB: {
+                            type: ArgumentType.STRING,
+                            defaultValue: '192.168.1.100'
+                        }
+                    }
                 },
                 {
                     opcode: 'lightsOff',
                     blockType: BlockType.COMMAND,
                     text: formatMessage({
                         id: 'albilab.lightsOff',
-                        default: 'turn off lights',
+                        default: 'turn off lights [ALBILAB]',
                         description: 'Turn off lights'
-                    })
+                    }),
+                    arguments: {
+                        ALBILAB: {
+                            type: ArgumentType.STRING,
+                            defaultValue: '192.168.1.100'
+                        }
+                    }
                 },
                         {
                             opcode: 'lightsCustom',
                             blockType: BlockType.COMMAND,
                             text: formatMessage({
                                 id: 'albilab.lightsCustom',
-                                default: 'set lights red [RED]% blue [BLUE]% white [WHITE]%',
+                                default: 'set lights red [RED]% blue [BLUE]% white [WHITE]% [ALBILAB]',
                                 description: 'Set custom light colors with intensity'
                             }),
                             arguments: {
@@ -156,6 +167,10 @@ class Scratch3AlbiLABBlocks {
                                 WHITE: {
                                     type: ArgumentType.NUMBER,
                                     defaultValue: 100
+                                },
+                                ALBILAB: {
+                                    type: ArgumentType.STRING,
+                                    defaultValue: '192.168.1.100'
                                 }
                             }
                         },
@@ -165,31 +180,47 @@ class Scratch3AlbiLABBlocks {
                     blockType: BlockType.COMMAND,
                     text: formatMessage({
                         id: 'albilab.pumpOn',
-                        default: 'turn on pump',
+                        default: 'turn on pump [ALBILAB]',
                         description: 'Turn on pump'
-                    })
+                    }),
+                    arguments: {
+                        ALBILAB: {
+                            type: ArgumentType.STRING,
+                            defaultValue: '192.168.1.100'
+                        }
+                    }
                 },
                 {
                     opcode: 'pumpOff',
                     blockType: BlockType.COMMAND,
                     text: formatMessage({
                         id: 'albilab.pumpOff',
-                        default: 'turn off pump',
+                        default: 'turn off pump [ALBILAB]',
                         description: 'Turn off pump'
-                    })
+                    }),
+                    arguments: {
+                        ALBILAB: {
+                            type: ArgumentType.STRING,
+                            defaultValue: '192.168.1.100'
+                        }
+                    }
                 },
                 {
                     opcode: 'pumpOnFor',
                     blockType: BlockType.COMMAND,
                     text: formatMessage({
                         id: 'albilab.pumpOnFor',
-                        default: 'turn on pump for [SECONDS] seconds',
+                        default: 'turn on pump for [SECONDS] seconds [ALBILAB]',
                         description: 'Turn on pump for specified time'
                     }),
                     arguments: {
                         SECONDS: {
                             type: ArgumentType.NUMBER,
                             defaultValue: 5
+                        },
+                        ALBILAB: {
+                            type: ArgumentType.STRING,
+                            defaultValue: '192.168.1.100'
                         }
                     }
                 },
@@ -198,13 +229,17 @@ class Scratch3AlbiLABBlocks {
                     blockType: BlockType.COMMAND,
                     text: formatMessage({
                         id: 'albilab.pumpOffFor',
-                        default: 'turn off pump for [SECONDS] seconds',
+                        default: 'turn off pump for [SECONDS] seconds [ALBILAB]',
                         description: 'Turn off pump for specified time'
                     }),
                     arguments: {
                         SECONDS: {
                             type: ArgumentType.NUMBER,
                             defaultValue: 5
+                        },
+                        ALBILAB: {
+                            type: ArgumentType.STRING,
+                            defaultValue: '192.168.1.100'
                         }
                     }
                 },
@@ -214,31 +249,47 @@ class Scratch3AlbiLABBlocks {
                     blockType: BlockType.COMMAND,
                     text: formatMessage({
                         id: 'albilab.fanOn',
-                        default: 'turn on fan',
+                        default: 'turn on fan [ALBILAB]',
                         description: 'Turn on fan'
-                    })
+                    }),
+                    arguments: {
+                        ALBILAB: {
+                            type: ArgumentType.STRING,
+                            defaultValue: '192.168.1.100'
+                        }
+                    }
                 },
                         {
                             opcode: 'fanOff',
                             blockType: BlockType.COMMAND,
                             text: formatMessage({
                                 id: 'albilab.fanOff',
-                                default: 'turn off fan',
+                                default: 'turn off fan [ALBILAB]',
                                 description: 'Turn off fan'
-                            })
+                            }),
+                            arguments: {
+                                ALBILAB: {
+                                    type: ArgumentType.STRING,
+                                    defaultValue: '192.168.1.100'
+                                }
+                            }
                         },
                         {
                             opcode: 'fanOnFor',
                             blockType: BlockType.COMMAND,
                             text: formatMessage({
                                 id: 'albilab.fanOnFor',
-                                default: 'turn on fan for [SECONDS] seconds',
+                                default: 'turn on fan for [SECONDS] seconds [ALBILAB]',
                                 description: 'Turn on fan for specified time'
                             }),
                             arguments: {
                                 SECONDS: {
                                     type: ArgumentType.NUMBER,
                                     defaultValue: 60
+                                },
+                                ALBILAB: {
+                                    type: ArgumentType.STRING,
+                                    defaultValue: '192.168.1.100'
                                 }
                             }
                         },
@@ -248,48 +299,56 @@ class Scratch3AlbiLABBlocks {
                     blockType: BlockType.REPORTER,
                     text: formatMessage({
                         id: 'albilab.getTemperature',
-                        default: 'air temperature',
+                        default: 'air temperature [ALBILAB]',
                         description: 'Get air temperature'
-                    })
+                    }),
+                    arguments: {
+                        ALBILAB: {
+                            type: ArgumentType.STRING,
+                            defaultValue: '192.168.1.100'
+                        }
+                    }
                 },
                 {
                     opcode: 'getHumidity',
                     blockType: BlockType.REPORTER,
                     text: formatMessage({
                         id: 'albilab.getHumidity',
-                        default: 'air humidity',
+                        default: 'air humidity [ALBILAB]',
                         description: 'Get air humidity'
-                    })
+                    }),
+                    arguments: {
+                        ALBILAB: {
+                            type: ArgumentType.STRING,
+                            defaultValue: '192.168.1.100'
+                        }
+                    }
                 },
                 {
                     opcode: 'getSoilMoisture',
                     blockType: BlockType.REPORTER,
                     text: formatMessage({
                         id: 'albilab.getSoilMoisture',
-                        default: 'soil moisture',
+                        default: 'soil moisture [ALBILAB]',
                         description: 'Get soil moisture'
-                    })
+                    }),
+                    arguments: {
+                        ALBILAB: {
+                            type: ArgumentType.STRING,
+                            defaultValue: '192.168.1.100'
+                        }
+                    }
                 },
                         {
                             opcode: 'getWaterLevel',
                             blockType: BlockType.BOOLEAN,
                             text: formatMessage({
                                 id: 'albilab.getWaterLevel',
-                                default: 'water level in tank',
+                                default: 'water level in tank [ALBILAB]',
                                 description: 'Check water level in tank'
-                            })
-                        },
-                        // Configuration block
-                        {
-                            opcode: 'setDeviceIP',
-                            blockType: BlockType.COMMAND,
-                            text: formatMessage({
-                                id: 'albilab.setDeviceIP',
-                                default: 'set AlbiLAB IP address to [IP]',
-                                description: 'Set AlbiLAB device IP address'
                             }),
                             arguments: {
-                                IP: {
+                                ALBILAB: {
                                     type: ArgumentType.STRING,
                                     defaultValue: '192.168.1.100'
                                 }
@@ -313,18 +372,37 @@ class Scratch3AlbiLABBlocks {
                     'albilab.getHumidity': 'vlhkost vzduchu',
                     'albilab.getSoilMoisture': 'vlhkost půdy',
                     'albilab.getWaterLevel': 'přítomnost vody v nádrži',
-                    'albilab.setDeviceIP': 'nastavit IP adresu AlbiLAB na [IP]'
+                    'albilab.lightsOn': 'zapnout světla [ALBILAB]',
+                    'albilab.lightsOff': 'vypnout světla [ALBILAB]',
+                    'albilab.lightsCustom': 'rozsvítit světla červená [RED]% modrá [BLUE]% bílá [WHITE]% [ALBILAB]',
+                    'albilab.pumpOn': 'zapnout čerpadlo [ALBILAB]',
+                    'albilab.pumpOff': 'vypnout čerpadlo [ALBILAB]',
+                    'albilab.pumpOnFor': 'zapnout čerpadlo na [SECONDS] sekund [ALBILAB]',
+                    'albilab.pumpOffFor': 'vypnout čerpadlo na [SECONDS] sekund [ALBILAB]',
+                    'albilab.fanOn': 'zapnout větrák [ALBILAB]',
+                    'albilab.fanOff': 'vypnout větrák [ALBILAB]',
+                    'albilab.fanOnFor': 'zapnout větrák na [SECONDS] sekund [ALBILAB]',
+                    'albilab.getTemperature': 'teplota vzduchu [ALBILAB]',
+                    'albilab.getHumidity': 'vlhkost vzduchu [ALBILAB]',
+                    'albilab.getSoilMoisture': 'vlhkost půdy [ALBILAB]',
+                    'albilab.getWaterLevel': 'přítomnost vody v nádrži [ALBILAB]'
                 }
             }
         };
     }
 
     // Light control methods
-    async lightsOn () {
+    async lightsOn (args, util) {
+        const ipAddress = this.getValidatedIP(args.ALBILAB);
+        if (!ipAddress) {
+            console.error(`[${new Date().toISOString()}] AlbiLAB: Invalid IP address for lightsOn`);
+            return;
+        }
+        
         try {
-            await this.apiClient.controlLights('on');
+            await this.apiClient.controlLights('on', {}, ipAddress);
             this.deviceState.lights.on = true;
-            console.log(`[${new Date().toISOString()}] AlbiLAB: Lights turned ON`);
+            console.log(`[${new Date().toISOString()}] AlbiLAB: Lights turned ON (IP: ${ipAddress})`);
         } catch (error) {
             console.error(`[${new Date().toISOString()}] AlbiLAB: Failed to turn on lights:`, error.message);
             // Fallback to local state
@@ -332,11 +410,17 @@ class Scratch3AlbiLABBlocks {
         }
     }
 
-    async lightsOff () {
+    async lightsOff (args, util) {
+        const ipAddress = this.getValidatedIP(args.ALBILAB);
+        if (!ipAddress) {
+            console.error(`[${new Date().toISOString()}] AlbiLAB: Invalid IP address for lightsOff`);
+            return;
+        }
+        
         try {
-            await this.apiClient.controlLights('off');
+            await this.apiClient.controlLights('off', {}, ipAddress);
             this.deviceState.lights.on = false;
-            console.log(`[${new Date().toISOString()}] AlbiLAB: Lights turned OFF`);
+            console.log(`[${new Date().toISOString()}] AlbiLAB: Lights turned OFF (IP: ${ipAddress})`);
         } catch (error) {
             console.error(`[${new Date().toISOString()}] AlbiLAB: Failed to turn off lights:`, error.message);
             // Fallback to local state
@@ -344,7 +428,13 @@ class Scratch3AlbiLABBlocks {
         }
     }
 
-    async lightsCustom (args) {
+    async lightsCustom (args, util) {
+        const ipAddress = this.getValidatedIP(args.ALBILAB);
+        if (!ipAddress) {
+            console.error(`[${new Date().toISOString()}] AlbiLAB: Invalid IP address for lightsCustom`);
+            return;
+        }
+        
         try {
             // Limit values to 0-100 range
             const red = Math.max(0, Math.min(100, args.RED || 0));
@@ -352,11 +442,11 @@ class Scratch3AlbiLABBlocks {
             const white = Math.max(0, Math.min(100, args.WHITE || 0));
             
             const colors = { red, blue, white };
-            await this.apiClient.controlLights('custom', colors);
+            await this.apiClient.controlLights('custom', colors, ipAddress);
             
             this.deviceState.lights.on = true;
             this.deviceState.lights.color = `R:${red}% B:${blue}% W:${white}%`;
-            console.log(`[${new Date().toISOString()}] AlbiLAB: Lights set to Red:${red}% Blue:${blue}% White:${white}%`);
+            console.log(`[${new Date().toISOString()}] AlbiLAB: Lights set to Red:${red}% Blue:${blue}% White:${white}% (IP: ${ipAddress})`);
         } catch (error) {
             console.error(`[${new Date().toISOString()}] AlbiLAB: Failed to set custom light colors:`, error.message);
             // Fallback to local state
@@ -369,11 +459,17 @@ class Scratch3AlbiLABBlocks {
     }
 
     // Pump control methods
-    async pumpOn () {
+    async pumpOn (args, util) {
+        const ipAddress = this.getValidatedIP(args.ALBILAB);
+        if (!ipAddress) {
+            console.error(`[${new Date().toISOString()}] AlbiLAB: Invalid IP address for pumpOn`);
+            return;
+        }
+        
         try {
-            await this.apiClient.controlPump('start');
+            await this.apiClient.controlPump('start', null, ipAddress);
             this.deviceState.pump.on = true;
-            console.log(`[${new Date().toISOString()}] AlbiLAB: Pump turned ON`);
+            console.log(`[${new Date().toISOString()}] AlbiLAB: Pump turned ON (IP: ${ipAddress})`);
         } catch (error) {
             console.error(`[${new Date().toISOString()}] AlbiLAB: Failed to turn on pump:`, error.message);
             // Fallback to local state
@@ -381,15 +477,21 @@ class Scratch3AlbiLABBlocks {
         }
     }
 
-    async pumpOff () {
+    async pumpOff (args, util) {
+        const ipAddress = this.getValidatedIP(args.ALBILAB);
+        if (!ipAddress) {
+            console.error(`[${new Date().toISOString()}] AlbiLAB: Invalid IP address for pumpOff`);
+            return;
+        }
+        
         try {
-            await this.apiClient.controlPump('stop');
+            await this.apiClient.controlPump('stop', null, ipAddress);
             this.deviceState.pump.on = false;
             if (this.deviceState.pump.timer) {
                 clearTimeout(this.deviceState.pump.timer);
                 this.deviceState.pump.timer = null;
             }
-            console.log(`[${new Date().toISOString()}] AlbiLAB: Pump turned OFF`);
+            console.log(`[${new Date().toISOString()}] AlbiLAB: Pump turned OFF (IP: ${ipAddress})`);
         } catch (error) {
             console.error(`[${new Date().toISOString()}] AlbiLAB: Failed to turn off pump:`, error.message);
             // Fallback to local state
@@ -401,13 +503,19 @@ class Scratch3AlbiLABBlocks {
         }
     }
 
-    async pumpOnFor (args) {
+    async pumpOnFor (args, util) {
+        const ipAddress = this.getValidatedIP(args.ALBILAB);
+        if (!ipAddress) {
+            console.error(`[${new Date().toISOString()}] AlbiLAB: Invalid IP address for pumpOnFor`);
+            return;
+        }
+        
         const seconds = Math.max(1, Math.min(300, args.SECONDS)); // Limit 1-300 seconds
         
         try {
-            await this.apiClient.controlPump('timed', seconds);
+            await this.apiClient.controlPump('timed', seconds, ipAddress);
             this.deviceState.pump.on = true;
-            console.log(`[${new Date().toISOString()}] AlbiLAB: Pump turned ON for ${seconds} seconds`);
+            console.log(`[${new Date().toISOString()}] AlbiLAB: Pump turned ON for ${seconds} seconds (IP: ${ipAddress})`);
 
             // Set local timer as backup
             this.deviceState.pump.timer = setTimeout(() => {
@@ -427,19 +535,25 @@ class Scratch3AlbiLABBlocks {
         }
     }
 
-    async pumpOffFor (args) {
+    async pumpOffFor (args, util) {
+        const ipAddress = this.getValidatedIP(args.ALBILAB);
+        if (!ipAddress) {
+            console.error(`[${new Date().toISOString()}] AlbiLAB: Invalid IP address for pumpOffFor`);
+            return;
+        }
+        
         const seconds = Math.max(1, Math.min(300, args.SECONDS)); // Limit 1-300 seconds
         
         try {
-            await this.apiClient.controlPump('stop');
+            await this.apiClient.controlPump('stop', null, ipAddress);
             this.deviceState.pump.on = false;
-            console.log(`AlbiLAB: Pump turned OFF for ${seconds} seconds`);
+            console.log(`[${new Date().toISOString()}] AlbiLAB: Pump turned OFF for ${seconds} seconds (IP: ${ipAddress})`);
 
             setTimeout(async () => {
                 try {
-                    await this.apiClient.controlPump('start');
+                    await this.apiClient.controlPump('start', null, ipAddress);
                     this.deviceState.pump.on = true;
-                    console.log(`[${new Date().toISOString()}] AlbiLAB: Pump automatically turned ON`);
+                    console.log(`[${new Date().toISOString()}] AlbiLAB: Pump automatically turned ON (IP: ${ipAddress})`);
                 } catch (error) {
                     console.error(`[${new Date().toISOString()}] AlbiLAB: Failed to automatically turn on pump:`, error.message);
                     this.deviceState.pump.on = true;
@@ -457,11 +571,17 @@ class Scratch3AlbiLABBlocks {
     }
 
     // Fan control methods
-    async fanOn () {
+    async fanOn (args, util) {
+        const ipAddress = this.getValidatedIP(args.ALBILAB);
+        if (!ipAddress) {
+            console.error(`[${new Date().toISOString()}] AlbiLAB: Invalid IP address for fanOn`);
+            return;
+        }
+        
         try {
-            await this.apiClient.controlFan('start');
+            await this.apiClient.controlFan('start', null, ipAddress);
             this.deviceState.fan.on = true;
-            console.log(`[${new Date().toISOString()}] AlbiLAB: Fan turned ON`);
+            console.log(`[${new Date().toISOString()}] AlbiLAB: Fan turned ON (IP: ${ipAddress})`);
         } catch (error) {
             console.error(`[${new Date().toISOString()}] AlbiLAB: Failed to turn on fan:`, error.message);
             // Fallback to local state
@@ -469,15 +589,21 @@ class Scratch3AlbiLABBlocks {
         }
     }
 
-    async fanOff () {
+    async fanOff (args, util) {
+        const ipAddress = this.getValidatedIP(args.ALBILAB);
+        if (!ipAddress) {
+            console.error(`[${new Date().toISOString()}] AlbiLAB: Invalid IP address for fanOff`);
+            return;
+        }
+        
         try {
-            await this.apiClient.controlFan('stop');
+            await this.apiClient.controlFan('stop', null, ipAddress);
             this.deviceState.fan.on = false;
             if (this.deviceState.fan.timer) {
                 clearTimeout(this.deviceState.fan.timer);
                 this.deviceState.fan.timer = null;
             }
-            console.log(`[${new Date().toISOString()}] AlbiLAB: Fan turned OFF`);
+            console.log(`[${new Date().toISOString()}] AlbiLAB: Fan turned OFF (IP: ${ipAddress})`);
         } catch (error) {
             console.error(`[${new Date().toISOString()}] AlbiLAB: Failed to turn off fan:`, error.message);
             // Fallback to local state
@@ -489,13 +615,19 @@ class Scratch3AlbiLABBlocks {
         }
     }
 
-    async fanOnFor (args) {
+    async fanOnFor (args, util) {
+        const ipAddress = this.getValidatedIP(args.ALBILAB);
+        if (!ipAddress) {
+            console.error(`[${new Date().toISOString()}] AlbiLAB: Invalid IP address for fanOnFor`);
+            return;
+        }
+        
         const seconds = Math.max(1, Math.min(300, args.SECONDS)); // Limit 1-300 seconds
         
         try {
-            await this.apiClient.controlFan('timed', seconds);
+            await this.apiClient.controlFan('timed', seconds, ipAddress);
             this.deviceState.fan.on = true;
-            console.log(`[${new Date().toISOString()}] AlbiLAB: Fan turned ON for ${seconds} seconds`);
+            console.log(`[${new Date().toISOString()}] AlbiLAB: Fan turned ON for ${seconds} seconds (IP: ${ipAddress})`);
 
             // Set local timer as backup
             this.deviceState.fan.timer = setTimeout(() => {
@@ -516,9 +648,19 @@ class Scratch3AlbiLABBlocks {
     }
 
     // Sensor reading methods
-    async getTemperature () {
+    async getTemperature (args, util) {
+        const ipAddress = this.getValidatedIP(args.ALBILAB);
+        if (!ipAddress) {
+            console.error(`[${new Date().toISOString()}] AlbiLAB: Invalid IP address for getTemperature`);
+            // Fallback to simulated data
+            const baseTemp = 22.5;
+            const variation = (Math.random() - 0.5) * 2; // ±1°C variation
+            this.deviceState.sensors.temperature = Math.round((baseTemp + variation) * 10) / 10;
+            return this.deviceState.sensors.temperature;
+        }
+        
         try {
-            const sensorData = await this.apiClient.getSensorData();
+            const sensorData = await this.apiClient.getSensorData(ipAddress);
             this.deviceState.sensors.temperature = sensorData.temperature;
             return this.deviceState.sensors.temperature;
         } catch (error) {
@@ -531,9 +673,19 @@ class Scratch3AlbiLABBlocks {
         }
     }
 
-    async getHumidity () {
+    async getHumidity (args, util) {
+        const ipAddress = this.getValidatedIP(args.ALBILAB);
+        if (!ipAddress) {
+            console.error(`[${new Date().toISOString()}] AlbiLAB: Invalid IP address for getHumidity`);
+            // Fallback to simulated data
+            const baseHumidity = 65.0;
+            const variation = (Math.random() - 0.5) * 10; // ±5% variation
+            this.deviceState.sensors.humidity = Math.round((baseHumidity + variation) * 10) / 10;
+            return this.deviceState.sensors.humidity;
+        }
+        
         try {
-            const sensorData = await this.apiClient.getSensorData();
+            const sensorData = await this.apiClient.getSensorData(ipAddress);
             this.deviceState.sensors.humidity = sensorData.humidity;
             return this.deviceState.sensors.humidity;
         } catch (error) {
@@ -546,9 +698,19 @@ class Scratch3AlbiLABBlocks {
         }
     }
 
-    async getSoilMoisture () {
+    async getSoilMoisture (args, util) {
+        const ipAddress = this.getValidatedIP(args.ALBILAB);
+        if (!ipAddress) {
+            console.error(`[${new Date().toISOString()}] AlbiLAB: Invalid IP address for getSoilMoisture`);
+            // Fallback to simulated data
+            const baseMoisture = 45.0;
+            const variation = (Math.random() - 0.5) * 20; // ±10% variation
+            this.deviceState.sensors.soilMoisture = Math.round((baseMoisture + variation) * 10) / 10;
+            return this.deviceState.sensors.soilMoisture;
+        }
+        
         try {
-            const sensorData = await this.apiClient.getSensorData();
+            const sensorData = await this.apiClient.getSensorData(ipAddress);
             this.deviceState.sensors.soilMoisture = sensorData.soilMoisture;
             return this.deviceState.sensors.soilMoisture;
         } catch (error) {
@@ -561,9 +723,17 @@ class Scratch3AlbiLABBlocks {
         }
     }
 
-    async getWaterLevel () {
+    async getWaterLevel (args, util) {
+        const ipAddress = this.getValidatedIP(args.ALBILAB);
+        if (!ipAddress) {
+            console.error(`[${new Date().toISOString()}] AlbiLAB: Invalid IP address for getWaterLevel`);
+            // Fallback to simulated data
+            this.deviceState.sensors.waterLevel = Math.random() > 0.1; // 90% chance of water present
+            return this.deviceState.sensors.waterLevel;
+        }
+        
         try {
-            const sensorData = await this.apiClient.getSensorData();
+            const sensorData = await this.apiClient.getSensorData(ipAddress);
             this.deviceState.sensors.waterLevel = sensorData.waterLevel;
             return this.deviceState.sensors.waterLevel;
         } catch (error) {
@@ -574,19 +744,30 @@ class Scratch3AlbiLABBlocks {
         }
     }
 
-    // Configuration methods
-    setDeviceIP (args) {
-        const ipAddress = args.IP.trim();
+    /**
+     * Validate and get IP address from arguments
+     * @param {string} ipAddress - IP address string
+     * @returns {?string} Validated IP address or null
+     */
+    getValidatedIP(ipAddress) {
+        if (!ipAddress || typeof ipAddress !== 'string') {
+            return null;
+        }
+        
+        const trimmedIP = ipAddress.trim();
+        if (!trimmedIP) {
+            return null;
+        }
         
         // Basic IP address validation
         const ipRegex = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
         
-        if (ipRegex.test(ipAddress)) {
-            this.apiClient.updateBaseURL(ipAddress);
-            console.log(`[${new Date().toISOString()}] AlbiLAB: Device IP address set to ${ipAddress}`);
-        } else {
-            console.error(`[${new Date().toISOString()}] AlbiLAB: Invalid IP address format: ${ipAddress}`);
+        if (ipRegex.test(trimmedIP)) {
+            return trimmedIP;
         }
+        
+        console.error(`[${new Date().toISOString()}] AlbiLAB: Invalid IP address format: ${trimmedIP}`);
+        return null;
     }
 }
 
