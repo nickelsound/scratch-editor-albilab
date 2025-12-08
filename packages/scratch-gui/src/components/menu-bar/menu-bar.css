@@ -444,8 +444,8 @@
 
 .autoSaveManagerItem {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
+    flex-direction: column;
+    gap: 0.75rem;
     padding: 1rem;
     border: 1px solid $motion-primary;
     border-radius: 6px;
@@ -455,6 +455,13 @@
 
 .autoSaveManagerItem:hover {
     background-color: $ui-tertiary;
+}
+
+.autoSaveManagerItemCurrent {
+    border-color: $motion-primary;
+    border-width: 2px;
+    background-color: rgba(74, 144, 226, 0.1);
+    box-shadow: 0 0 0 1px rgba(74, 144, 226, 0.2);
 }
 
 .autoSaveManagerItemInfo {
@@ -500,19 +507,30 @@
 
 .autoSaveManagerItemActions {
     display: flex;
+    flex-wrap: wrap;
     gap: 0.5rem;
+    align-items: flex-start;
+    width: 100%;
+}
+
+.autoSaveManagerButtonGroup {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
 }
 
 .autoSaveManagerButton {
-    padding: 0.5rem 1rem;
+    padding: 0.4rem 0.75rem;
     border: 1px solid $motion-primary;
     border-radius: 4px;
     background-color: $ui-white;
     color: $text-primary;
-    font-size: 0.875rem;
+    font-size: 0.8125rem;
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s ease;
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .autoSaveManagerButton:hover {

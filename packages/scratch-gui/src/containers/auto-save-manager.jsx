@@ -468,9 +468,34 @@ const AutoSaveManager = (props) => {
             if (deployResponse.ok) {
                 const data = await deployResponse.json();
                 if (data.success) {
-                    // Update project list
-                    loadProjects();
-                    showSuccess(props.intl.formatMessage({id: 'gui.success.currentProjectDeployed'}, {name: projectName}));
+                    // After successful deployment, start the project
+                    const startUrl = getApiUrl('start-project');
+                    const startResponse = await fetch(startUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ projectName })
+                    });
+                    
+                    if (startResponse.ok) {
+                        const startData = await startResponse.json();
+                        if (startData.success) {
+                            // Update project list
+                            loadProjects();
+                            showSuccess(props.intl.formatMessage({id: 'gui.success.currentProjectDeployedAndStarted'}, {name: projectName}));
+                        } else {
+                            // Update project list
+                            loadProjects();
+                            showSuccess(props.intl.formatMessage({id: 'gui.success.currentProjectDeployed'}, {name: projectName}));
+                            showWarning(props.intl.formatMessage({id: 'gui.warnings.projectDeployedButNotStarted'}));
+                        }
+                    } else {
+                        // Update project list
+                        loadProjects();
+                        showSuccess(props.intl.formatMessage({id: 'gui.success.currentProjectDeployed'}, {name: projectName}));
+                        showWarning(props.intl.formatMessage({id: 'gui.warnings.projectDeployedButNotStarted'}));
+                    }
                 } else {
                     showError(data.error || props.intl.formatMessage({id: 'gui.errors.unknownError'}), props.intl.formatMessage({id: 'gui.errors.deployingProject'}));
                 }
@@ -559,6 +584,69 @@ const AutoSaveManager = (props) => {
         }
     };
 
+    const handleRestoreFromDeploy = async (projectName) => {
+        try {
+            const apiUrl = getApiUrl('restore-from-deploy');
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ projectName })
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success) {
+                    // Update project list
+                    loadProjects();
+                    
+                    // If project data is returned, load it into editor
+                    if (data.projectData && props.vm) {
+                        try {
+                            let projectData = data.projectData;
+                            
+                            // Ensure projectData is a string
+                            if (typeof projectData !== 'string') {
+                                projectData = JSON.stringify(projectData);
+                            }
+                            
+                            // Load project into VM
+                            await props.vm.loadProject(projectData);
+                            
+                            // Update project title
+                            props.setProjectTitle(projectName);
+                            
+                            // Close manager
+                            handleClose();
+                            
+                            showSuccess(props.intl.formatMessage({id: 'gui.success.projectRestoredFromDeploy'}, {name: projectName}));
+                        } catch (loadError) {
+                            console.error('Error loading restored project:', loadError);
+                            showSuccess(props.intl.formatMessage({id: 'gui.success.projectRestoredFromDeploy'}, {name: projectName}));
+                            showWarning(props.intl.formatMessage({id: 'gui.warnings.projectRestoredButNotLoaded'}));
+                        }
+                    } else {
+                        showSuccess(props.intl.formatMessage({id: 'gui.success.projectRestoredFromDeploy'}, {name: projectName}));
+                    }
+                } else {
+                    showError(data.error || props.intl.formatMessage({id: 'gui.errors.unknownError'}), props.intl.formatMessage({id: 'gui.errors.restoringFromDeploy'}));
+                }
+            } else {
+                // Try to load error message from response body
+                try {
+                    const errorData = await response.json();
+                    showError(errorData.error || response.statusText, props.intl.formatMessage({id: 'gui.errors.restoringFromDeploy'}));
+                } catch (parseError) {
+                    showError(response.statusText, props.intl.formatMessage({id: 'gui.errors.restoringFromDeploy'}));
+                }
+            }
+        } catch (error) {
+            console.error('Error restoring from deploy:', error);
+            showError(error.message, props.intl.formatMessage({id: 'gui.errors.restoringFromDeploy'}));
+        }
+    };
+
     const handleDeleteProject = async (projectName) => {
         try {
             const apiUrl = getApiUrl(`/saved-project/auto-save?projectName=${encodeURIComponent(projectName)}`);
@@ -595,12 +683,14 @@ const AutoSaveManager = (props) => {
             isOpen={isOpen}
             projects={projects}
             isLoading={isLoading}
+            currentProjectTitle={props.projectTitle}
             onClose={handleClose}
             onLoadProject={handleLoadProject}
             onDeployProject={handleDeployProject}
             onDeployCurrentProject={handleDeployCurrentProject}
             onStartProject={handleStartProject}
             onStopProject={handleStopProject}
+            onRestoreFromDeploy={handleRestoreFromDeploy}
             onDeleteProject={handleDeleteProject}
         />
     );
