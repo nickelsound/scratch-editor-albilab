@@ -99,6 +99,22 @@ class Blocks extends React.Component {
         this.ScratchBlocks.FieldColourSlider.activateEyedropper_ = this.props.onActivateColorPicker;
         this.ScratchBlocks.Procedures.externalProcedureDefCallback = this.props.onActivateCustomProcedures;
         this.ScratchBlocks.ScratchMsgs.setLocale(this.props.locale);
+        
+        // Listen for AlbiLAB IP address changes to update toolbox
+        this.handleAlbilabIPChanged = () => {
+            // Force toolbox update by getting new XML and updating state
+            // Since runtime.getBlocksXML() checks localStorage on each call,
+            // we just need to regenerate the toolbox XML
+            if (this.props.isVisible) {
+                const toolboxXML = this.getToolboxXML();
+                if (toolboxXML) {
+                    this.props.updateToolboxState(toolboxXML);
+                    // Also force immediate update if blocks are visible
+                    this.requestToolboxUpdate();
+                }
+            }
+        };
+        window.addEventListener('albilabIPChanged', this.handleAlbilabIPChanged);
 
         const workspaceConfig = defaultsDeep({},
             Blocks.defaultOptions,
@@ -203,6 +219,11 @@ class Blocks extends React.Component {
 
         // Clear the flyout blocks so that they can be recreated on mount.
         this.props.vm.clearFlyoutBlocks();
+        
+        // Remove event listener
+        if (this.handleAlbilabIPChanged) {
+            window.removeEventListener('albilabIPChanged', this.handleAlbilabIPChanged);
+        }
     }
     requestToolboxUpdate () {
         clearTimeout(this.toolboxUpdateTimeout);

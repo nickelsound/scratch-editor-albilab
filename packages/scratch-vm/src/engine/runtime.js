@@ -1317,9 +1317,26 @@ class Runtime extends EventEmitter {
                 name: placeholder
             };
 
-            const defaultValue =
+            let defaultValue =
                 typeof argInfo.defaultValue === 'undefined' ? '' :
                     xmlEscape(maybeFormatMessage(argInfo.defaultValue, this.makeMessageContextForTarget()).toString());
+            
+            // Special handling for AlbiLAB IP address - check localStorage if available
+            if (placeholder === 'ALBILAB' && context.categoryInfo.id === 'albilab') {
+                try {
+                    if (typeof window !== 'undefined' && window.localStorage) {
+                        const storedIP = window.localStorage.getItem('albilab-default-ip');
+                        if (storedIP) {
+                            const IP_REGEX = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+                            if (IP_REGEX.test(storedIP.trim())) {
+                                defaultValue = xmlEscape(storedIP.trim());
+                            }
+                        }
+                    }
+                } catch (e) {
+                    // Ignore errors accessing localStorage
+                }
+            }
 
             if (argTypeInfo.check) {
                 // Right now the only type of 'check' we have specifies that the

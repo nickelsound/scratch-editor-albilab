@@ -72,7 +72,19 @@ export const cs = {
     'gui.warnings.projectDeployedButNotStarted': 'Projekt byl nasazen, ale nepodařilo se ho spustit.',
     'gui.menuBar.autoSaveManager.manageProjects': 'Správa projektů',
     'gui.gui.unknownProject': 'Neznámý projekt',
-    'gui.errors.noSavedProjectFound': 'Žádný uložený projekt nebyl nalezen'
+    'gui.errors.noSavedProjectFound': 'Žádný uložený projekt nebyl nalezen',
+    // AlbiLAB IP prompt
+    'gui.albilabIPPrompt.title': 'Nastavení IP adresy AlbiLAB',
+    'gui.albilabIPPrompt.label': 'Zadejte IP adresu vašeho primárního AlbiLAB zařízení:',
+    'gui.albilabIPPrompt.description': 'Tato IP adresa bude automaticky přednastavena do všech AlbiLAB komponent. Můžete ji později změnit v nastavení.',
+    'gui.albilabIPPrompt.reloadNotice': 'Po uložení se stránka automaticky obnoví, aby se hodnota zpropagovala do všech komponent.',
+    'gui.albilabIPPrompt.placeholder': 'např. 192.168.1.100',
+    'gui.albilabIPPrompt.invalidIP': 'Neplatný formát IP adresy',
+    'gui.albilabIPPrompt.ok': 'OK',
+    'gui.albilabIPPrompt.cancel': 'Zrušit',
+    'gui.albilabIPPrompt.currentIPLabel': 'Aktuální IP adresa: {ip}',
+    'gui.albilabIPPrompt.noCurrentIP': 'Aktuálně není nastavena žádná IP adresa',
+    'gui.albilabIPMenu.title': 'IP adresa AlbiLAB'
 };
 
 export const en = {
@@ -146,6 +158,18 @@ export const en = {
     'gui.warnings.projectDeployedButNotStarted': 'Project was deployed but could not be started.',
     'gui.menuBar.autoSaveManager.manageProjects': 'Manage projects',
     'gui.gui.unknownProject': 'Unknown project',
-    'gui.errors.noSavedProjectFound': 'No saved project was found'
+    'gui.errors.noSavedProjectFound': 'No saved project was found',
+    // AlbiLAB IP prompt
+    'gui.albilabIPPrompt.title': 'AlbiLAB IP Address Setup',
+    'gui.albilabIPPrompt.label': 'Enter the IP address of your primary AlbiLAB device:',
+    'gui.albilabIPPrompt.description': 'This IP address will be automatically pre-filled in all AlbiLAB components. You can change it later in settings.',
+    'gui.albilabIPPrompt.reloadNotice': 'After saving, the page will reload to propagate the value to all components.',
+    'gui.albilabIPPrompt.placeholder': 'e.g. 192.168.1.100',
+    'gui.albilabIPPrompt.invalidIP': 'Invalid IP address format',
+    'gui.albilabIPPrompt.ok': 'OK',
+    'gui.albilabIPPrompt.cancel': 'Cancel',
+    'gui.albilabIPPrompt.currentIPLabel': 'Current IP address: {ip}',
+    'gui.albilabIPPrompt.noCurrentIP': 'No IP address is currently set',
+    'gui.albilabIPMenu.title': 'AlbiLAB IP Address'
 };
 
