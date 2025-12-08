@@ -8,8 +8,8 @@ import styles from './menu-bar.css';
 const messages = defineMessages({
     title: {
         id: 'gui.menuBar.autoSaveManager.title',
-        defaultMessage: 'Auto-saved projects management',
-        description: 'Title for auto-save manager dialog'
+        defaultMessage: 'Projects manager',
+        description: 'Title for projects manager dialog'
     },
     loading: {
         id: 'gui.menuBar.autoSaveManager.loading',

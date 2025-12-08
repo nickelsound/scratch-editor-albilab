@@ -2,7 +2,7 @@
  * Translations for auto-save components
  */
 export const cs = {
-    'gui.menuBar.autoSaveManager.title': 'Správa automaticky uložených projektů',
+    'gui.menuBar.autoSaveManager.title': 'Správa projektů',
     'gui.menuBar.autoSaveManager.loading': 'Načítám projekty...',
     'gui.menuBar.autoSaveManager.noProjects': 'Žádné automaticky uložené projekty',
     'gui.menuBar.autoSaveManager.loadProject': 'Načíst',
@@ -76,7 +76,7 @@ export const cs = {
 };
 
 export const en = {
-    'gui.menuBar.autoSaveManager.title': 'Auto-saved projects manager',
+    'gui.menuBar.autoSaveManager.title': 'Projects manager',
     'gui.menuBar.autoSaveManager.loading': 'Loading projects...',
     'gui.menuBar.autoSaveManager.noProjects': 'No auto-saved projects',
     'gui.menuBar.autoSaveManager.loadProject': 'Load',
