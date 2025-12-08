@@ -24,8 +24,10 @@ import {
     closeBackdropLibrary,
     closeTelemetryModal,
     openExtensionLibrary,
-    closeDebugModal
+    closeDebugModal,
+    openAlbilabIPPrompt
 } from '../reducers/modals';
+import {getAlbilabIP, hasPromptBeenShown} from '../lib/albilab-ip-storage';
 
 import {setPlatform} from '../reducers/platform';
 
@@ -53,6 +55,16 @@ class GUI extends React.Component {
         this.props.storage.setProjectMetadata?.(this.props.projectId);
         if (this.props.platform) {
             this.props.setPlatform(this.props.platform);
+        }
+        
+        // Check if AlbiLAB IP address is set, show prompt if not
+        const storedIP = getAlbilabIP();
+        const promptShown = hasPromptBeenShown();
+        if (!storedIP && !promptShown) {
+            // Show prompt after a short delay to ensure GUI is fully loaded
+            setTimeout(() => {
+                this.props.onOpenAlbilabIPPrompt();
+            }, 500);
         }
     }
     componentDidUpdate (prevProps) {
@@ -192,7 +204,8 @@ const mapDispatchToProps = dispatch => ({
     onRequestCloseBackdropLibrary: () => dispatch(closeBackdropLibrary()),
     onRequestCloseCostumeLibrary: () => dispatch(closeCostumeLibrary()),
     onRequestCloseDebugModal: () => dispatch(closeDebugModal()),
-    onRequestCloseTelemetryModal: () => dispatch(closeTelemetryModal())
+    onRequestCloseTelemetryModal: () => dispatch(closeTelemetryModal()),
+    onOpenAlbilabIPPrompt: () => dispatch(openAlbilabIPPrompt())
 });
 
 const ConnectedGUI = injectIntl(connect(

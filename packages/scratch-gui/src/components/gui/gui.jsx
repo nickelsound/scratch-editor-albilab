@@ -31,6 +31,7 @@ import DragLayer from '../../containers/drag-layer.jsx';
 import ConnectionModal from '../../containers/connection-modal.jsx';
 import TelemetryModal from '../telemetry-modal/telemetry-modal.jsx';
 import AutoSaveManager from '../../containers/auto-save-manager.jsx';
+import AlbilabIPPrompt from '../../containers/albilab-ip-prompt.jsx';
 
 import layout, {STAGE_SIZE_MODES} from '../../lib/layout-constants';
 import {resolveStageSize} from '../../lib/screen-utils';
@@ -250,6 +251,7 @@ const GUIComponent = props => {
                     isOpen={debugModalVisible}
                     onClose={onCloseDebugModal}
                 />}
+                <AlbilabIPPrompt />
                 {backdropLibraryVisible ? (
                     <BackdropLibrary
                         vm={vm}
