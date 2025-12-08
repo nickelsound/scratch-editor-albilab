@@ -43,8 +43,8 @@ const messages = defineMessages({
     },
     deployCurrentProject: {
         id: 'gui.menuBar.autoSaveManager.deployCurrentProject',
-        defaultMessage: 'Deploy current project',
-        description: 'Deploy current project button'
+        defaultMessage: 'Deploy and Start current project',
+        description: 'Deploy and start current project button'
     },
     startProject: {
         id: 'gui.menuBar.autoSaveManager.startProject',

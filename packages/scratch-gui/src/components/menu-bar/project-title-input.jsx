@@ -20,9 +20,9 @@ const messages = defineMessages({
         defaultMessage: 'Project title here'
     },
     deployCurrentProject: {
-        id: 'gui.gui.deployCurrentProject',
-        description: 'Deploy current project button',
-        defaultMessage: 'Nasadit aktuální projekt'
+        id: 'gui.menuBar.autoSaveManager.deployCurrentProject',
+        description: 'Deploy and start current project button',
+        defaultMessage: 'Deploy and Start current project'
     }
 });
 
@@ -80,7 +80,28 @@ const ProjectTitleInput = ({
             if (deployResponse.ok) {
                 const data = await deployResponse.json();
                 if (data.success) {
-                    notificationService.showSuccess(intl.formatMessage({id: 'gui.success.currentProjectDeployed'}, {name: projectName}));
+                    // After successful deployment, start the project
+                    const startUrl = getApiUrl('start-project');
+                    const startResponse = await fetch(startUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ projectName })
+                    });
+                    
+                    if (startResponse.ok) {
+                        const startData = await startResponse.json();
+                        if (startData.success) {
+                            notificationService.showSuccess(intl.formatMessage({id: 'gui.success.currentProjectDeployedAndStarted'}, {name: projectName}));
+                        } else {
+                            notificationService.showSuccess(intl.formatMessage({id: 'gui.success.currentProjectDeployed'}, {name: projectName}));
+                            notificationService.showWarning(intl.formatMessage({id: 'gui.warnings.projectDeployedButNotStarted'}));
+                        }
+                    } else {
+                        notificationService.showSuccess(intl.formatMessage({id: 'gui.success.currentProjectDeployed'}, {name: projectName}));
+                        notificationService.showWarning(intl.formatMessage({id: 'gui.warnings.projectDeployedButNotStarted'}));
+                    }
                 } else {
                     notificationService.showError(data.error || intl.formatMessage({id: 'gui.errors.unknownError'}), intl.formatMessage({id: 'gui.errors.deployingProject'}));
                 }

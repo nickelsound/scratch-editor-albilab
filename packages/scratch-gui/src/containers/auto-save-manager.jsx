@@ -468,9 +468,34 @@ const AutoSaveManager = (props) => {
             if (deployResponse.ok) {
                 const data = await deployResponse.json();
                 if (data.success) {
-                    // Update project list
-                    loadProjects();
-                    showSuccess(props.intl.formatMessage({id: 'gui.success.currentProjectDeployed'}, {name: projectName}));
+                    // After successful deployment, start the project
+                    const startUrl = getApiUrl('start-project');
+                    const startResponse = await fetch(startUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ projectName })
+                    });
+                    
+                    if (startResponse.ok) {
+                        const startData = await startResponse.json();
+                        if (startData.success) {
+                            // Update project list
+                            loadProjects();
+                            showSuccess(props.intl.formatMessage({id: 'gui.success.currentProjectDeployedAndStarted'}, {name: projectName}));
+                        } else {
+                            // Update project list
+                            loadProjects();
+                            showSuccess(props.intl.formatMessage({id: 'gui.success.currentProjectDeployed'}, {name: projectName}));
+                            showWarning(props.intl.formatMessage({id: 'gui.warnings.projectDeployedButNotStarted'}));
+                        }
+                    } else {
+                        // Update project list
+                        loadProjects();
+                        showSuccess(props.intl.formatMessage({id: 'gui.success.currentProjectDeployed'}, {name: projectName}));
+                        showWarning(props.intl.formatMessage({id: 'gui.warnings.projectDeployedButNotStarted'}));
+                    }
                 } else {
                     showError(data.error || props.intl.formatMessage({id: 'gui.errors.unknownError'}), props.intl.formatMessage({id: 'gui.errors.deployingProject'}));
                 }
