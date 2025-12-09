@@ -136,11 +136,14 @@ class AutoSaveService {
             const projectData = this.vm.toJSON();
             
             // Check if project is empty (has no blocks) - if so, skip saving
-            if (this.isProjectEmpty(projectData)) {
+            const isEmpty = this.isProjectEmpty(projectData);
+            if (isEmpty) {
                 console.log('Project is empty (no blocks) - skipping auto-save');
                 this.scheduleNextSave();
                 return;
             }
+            
+            console.log('Project has blocks - proceeding with auto-save');
 
             this.isSaving = true;
             this.updateSaveStatus('saving');
@@ -200,28 +203,72 @@ class AutoSaveService {
     isProjectEmpty(projectData) {
         try {
             // Parse project data if it's a string
-            const parsed = typeof projectData === 'string' ? JSON.parse(projectData) : projectData;
+            let parsed = projectData;
+            if (typeof projectData === 'string') {
+                try {
+                    parsed = JSON.parse(projectData);
+                } catch (parseError) {
+                    console.error('Error parsing project data:', parseError);
+                    // If we can't parse, assume it's not empty to be safe (don't skip saving)
+                    return false;
+                }
+            }
             
-            if (!parsed || !parsed.targets || !Array.isArray(parsed.targets)) {
+            if (!parsed || typeof parsed !== 'object') {
+                console.log('Project is empty: invalid parsed data', { type: typeof parsed });
+                return true;
+            }
+            
+            if (!parsed.targets || !Array.isArray(parsed.targets)) {
+                console.log('Project is empty: invalid targets structure', {
+                    hasTargets: !!parsed.targets,
+                    isArray: Array.isArray(parsed.targets)
+                });
                 return true;
             }
             
             // Check all targets for blocks
             for (const target of parsed.targets) {
-                if (target.blocks && typeof target.blocks === 'object') {
-                    const blockKeys = Object.keys(target.blocks);
-                    // If there are any blocks, project is not empty
-                    if (blockKeys.length > 0) {
+                if (!target || typeof target !== 'object') {
+                    continue;
+                }
+                
+                // Check if target has blocks property
+                if (target.blocks !== null && target.blocks !== undefined) {
+                    // blocks is an object (not array) - check for keys
+                    if (typeof target.blocks === 'object' && !Array.isArray(target.blocks)) {
+                        const blockKeys = Object.keys(target.blocks);
+                        // Filter out any null/undefined values - any key that exists is a valid block
+                        const validBlockKeys = blockKeys.filter(key => target.blocks[key] != null);
+                        // If there are any valid blocks, project is not empty
+                        if (validBlockKeys.length > 0) {
+                            console.log('Project has blocks: found', validBlockKeys.length, 'blocks in target', target.name || target.id);
+                            return false;
+                        }
+                    } else if (Array.isArray(target.blocks) && target.blocks.length > 0) {
+                        // blocks is an array (shouldn't happen in SB3, but be safe)
+                        console.log('Project has blocks: found blocks array with length', target.blocks.length);
                         return false;
                     }
                 }
             }
             
             // No blocks found in any target
+            console.log('Project is empty: no blocks found in any target', {
+                targetCount: parsed.targets.length,
+                targets: parsed.targets.map(t => ({
+                    name: t.name,
+                    hasBlocks: !!(t && t.blocks),
+                    blocksType: t && t.blocks ? typeof t.blocks : 'undefined',
+                    blocksKeys: t && t.blocks && typeof t.blocks === 'object' && !Array.isArray(t.blocks) 
+                        ? Object.keys(t.blocks).length 
+                        : 'N/A'
+                }))
+            });
             return true;
         } catch (error) {
             console.error('Error checking if project is empty:', error);
-            // If we can't parse, assume it's not empty to be safe
+            // If we can't parse, assume it's not empty to be safe (don't skip saving)
             return false;
         }
     }
