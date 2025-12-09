@@ -253,6 +253,8 @@ const GUIComponent = props => {
                     />
                 ) : null}
                 {!menuBarHidden && <MenuBar
+                    ariaLabel="Navigation Menu"
+                    role="header"
                     accountNavOpen={accountNavOpen}
                     authorId={authorId}
                     authorThumbnailUrl={authorThumbnailUrl}
@@ -290,7 +292,11 @@ const GUIComponent = props => {
                 />}
                 <Box className={boxStyles}>
                     <Box className={styles.flexWrapper}>
-                        <Box className={styles.editorWrapper}>
+                        <Box
+                            role="main"
+                            ariaLabel="Editor"
+                            className={styles.editorWrapper}
+                        >
                             <Tabs
                                 forceRenderTabPanel
                                 className={tabClassNames.tabs}
@@ -403,7 +409,11 @@ const GUIComponent = props => {
                             ) : null}
                         </Box>
 
-                        <Box className={classNames(styles.stageAndTargetWrapper, styles[stageSize])}>
+                        <Box
+                            ariaLabel="Stage and Target"
+                            role="complementary"
+                            className={classNames(styles.stageAndTargetWrapper, styles[stageSize])}
+                        >
                             <StageWrapper
                                 isFullScreen={isFullScreen}
                                 isRendererSupported={isRendererSupported}
