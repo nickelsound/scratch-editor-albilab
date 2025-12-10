@@ -254,7 +254,7 @@ const GUIComponent = props => {
                 ) : null}
                 {!menuBarHidden && <MenuBar
                     ariaLabel="Navigation Menu"
-                    role="header"
+                    role="navigation"
                     accountNavOpen={accountNavOpen}
                     authorId={authorId}
                     authorThumbnailUrl={authorThumbnailUrl}
@@ -294,7 +294,7 @@ const GUIComponent = props => {
                     <Box className={styles.flexWrapper}>
                         <Box
                             role="main"
-                            ariaLabel="Editor"
+                            aria-label="Editor"
                             className={styles.editorWrapper}
                         >
                             <Tabs
@@ -410,7 +410,7 @@ const GUIComponent = props => {
                         </Box>
 
                         <Box
-                            ariaLabel="Stage and Target"
+                            aria-label="Stage and Target"
                             role="complementary"
                             className={classNames(styles.stageAndTargetWrapper, styles[stageSize])}
                         >

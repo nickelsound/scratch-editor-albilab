@@ -437,6 +437,8 @@ class MenuBar extends React.Component {
                     this.props.className,
                     styles.menuBar
                 )}
+                aria-label={this.props.ariaLabel}
+                role="navigation"
             >
                 <div className={styles.mainMenu}>
                     <div className={styles.fileGroup}>
@@ -896,6 +898,7 @@ class MenuBar extends React.Component {
 MenuBar.propTypes = {
     aboutMenuOpen: PropTypes.bool,
     accountMenuOpen: PropTypes.bool,
+    ariaLabel: PropTypes.string,
     authorId: PropTypes.oneOfType([PropTypes.string, PropTypes.bool]),
     authorThumbnailUrl: PropTypes.string,
     authorUsername: PropTypes.oneOfType([PropTypes.string, PropTypes.bool]),
@@ -971,6 +974,7 @@ MenuBar.propTypes = {
     platform: PropTypes.oneOf(Object.keys(PLATFORM)),
     projectTitle: PropTypes.string,
     renderLogin: PropTypes.func,
+    role: PropTypes.string,
     settingsMenuOpen: PropTypes.bool,
     shouldSaveBeforeTransition: PropTypes.func,
     showComingSoon: PropTypes.bool,
