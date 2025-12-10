@@ -22,7 +22,7 @@
     "src"
   ],
   "scripts": {
-    "build": "npm run docs && webpack --progress",
+    "build": "webpack --progress",
     "clean": "rimraf dist playground",
     "coverage": "tap ./test/{unit,integration}/*.js --coverage --coverage-report=lcov",
     "docs": "jsdoc -c .jsdoc.json",

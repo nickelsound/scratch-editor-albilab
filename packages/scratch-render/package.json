@@ -21,7 +21,7 @@
     "src"
   ],
   "scripts": {
-    "build": "webpack --progress && npm run docs",
+    "build": "webpack --progress",
     "clean": "rimraf dist playground",
     "docs": "jsdoc -c .jsdoc.json",
     "lint": "eslint .",
