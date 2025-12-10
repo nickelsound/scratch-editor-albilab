@@ -253,8 +253,8 @@ const GUIComponent = props => {
                     />
                 ) : null}
                 {!menuBarHidden && <MenuBar
-                    ariaLabel="Navigation Menu"
                     role="navigation"
+                    ariaLabel="Navigation Menu"
                     accountNavOpen={accountNavOpen}
                     authorId={authorId}
                     authorThumbnailUrl={authorThumbnailUrl}
@@ -304,6 +304,8 @@ const GUIComponent = props => {
                                 selectedTabClassName={tabClassNames.tabSelected}
                                 selectedTabPanelClassName={tabClassNames.tabPanelSelected}
                                 onSelect={onActivateTab}
+                                role="region"
+                                aria-label="Editor Tabs"
 
                                 // TODO: focusTabOnClick should be true for accessibility, but currently conflicts
                                 // with nudge operations in the paint editor. We'll likely need to manage focus
@@ -405,13 +407,17 @@ const GUIComponent = props => {
                                 </TabPanel>
                             </Tabs>
                             {backpackVisible ? (
-                                <Backpack host={backpackHost} />
+                                <Backpack
+                                    host={backpackHost}
+                                    role="region"
+                                    ariaLabel="Backpack"
+                                />
                             ) : null}
                         </Box>
 
                         <Box
-                            aria-label="Stage and Target"
                             role="complementary"
+                            aria-label="Stage and Target"
                             className={classNames(styles.stageAndTargetWrapper, styles[stageSize])}
                         >
                             <StageWrapper
@@ -420,8 +426,14 @@ const GUIComponent = props => {
                                 isRtl={isRtl}
                                 stageSize={stageSize}
                                 vm={vm}
+                                role="region"
+                                ariaLabel="Stage"
                             />
-                            <Box className={styles.targetWrapper}>
+                            <Box
+                                className={styles.targetWrapper}
+                                role="region"
+                                aria-label="Target"
+                            >
                                 <TargetPane
                                     stageSize={stageSize}
                                     vm={vm}
