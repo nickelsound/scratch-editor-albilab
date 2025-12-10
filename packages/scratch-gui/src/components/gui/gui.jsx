@@ -318,7 +318,10 @@ const GUIComponent = props => {
                                 // Actual behavior: the Code or Sounds tab is now focused
                                 focusTabOnClick={false}
                             >
-                                <TabList className={tabClassNames.tabList}>
+                                <TabList
+                                    className={tabClassNames.tabList}
+                                    aria-roledescription="tab list"
+                                >
                                     <Tab className={tabClassNames.tab}>
                                         <img
                                             draggable={false}
@@ -367,7 +370,10 @@ const GUIComponent = props => {
                                         />
                                     </Tab>
                                 </TabList>
-                                <TabPanel className={tabClassNames.tabPanel}>
+                                <TabPanel
+                                    className={tabClassNames.tabPanel}
+                                    aria-roledescription="editor panel"
+                                >
                                     <Box className={styles.blocksWrapper}>
                                         <Blocks
                                             key={`${blocksId}/${theme}`}
