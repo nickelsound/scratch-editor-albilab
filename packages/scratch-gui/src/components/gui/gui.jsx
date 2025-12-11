@@ -290,168 +290,166 @@ const GUIComponent = props => {
                     username={username}
                     accountMenuOptions={accountMenuOptions}
                 />}
-                <Box className={boxStyles}>
-                    <Box className={styles.flexWrapper}>
-                        <Box
-                            role="main"
-                            aria-label="Editor"
-                            className={styles.editorWrapper}
-                        >
-                            <Tabs
-                                forceRenderTabPanel
-                                className={tabClassNames.tabs}
-                                selectedIndex={activeTabIndex}
-                                selectedTabClassName={tabClassNames.tabSelected}
-                                selectedTabPanelClassName={tabClassNames.tabPanelSelected}
-                                onSelect={onActivateTab}
-                                role="region"
-                                aria-label="Editor Tabs"
+                <Box className={classNames(boxStyles, styles.flexWrapper)}>
+                    <Box
+                        role="main"
+                        aria-label="Editor"
+                        className={styles.editorWrapper}
+                    >
+                        <Tabs
+                            forceRenderTabPanel
+                            className={tabClassNames.tabs}
+                            selectedIndex={activeTabIndex}
+                            selectedTabClassName={tabClassNames.tabSelected}
+                            selectedTabPanelClassName={tabClassNames.tabPanelSelected}
+                            onSelect={onActivateTab}
+                            role="region"
+                            aria-label="Editor Tabs"
 
-                                // TODO: focusTabOnClick should be true for accessibility, but currently conflicts
-                                // with nudge operations in the paint editor. We'll likely need to manage focus
-                                // differently within the paint editor before we can turn this back on.
-                                // Repro steps:
-                                // 1. Click the Costumes tab
-                                // 2. Select something in the paint editor (say, the cat's face)
-                                // 3. Press the left or right arrow key
-                                // Desired behavior: the face should nudge left or right
-                                // Actual behavior: the Code or Sounds tab is now focused
-                                focusTabOnClick={false}
+                            // TODO: focusTabOnClick should be true for accessibility, but currently conflicts
+                            // with nudge operations in the paint editor. We'll likely need to manage focus
+                            // differently within the paint editor before we can turn this back on.
+                            // Repro steps:
+                            // 1. Click the Costumes tab
+                            // 2. Select something in the paint editor (say, the cat's face)
+                            // 3. Press the left or right arrow key
+                            // Desired behavior: the face should nudge left or right
+                            // Actual behavior: the Code or Sounds tab is now focused
+                            focusTabOnClick={false}
+                        >
+                            <TabList
+                                className={tabClassNames.tabList}
+                                aria-label="Editor Tabs"
                             >
-                                <TabList
-                                    className={tabClassNames.tabList}
-                                    aria-label="Editor Tabs"
+                                <Tab
+                                    className={tabClassNames.tab}
+                                    aria-label="Code Editor Tab"
                                 >
-                                    <Tab
-                                        className={tabClassNames.tab}
-                                        aria-label="Code Editor Tab"
-                                    >
-                                        <img
-                                            draggable={false}
-                                            src={codeIcon}
-                                        />
-                                        <FormattedMessage
-                                            defaultMessage="Code"
-                                            description="Button to get to the code panel"
-                                            id="gui.gui.codeTab"
-                                        />
-                                    </Tab>
-                                    <Tab
-                                        className={tabClassNames.tab}
-                                        onClick={onActivateCostumesTab}
-                                        aria-label="Costumes Tab"
-                                    >
-                                        <img
-                                            draggable={false}
-                                            src={costumesIcon}
-                                        />
-                                        {targetIsStage ? (
-                                            <FormattedMessage
-                                                defaultMessage="Backdrops"
-                                                description="Button to get to the backdrops panel"
-                                                id="gui.gui.backdropsTab"
-                                            />
-                                        ) : (
-                                            <FormattedMessage
-                                                defaultMessage="Costumes"
-                                                description="Button to get to the costumes panel"
-                                                id="gui.gui.costumesTab"
-                                            />
-                                        )}
-                                    </Tab>
-                                    <Tab
-                                        className={tabClassNames.tab}
-                                        onClick={onActivateSoundsTab}
-                                        aria-label="Sounds Tab"
-                                    >
-                                        <img
-                                            draggable={false}
-                                            src={soundsIcon}
-                                        />
-                                        <FormattedMessage
-                                            defaultMessage="Sounds"
-                                            description="Button to get to the sounds panel"
-                                            id="gui.gui.soundsTab"
-                                        />
-                                    </Tab>
-                                </TabList>
-                                <TabPanel
-                                    className={tabClassNames.tabPanel}
-                                    aria-label="editor panel"
+                                    <img
+                                        draggable={false}
+                                        src={codeIcon}
+                                    />
+                                    <FormattedMessage
+                                        defaultMessage="Code"
+                                        description="Button to get to the code panel"
+                                        id="gui.gui.codeTab"
+                                    />
+                                </Tab>
+                                <Tab
+                                    className={tabClassNames.tab}
+                                    onClick={onActivateCostumesTab}
+                                    aria-label="Costumes Tab"
                                 >
-                                    <Box className={styles.blocksWrapper}>
-                                        <Blocks
-                                            key={`${blocksId}/${theme}`}
-                                            canUseCloud={canUseCloud}
-                                            grow={1}
-                                            isVisible={blocksTabVisible}
-                                            options={{
-                                                media: `${basePath}static/${themeMap[theme].blocksMediaFolder}/`
-                                            }}
-                                            stageSize={stageSize}
-                                            theme={theme}
-                                            vm={vm}
-                                            showNewFeatureCallouts={showNewFeatureCallouts}
-                                            username={username}
+                                    <img
+                                        draggable={false}
+                                        src={costumesIcon}
+                                    />
+                                    {targetIsStage ? (
+                                        <FormattedMessage
+                                            defaultMessage="Backdrops"
+                                            description="Button to get to the backdrops panel"
+                                            id="gui.gui.backdropsTab"
                                         />
-                                    </Box>
-                                    <ExtensionsButton
-                                        activeTabIndex={activeTabIndex}
-                                        intl={intl}
+                                    ) : (
+                                        <FormattedMessage
+                                            defaultMessage="Costumes"
+                                            description="Button to get to the costumes panel"
+                                            id="gui.gui.costumesTab"
+                                        />
+                                    )}
+                                </Tab>
+                                <Tab
+                                    className={tabClassNames.tab}
+                                    onClick={onActivateSoundsTab}
+                                    aria-label="Sounds Tab"
+                                >
+                                    <img
+                                        draggable={false}
+                                        src={soundsIcon}
+                                    />
+                                    <FormattedMessage
+                                        defaultMessage="Sounds"
+                                        description="Button to get to the sounds panel"
+                                        id="gui.gui.soundsTab"
+                                    />
+                                </Tab>
+                            </TabList>
+                            <TabPanel
+                                className={tabClassNames.tabPanel}
+                                aria-label="editor panel"
+                            >
+                                <Box className={styles.blocksWrapper}>
+                                    <Blocks
+                                        key={`${blocksId}/${theme}`}
+                                        canUseCloud={canUseCloud}
+                                        grow={1}
+                                        isVisible={blocksTabVisible}
+                                        options={{
+                                            media: `${basePath}static/${themeMap[theme].blocksMediaFolder}/`
+                                        }}
+                                        stageSize={stageSize}
+                                        theme={theme}
+                                        vm={vm}
                                         showNewFeatureCallouts={showNewFeatureCallouts}
-                                        onExtensionButtonClick={onExtensionButtonClick}
                                         username={username}
                                     />
-                                    <Box className={styles.watermark}>
-                                        <Watermark />
-                                    </Box>
-                                </TabPanel>
-                                <TabPanel className={tabClassNames.tabPanel}>
-                                    {costumesTabVisible ? <CostumeTab
-                                        vm={vm}
-                                        onNewLibraryBackdropClick={onNewLibraryBackdropClick}
-                                        onNewLibraryCostumeClick={onNewLibraryCostumeClick}
-                                    /> : null}
-                                </TabPanel>
-                                <TabPanel className={tabClassNames.tabPanel}>
-                                    {soundsTabVisible ? <SoundTab vm={vm} /> : null}
-                                </TabPanel>
-                            </Tabs>
-                            {backpackVisible ? (
-                                <Backpack
-                                    host={backpackHost}
-                                    ariaRole="region"
-                                    ariaLabel="Backpack"
+                                </Box>
+                                <ExtensionsButton
+                                    activeTabIndex={activeTabIndex}
+                                    intl={intl}
+                                    showNewFeatureCallouts={showNewFeatureCallouts}
+                                    onExtensionButtonClick={onExtensionButtonClick}
+                                    username={username}
                                 />
-                            ) : null}
-                        </Box>
+                                <Box className={styles.watermark}>
+                                    <Watermark />
+                                </Box>
+                            </TabPanel>
+                            <TabPanel className={tabClassNames.tabPanel}>
+                                {costumesTabVisible ? <CostumeTab
+                                    vm={vm}
+                                    onNewLibraryBackdropClick={onNewLibraryBackdropClick}
+                                    onNewLibraryCostumeClick={onNewLibraryCostumeClick}
+                                /> : null}
+                            </TabPanel>
+                            <TabPanel className={tabClassNames.tabPanel}>
+                                {soundsTabVisible ? <SoundTab vm={vm} /> : null}
+                            </TabPanel>
+                        </Tabs>
+                        {backpackVisible ? (
+                            <Backpack
+                                host={backpackHost}
+                                ariaRole="region"
+                                ariaLabel="Backpack"
+                            />
+                        ) : null}
+                    </Box>
 
+                    <Box
+                        role="complementary"
+                        aria-label="Stage and Target"
+                        className={classNames(styles.stageAndTargetWrapper, styles[stageSize])}
+                    >
+                        <StageWrapper
+                            isFullScreen={isFullScreen}
+                            isRendererSupported={isRendererSupported}
+                            isRtl={isRtl}
+                            stageSize={stageSize}
+                            vm={vm}
+                            ariaRole="region"
+                            ariaLabel="Stage"
+                        />
                         <Box
-                            role="complementary"
-                            aria-label="Stage and Target"
-                            className={classNames(styles.stageAndTargetWrapper, styles[stageSize])}
+                            className={styles.targetWrapper}
+                            role="region"
+                            aria-label="Target"
                         >
-                            <StageWrapper
-                                isFullScreen={isFullScreen}
-                                isRendererSupported={isRendererSupported}
-                                isRtl={isRtl}
+                            <TargetPane
                                 stageSize={stageSize}
                                 vm={vm}
-                                ariaRole="region"
-                                ariaLabel="Stage"
+                                onNewSpriteClick={onNewSpriteClick}
+                                onNewBackdropClick={onNewLibraryBackdropClick}
                             />
-                            <Box
-                                className={styles.targetWrapper}
-                                role="region"
-                                aria-label="Target"
-                            >
-                                <TargetPane
-                                    stageSize={stageSize}
-                                    vm={vm}
-                                    onNewSpriteClick={onNewSpriteClick}
-                                    onNewBackdropClick={onNewLibraryBackdropClick}
-                                />
-                            </Box>
                         </Box>
                     </Box>
                 </Box>
