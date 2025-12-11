@@ -55,13 +55,13 @@ const Backpack = ({
     onMouseEnter,
     onMouseLeave,
     onMore,
-    role
+    ariaRole
 }) => {
     const intl = useIntl();
     return (
         <div
             className={styles.backpackContainer}
-            role={role}
+            role={ariaRole}
             aria-label={ariaLabel}
         >
             <div
@@ -180,7 +180,7 @@ Backpack.propTypes = {
     onMouseEnter: PropTypes.func,
     onMouseLeave: PropTypes.func,
     onToggle: PropTypes.func,
-    role: PropTypes.string,
+    ariaRole: PropTypes.string,
     showMore: PropTypes.bool
 };
 

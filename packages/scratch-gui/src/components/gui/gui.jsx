@@ -253,8 +253,8 @@ const GUIComponent = props => {
                     />
                 ) : null}
                 {!menuBarHidden && <MenuBar
-                    role="navigation"
-                    ariaLabel="Navigation Menu"
+                    ariaRole="banner"
+                    ariaLabel="Menu topbar"
                     accountNavOpen={accountNavOpen}
                     authorId={authorId}
                     authorThumbnailUrl={authorThumbnailUrl}
@@ -320,9 +320,12 @@ const GUIComponent = props => {
                             >
                                 <TabList
                                     className={tabClassNames.tabList}
-                                    aria-roledescription="tab list"
+                                    aria-label="Editor Tabs"
                                 >
-                                    <Tab className={tabClassNames.tab}>
+                                    <Tab
+                                        className={tabClassNames.tab}
+                                        aria-label="Code Editor Tab"
+                                    >
                                         <img
                                             draggable={false}
                                             src={codeIcon}
@@ -336,6 +339,7 @@ const GUIComponent = props => {
                                     <Tab
                                         className={tabClassNames.tab}
                                         onClick={onActivateCostumesTab}
+                                        aria-label="Costumes Tab"
                                     >
                                         <img
                                             draggable={false}
@@ -358,6 +362,7 @@ const GUIComponent = props => {
                                     <Tab
                                         className={tabClassNames.tab}
                                         onClick={onActivateSoundsTab}
+                                        aria-label="Sounds Tab"
                                     >
                                         <img
                                             draggable={false}
@@ -372,7 +377,7 @@ const GUIComponent = props => {
                                 </TabList>
                                 <TabPanel
                                     className={tabClassNames.tabPanel}
-                                    aria-roledescription="editor panel"
+                                    aria-label="editor panel"
                                 >
                                     <Box className={styles.blocksWrapper}>
                                         <Blocks
@@ -415,7 +420,7 @@ const GUIComponent = props => {
                             {backpackVisible ? (
                                 <Backpack
                                     host={backpackHost}
-                                    role="region"
+                                    ariaRole="region"
                                     ariaLabel="Backpack"
                                 />
                             ) : null}
@@ -432,7 +437,7 @@ const GUIComponent = props => {
                                 isRtl={isRtl}
                                 stageSize={stageSize}
                                 vm={vm}
-                                role="region"
+                                ariaRole="region"
                                 ariaLabel="Stage"
                             />
                             <Box

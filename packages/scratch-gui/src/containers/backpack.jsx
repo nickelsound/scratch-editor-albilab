@@ -223,7 +223,7 @@ class Backpack extends React.Component {
                 onMouseEnter={this.handleMouseEnter}
                 onMouseLeave={this.handleMouseLeave}
                 onToggle={this.props.host ? this.handleToggle : null}
-                role={this.props.role}
+                ariaRole={this.props.ariaRole}
                 ariaLabel={this.props.ariaLabel}
             />
         );
@@ -236,7 +236,7 @@ Backpack.propTypes = {
     token: PropTypes.string,
     username: PropTypes.string,
     vm: PropTypes.instanceOf(VM),
-    role: PropTypes.string,
+    ariaRole: PropTypes.string,
     ariaLabel: PropTypes.string
 };
 

@@ -20,7 +20,7 @@ const StageWrapperComponent = function (props) {
         loading,
         manuallySaveThumbnails,
         onUpdateProjectThumbnail,
-        role,
+        ariaRole,
         stageSize,
         vm
     } = props;
@@ -32,7 +32,7 @@ const StageWrapperComponent = function (props) {
                 {[styles.fullScreen]: isFullScreen}
             )}
             dir={isRtl ? 'rtl' : 'ltr'}
-            role={role}
+            role={ariaRole}
             aria-label={ariaLabel}
         >
             <Box className={styles.stageMenuWrapper}>
@@ -68,7 +68,7 @@ StageWrapperComponent.propTypes = {
     loading: PropTypes.bool,
     manuallySaveThumbnails: PropTypes.bool,
     onUpdateProjectThumbnail: PropTypes.func,
-    role: PropTypes.string,
+    ariaRole: PropTypes.string,
     stageSize: PropTypes.oneOf(Object.keys(STAGE_DISPLAY_SIZES)).isRequired,
     vm: PropTypes.instanceOf(VM).isRequired
 };
