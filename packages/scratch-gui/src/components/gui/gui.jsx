@@ -303,8 +303,6 @@ const GUIComponent = props => {
                             selectedTabClassName={tabClassNames.tabSelected}
                             selectedTabPanelClassName={tabClassNames.tabPanelSelected}
                             onSelect={onActivateTab}
-                            role="region"
-                            aria-label="Editor Tabs"
 
                             // TODO: focusTabOnClick should be true for accessibility, but currently conflicts
                             // with nudge operations in the paint editor. We'll likely need to manage focus
@@ -317,14 +315,8 @@ const GUIComponent = props => {
                             // Actual behavior: the Code or Sounds tab is now focused
                             focusTabOnClick={false}
                         >
-                            <TabList
-                                className={tabClassNames.tabList}
-                                aria-label="Editor Tabs"
-                            >
-                                <Tab
-                                    className={tabClassNames.tab}
-                                    aria-label="Code Editor Tab"
-                                >
+                            <TabList className={tabClassNames.tabList}>
+                                <Tab className={tabClassNames.tab}>
                                     <img
                                         draggable={false}
                                         src={codeIcon}
@@ -338,7 +330,6 @@ const GUIComponent = props => {
                                 <Tab
                                     className={tabClassNames.tab}
                                     onClick={onActivateCostumesTab}
-                                    aria-label="Costumes Tab"
                                 >
                                     <img
                                         draggable={false}
@@ -361,7 +352,6 @@ const GUIComponent = props => {
                                 <Tab
                                     className={tabClassNames.tab}
                                     onClick={onActivateSoundsTab}
-                                    aria-label="Sounds Tab"
                                 >
                                     <img
                                         draggable={false}
@@ -376,9 +366,12 @@ const GUIComponent = props => {
                             </TabList>
                             <TabPanel
                                 className={tabClassNames.tabPanel}
-                                aria-label="editor panel"
+                                aria-label="Code Editor Panel"
                             >
-                                <Box className={styles.blocksWrapper}>
+                                <Box
+                                    className={styles.blocksWrapper}
+                                    role="region"
+                                >
                                     <Blocks
                                         key={`${blocksId}/${theme}`}
                                         canUseCloud={canUseCloud}
@@ -405,15 +398,26 @@ const GUIComponent = props => {
                                     <Watermark />
                                 </Box>
                             </TabPanel>
-                            <TabPanel className={tabClassNames.tabPanel}>
+                            <TabPanel
+                                className={tabClassNames.tabPanel}
+                                aria-label={targetIsStage ? 'Backdrops Editor Panel' : 'Costumes Editor Panel'}
+                            >
                                 {costumesTabVisible ? <CostumeTab
+                                    ariaRole="region"
                                     vm={vm}
                                     onNewLibraryBackdropClick={onNewLibraryBackdropClick}
                                     onNewLibraryCostumeClick={onNewLibraryCostumeClick}
                                 /> : null}
                             </TabPanel>
-                            <TabPanel className={tabClassNames.tabPanel}>
-                                {soundsTabVisible ? <SoundTab vm={vm} /> : null}
+                            <TabPanel
+                                className={tabClassNames.tabPanel}
+                                aria-label="Sound Editor Panel"
+                            >
+                                {soundsTabVisible ?
+                                    <SoundTab
+                                        vm={vm}
+                                        ariaRole="region"
+                                    /> : null}
                             </TabPanel>
                         </Tabs>
                         {backpackVisible ? (
@@ -442,7 +446,7 @@ const GUIComponent = props => {
                         <Box
                             className={styles.targetWrapper}
                             role="region"
-                            aria-label="Target"
+                            aria-label="Target Pane"
                         >
                             <TargetPane
                                 stageSize={stageSize}
