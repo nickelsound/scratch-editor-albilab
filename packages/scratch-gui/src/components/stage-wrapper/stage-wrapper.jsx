@@ -14,13 +14,13 @@ import styles from './stage-wrapper.css';
 const StageWrapperComponent = function (props) {
     const {
         ariaLabel,
+        ariaRole,
         isFullScreen,
         isRtl,
         isRendererSupported,
         loading,
         manuallySaveThumbnails,
         onUpdateProjectThumbnail,
-        ariaRole,
         stageSize,
         vm
     } = props;
@@ -62,13 +62,13 @@ const StageWrapperComponent = function (props) {
 
 StageWrapperComponent.propTypes = {
     ariaLabel: PropTypes.string,
+    ariaRole: PropTypes.string,
     isFullScreen: PropTypes.bool,
     isRendererSupported: PropTypes.bool.isRequired,
     isRtl: PropTypes.bool.isRequired,
     loading: PropTypes.bool,
     manuallySaveThumbnails: PropTypes.bool,
     onUpdateProjectThumbnail: PropTypes.func,
-    ariaRole: PropTypes.string,
     stageSize: PropTypes.oneOf(Object.keys(STAGE_DISPLAY_SIZES)).isRequired,
     vm: PropTypes.instanceOf(VM).isRequired
 };

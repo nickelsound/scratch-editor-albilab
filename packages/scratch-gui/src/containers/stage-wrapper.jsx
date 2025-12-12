@@ -8,8 +8,8 @@ const StageWrapper = props => <StageWrapperComponent {...props} />;
 
 StageWrapper.propTypes = {
     ariaLabel: PropTypes.string,
-    isRendererSupported: PropTypes.bool.isRequired,
     ariaRole: PropTypes.string,
+    isRendererSupported: PropTypes.bool.isRequired,
     stageSize: PropTypes.oneOf(Object.keys(STAGE_DISPLAY_SIZES)).isRequired,
     vm: PropTypes.instanceOf(VM).isRequired
 };
