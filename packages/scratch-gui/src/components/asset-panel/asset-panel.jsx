@@ -6,9 +6,10 @@ import styles from './asset-panel.css';
 import PropTypes from 'prop-types';
 
 const AssetPanel = props => {
-    const {ariaRole, ...restProps} = props;
+    const {ariaLabel, ariaRole, ...restProps} = props;
 
     return (<Box
+        aria-label={ariaLabel}
         role={ariaRole}
         className={styles.wrapper}
     >
@@ -23,6 +24,7 @@ const AssetPanel = props => {
 };
 
 AssetPanel.propTypes = {
+    ariaLabel: PropTypes.string,
     ariaRole: PropTypes.string,
     ...Selector.propTypes
 };

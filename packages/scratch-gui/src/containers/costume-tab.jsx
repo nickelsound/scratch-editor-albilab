@@ -260,6 +260,7 @@ class CostumeTab extends React.Component {
     }
     render () {
         const {
+            ariaLabel,
             ariaRole,
             dispatchUpdateRestore,
             intl,
@@ -288,6 +289,7 @@ class CostumeTab extends React.Component {
         })) : [];
         return (
             <AssetPanel
+                ariaLabel={ariaLabel}
                 ariaRole={ariaRole}
                 buttons={[
                     {
@@ -343,6 +345,7 @@ class CostumeTab extends React.Component {
 }
 
 CostumeTab.propTypes = {
+    ariaLabel: PropTypes.string,
     ariaRole: PropTypes.string,
     dispatchUpdateRestore: PropTypes.func,
     editingTarget: PropTypes.string,
