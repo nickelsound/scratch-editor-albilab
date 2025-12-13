@@ -32,6 +32,9 @@ const nodeConfig = baseConfig.clone()
                 name: 'ScratchSVGRenderer',
                 type: 'umd'
             }
+        },
+        externals: {
+            'jsdom': 'jsdom'
         }
     })
     .get();

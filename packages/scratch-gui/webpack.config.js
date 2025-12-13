@@ -77,11 +77,11 @@ const baseConfig = new ScratchWebpackConfigBuilder(
     .addPlugin(new CopyWebpackPlugin({
         patterns: [
             {
-                from: path.resolve(__dirname, 'node_modules/scratch-blocks/media'),
+                from: path.resolve(__dirname, '../../node_modules/scratch-blocks/media'),
                 to: 'static/blocks-media/default'
             },
             {
-                from: path.resolve(__dirname, 'node_modules/scratch-blocks/media'),
+                from: path.resolve(__dirname, '../../node_modules/scratch-blocks/media'),
                 to: 'static/blocks-media/high-contrast'
             },
             {
@@ -173,7 +173,11 @@ const buildConfig = baseConfig.clone()
         },
         devServer: {
             hot: true,
-            liveReload: true
+            liveReload: true,
+            static: {
+                directory: path.join(__dirname, 'build'),
+                publicPath: '/'
+            }
         },
         watchOptions: {
             poll: process.platform === 'win32' || process.env.WSL_DISTRO_NAME ? 1000 : false,

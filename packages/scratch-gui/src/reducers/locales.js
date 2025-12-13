@@ -2,8 +2,6 @@ import {isRtl} from 'scratch-l10n';
 import editorMessages from 'scratch-l10n/locales/editor-msgs';
 import {cs as autoSaveLocalesCs, en as autoSaveLocalesEn} from '../lib/auto-save-locales';
 
-addLocaleData(localeData);
-
 // Merge auto-save locales with editor messages
 const mergeMessages = (baseMessages, additionalMessagesCs, additionalMessagesEn) => {
     const merged = {};

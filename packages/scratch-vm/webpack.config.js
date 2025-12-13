@@ -13,12 +13,21 @@ const nodeBuilder = new ScratchWebpackConfigBuilder(common)
     .setTarget('node')
     .merge({
         entry: {
+            'scratch-vm': path.join(__dirname, 'src/index.js'),
             'extension-worker': path.join(__dirname, 'src/extension-support/extension-worker.js')
         },
         output: {
             library: {
                 name: 'VirtualMachine'
             }
+        },
+        externals: function ({context, request}, callback) {
+            // jsdom is needed by isomorphic-dompurify in node environment
+            if (request === 'jsdom') {
+                return callback(null, 'commonjs jsdom');
+            }
+            // Let webpack handle other externals
+            callback();
         }
     });
 

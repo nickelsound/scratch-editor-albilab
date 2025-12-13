@@ -1,7 +1,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import {connect} from 'react-redux';
-import {injectIntl, intlShape} from 'react-intl';
+import {injectIntl} from 'react-intl';
+import intlShape from '../lib/intlShape.js';
 import AutoSaveManagerComponent from '../components/menu-bar/auto-save-manager.jsx';
 import {setProjectTitle} from '../reducers/project-title.js';
 import {getApiUrl} from '../lib/api-config.js';
