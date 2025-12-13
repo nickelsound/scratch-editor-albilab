@@ -1,6 +1,4 @@
-import {addLocaleData} from 'react-intl';
-
-import {localeData, isRtl} from 'scratch-l10n';
+import {isRtl} from 'scratch-l10n';
 import editorMessages from 'scratch-l10n/locales/editor-msgs';
 import {cs as autoSaveLocalesCs, en as autoSaveLocalesEn} from '../lib/auto-save-locales';
 
@@ -22,7 +20,6 @@ const mergeMessages = (baseMessages, additionalMessagesCs, additionalMessagesEn)
 };
 
 const messagesByLocale = mergeMessages(editorMessages, autoSaveLocalesCs, autoSaveLocalesEn);
-
 const UPDATE_LOCALES = 'scratch-gui/locales/UPDATE_LOCALES';
 const SELECT_LOCALE = 'scratch-gui/locales/SELECT_LOCALE';
 

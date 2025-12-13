@@ -2,8 +2,8 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import {connect} from 'react-redux';
 
-import {setTheme} from '../reducers/theme';
-import {detectTheme} from './themes/themePersistance';
+import {setColorMode} from '../reducers/settings';
+import {detectColorMode} from './settings/color-mode/persistence';
 
 // Dark mode is not yet supported
 // const prefersDarkQuery = '(prefers-color-scheme: dark)';
@@ -12,7 +12,7 @@ const prefersHighContrastQuery = '(prefers-contrast: more)';
 const systemPreferencesHOC = function (WrappedComponent) {
     class SystemPreferences extends React.Component {
         componentDidMount () {
-            this.preferencesListener = () => this.props.onSetTheme(detectTheme());
+            this.preferencesListener = () => this.props.onSetColorMode(detectColorMode());
 
             if (window.matchMedia) {
                 this.highContrastMatchMedia = window.matchMedia(prefersHighContrastQuery);
@@ -38,9 +38,9 @@ const systemPreferencesHOC = function (WrappedComponent) {
 
         render () {
             const {
-                /* eslint-disable no-unused-vars */
-                onSetTheme,
-                /* eslint-enable no-unused-vars */
+                 
+                onSetColorMode,
+                 
                 ...props
             } = this.props;
             return <WrappedComponent {...props} />;
@@ -48,11 +48,11 @@ const systemPreferencesHOC = function (WrappedComponent) {
     }
 
     SystemPreferences.propTypes = {
-        onSetTheme: PropTypes.func
+        onSetColorMode: PropTypes.func
     };
 
     const mapDispatchToProps = dispatch => ({
-        onSetTheme: theme => dispatch(setTheme(theme))
+        onSetColorMode: mode => dispatch(setColorMode(mode))
     });
 
     return connect(

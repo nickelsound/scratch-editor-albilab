@@ -1,7 +1,7 @@
 import PropTypes from 'prop-types';
 import React from 'react';
 import classNames from 'classnames';
-import {FormattedMessage, injectIntl} from 'react-intl';
+import {FormattedMessage} from 'react-intl';
 import UserAvatar from './user-avatar.jsx';
 
 import styles from './author-info.css';
@@ -11,8 +11,9 @@ const AuthorInfo = ({
     imageUrl,
     projectTitle,
     // TODO: use userId to link to user's profile
-    userId, // eslint-disable-line no-unused-vars
-    username
+    userId,
+    username,
+    avatarBadge
 }) => (
     <div
         className={classNames(
@@ -23,6 +24,7 @@ const AuthorInfo = ({
         <UserAvatar
             className={styles.avatar}
             imageUrl={imageUrl}
+            showAvatarBadge={!!avatarBadge}
         />
         <div className={styles.titleAuthor}>
             <span className={styles.projectTitle}>
@@ -31,11 +33,16 @@ const AuthorInfo = ({
             <div>
                 <span className={styles.usernameLine}>
                     <FormattedMessage
-                        defaultMessage="by {username}"
+                        defaultMessage="by <span>{name}</span>"
                         description="Shows that a project was created by this user"
                         id="gui.authorInfo.byUser"
                         values={{
-                            username: <span className={styles.username}>{username}</span>
+                            name: username,
+                            span: name => (
+                                <span className={styles.username}>
+                                    {name}
+                                </span>
+                            )
                         }}
                     />
                 </span>
@@ -49,7 +56,8 @@ AuthorInfo.propTypes = {
     imageUrl: PropTypes.string,
     projectTitle: PropTypes.string,
     userId: PropTypes.oneOfType([PropTypes.string, PropTypes.bool]),
-    username: PropTypes.oneOfType([PropTypes.string, PropTypes.bool])
+    username: PropTypes.oneOfType([PropTypes.string, PropTypes.bool]),
+    avatarBadge: PropTypes.number
 };
 
-export default injectIntl(AuthorInfo);
+export default AuthorInfo;

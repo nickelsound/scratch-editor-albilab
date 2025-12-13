@@ -1,6 +1,6 @@
 {
   "name": "scratch-editor",
-  "version": "11.6.0",
+  "version": "12.1.2",
   "private": "true",
   "description": "Scratch editor mono-repository",
   "author": "Scratch Foundation",
@@ -11,12 +11,14 @@
     "url": "https://github.com/scratchfoundation/scratch-editor.git"
   },
   "scripts": {
-    "refresh-gh-workflow": "ts-node scripts/build-gha-workflows.ts",
+    "build": "cross-env NODE_ENV=production npm run --workspaces build",
     "build-monorepo": "cross-env-shell ./scripts/build-monorepo.sh",
     "prepare": "node -e \"try { require.resolve('husky'); require('husky').install(); } catch (e) { if (e.code === 'MODULE_NOT_FOUND') process.exit(0); throw e; }\"",
     "build": "cross-env NODE_ENV=production npm run --workspaces build",
     "clean": "npm run --workspaces clean",
     "test": "npm test --workspaces",
+    "refresh-gh-workflow": "ts-node scripts/build-gha-workflows.ts",
+    "update-legal": "npm --workspaces exec -c 'rm -f ./{LICENSE,TRADEMARK} && cp -f ../../{LICENSE,TRADEMARK} .'",
     "version": "cross-env-shell ./scripts/npm-version.sh"
   },
   "config": {
@@ -25,6 +27,7 @@
     }
   },
   "workspaces": [
+    "packages/task-herder",
     "packages/scratch-svg-renderer",
     "packages/scratch-render",
     "packages/scratch-vm",
@@ -35,6 +38,7 @@
     "@commitlint/cli": "17.8.1",
     "@commitlint/config-conventional": "17.8.1",
     "cross-env": "7.0.3",
+    "globals": "16.5.0",
     "husky": "8.0.3",
     "npm": "10.9.4",
     "buffer": "6.0.3",

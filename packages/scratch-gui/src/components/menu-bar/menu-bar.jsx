@@ -1,7 +1,8 @@
 import classNames from 'classnames';
 import {connect} from 'react-redux';
 import {compose} from 'redux';
-import {defineMessages, FormattedMessage, injectIntl, intlShape} from 'react-intl';
+import {defineMessages, FormattedMessage, injectIntl} from 'react-intl';
+import intlShape from '../../lib/intlShape.js';
 import PropTypes from 'prop-types';
 import bindAll from 'lodash.bindall';
 import bowser from 'bowser';
@@ -351,7 +352,7 @@ class MenuBar extends React.Component {
                 className={classNames(styles.menuBarItem, styles.hoverable, {
                     [styles.active]: this.props.aboutMenuOpen
                 })}
-                onMouseUp={this.props.onRequestOpenAbout}
+                onClick={this.props.onRequestOpenAbout}
             >
                 <img
                     className={styles.aboutIcon}
@@ -452,9 +453,12 @@ class MenuBar extends React.Component {
                                 onClick={this.props.onClickLogo}
                             />
                         </div>
-                        {(this.props.canChangeTheme || this.props.canChangeLanguage) && (<SettingsMenu
+                        {(this.props.canChangeColorMode || this.props.canChangeLanguage || this.props.canChangeTheme) &&
+                        (<SettingsMenu
                             canChangeLanguage={this.props.canChangeLanguage}
+                            canChangeColorMode={this.props.canChangeColorMode}
                             canChangeTheme={this.props.canChangeTheme}
+                            hasActiveMembership={this.props.hasActiveMembership}
                             isRtl={this.props.isRtl}
                             onRequestClose={this.props.onRequestCloseSettings}
                             onRequestOpen={this.props.onClickSettings}
@@ -465,7 +469,7 @@ class MenuBar extends React.Component {
                                 className={classNames(styles.menuBarItem, styles.hoverable, {
                                     [styles.active]: this.props.fileMenuOpen
                                 })}
-                                onMouseUp={this.props.onClickFile}
+                                onClick={this.props.onClickFile}
                             >
                                 <img src={fileIcon} />
                                 <span className={styles.collapsibleLabel}>
@@ -535,7 +539,7 @@ class MenuBar extends React.Component {
                             className={classNames(styles.menuBarItem, styles.hoverable, {
                                 [styles.active]: this.props.editMenuOpen
                             })}
-                            onMouseUp={this.props.onClickEdit}
+                            onClick={this.props.onClickEdit}
                         >
                             <img src={editIcon} />
                             <span className={styles.collapsibleLabel}>
@@ -587,7 +591,7 @@ class MenuBar extends React.Component {
                                 className={classNames(styles.menuBarItem, styles.hoverable, {
                                     [styles.active]: this.props.modeMenuOpen
                                 })}
-                                onMouseUp={this.props.onClickMode}
+                                onClick={this.props.onClickMode}
                             >
                                 <div className={classNames(styles.editMenu)}>
                                     <FormattedMessage
@@ -648,6 +652,7 @@ class MenuBar extends React.Component {
                             projectTitle={this.props.projectTitle}
                             userId={this.props.authorId}
                             username={this.props.authorUsername}
+                            avatarBadge={this.props.authorAvatarBadge}
                         />
                     ) : null)}
                     <Divider className={classNames(styles.divider)} />
@@ -719,6 +724,7 @@ class MenuBar extends React.Component {
                                     onLogOut={menuOpts.canLogout ? this.props.onLogOut : null}
 
                                     username={this.props.username}
+                                    avatarBadge={this.props.avatarBadge}
 
                                     avatarUrl={menuOpts.avatarUrl}
                                     myStuffUrl={menuOpts.myStuffUrl}
@@ -739,7 +745,7 @@ class MenuBar extends React.Component {
                                             styles.hoverable
                                         )}
                                         key="join"
-                                        onMouseUp={this.props.onOpenRegistration}
+                                        onClick={this.props.onOpenRegistration}
                                     >
                                         <FormattedMessage
                                             defaultMessage="Join Scratch"
@@ -757,6 +763,7 @@ class MenuBar extends React.Component {
                                         )}
                                         key="login"
                                         onMouseUp={this.props.onClickLogin}
+                                        onClick={this.props.onClickLogin}
                                     >
                                         <FormattedMessage
                                             defaultMessage="Sign in"
@@ -794,8 +801,10 @@ MenuBar.propTypes = {
     authorId: PropTypes.oneOfType([PropTypes.string, PropTypes.bool]),
     authorThumbnailUrl: PropTypes.string,
     authorUsername: PropTypes.oneOfType([PropTypes.string, PropTypes.bool]),
+    authorAvatarBadge: PropTypes.number,
     autoUpdateProject: PropTypes.func,
     canChangeLanguage: PropTypes.bool,
+    canChangeColorMode: PropTypes.bool,
     canChangeTheme: PropTypes.bool,
     canCreateCopy: PropTypes.bool,
     canCreateNew: PropTypes.bool,
@@ -810,6 +819,7 @@ MenuBar.propTypes = {
     editMenuOpen: PropTypes.bool,
     enableCommunity: PropTypes.bool,
     fileMenuOpen: PropTypes.bool,
+    hasActiveMembership: PropTypes.bool,
     intl: intlShape,
     isRtl: PropTypes.bool,
     isShared: PropTypes.bool,
@@ -870,6 +880,7 @@ MenuBar.propTypes = {
     shouldSaveBeforeTransition: PropTypes.func,
     showComingSoon: PropTypes.bool,
     username: PropTypes.string,
+    avatarBadge: PropTypes.number,
     userOwnsProject: PropTypes.bool,
 
     accountMenuOptions: AccountMenuOptionsPropTypes,
@@ -903,6 +914,7 @@ const mapStateToProps = (state, ownProps) => {
         projectTitle: state.scratchGui.projectTitle,
         settingsMenuOpen: settingsMenuOpen(state),
         username: ownProps.username ?? (user ? user.username : null),
+        avatarBadge: user ? user.membership_avatar_badge : null,
         userIsEducator: permissions && permissions.educator,
         vm: state.scratchGui.vm,
         mode220022BC: isTimeTravel220022BC(state),

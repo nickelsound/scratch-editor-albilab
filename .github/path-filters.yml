@@ -11,6 +11,9 @@ any-workspace:
   - *global
   - "packages/**"
 
+task-herder:
+  - *global
+  - "packages/task-herder/**"
 scratch-svg-renderer:
   - *global
   - "packages/scratch-svg-renderer/**"

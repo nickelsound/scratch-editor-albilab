@@ -8,6 +8,7 @@ declare module '!raw-loader!.*' {
   export default value;
 }
 
+declare module 'scratch-paint';
 declare module '@scratch/scratch-vm' {
   const VM: any;
   export default VM;

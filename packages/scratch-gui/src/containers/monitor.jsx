@@ -1,7 +1,8 @@
 import bindAll from 'lodash.bindall';
 import React from 'react';
 import PropTypes from 'prop-types';
-import {injectIntl, intlShape, defineMessages} from 'react-intl';
+import {injectIntl, defineMessages} from 'react-intl';
+import intlShape from '../lib/intlShape.js';
 
 import monitorAdapter from '../lib/monitor-adapter.js';
 import MonitorComponent, {monitorModes} from '../components/monitor/monitor.jsx';
@@ -9,7 +10,7 @@ import {addMonitorRect, getInitialPosition, resizeMonitorRect, removeMonitorRect
 import {getVariable, setVariableValue} from '../lib/variable-utils';
 import importCSV from '../lib/import-csv';
 import downloadBlob from '../lib/download-blob';
-import {DEFAULT_THEME} from '../lib/themes';
+import {DEFAULT_MODE} from '../lib/settings/color-mode/index.js';
 import SliderPrompt from './slider-prompt.jsx';
 
 import {connect} from 'react-redux';
@@ -214,7 +215,7 @@ class Monitor extends React.Component {
                     min={this.props.min}
                     mode={this.props.mode}
                     targetId={this.props.targetId}
-                    theme={this.props.theme}
+                    colorMode={this.props.colorMode}
                     width={this.props.width}
                     onDragEnd={this.handleDragEnd}
                     onExport={isList ? this.handleExport : null}
@@ -246,14 +247,14 @@ Monitor.propTypes = {
         savedMonitorPositions: PropTypes.object // eslint-disable-line react/forbid-prop-types
     }).isRequired,
     onDragEnd: PropTypes.func.isRequired,
-    opcode: PropTypes.string.isRequired, // eslint-disable-line react/no-unused-prop-types
-    params: PropTypes.object, // eslint-disable-line react/no-unused-prop-types, react/forbid-prop-types
+    opcode: PropTypes.string.isRequired,
+    params: PropTypes.object, // eslint-disable-line react/forbid-prop-types
     removeMonitorRect: PropTypes.func.isRequired,
     resizeMonitorRect: PropTypes.func.isRequired,
-    spriteName: PropTypes.string, // eslint-disable-line react/no-unused-prop-types
+    spriteName: PropTypes.string,
     targetId: PropTypes.string,
-    theme: PropTypes.string,
-    toolboxXML: PropTypes.string, // eslint-disable-line react/no-unused-prop-types
+    colorMode: PropTypes.string,
+    toolboxXML: PropTypes.string,
     value: PropTypes.oneOfType([
         PropTypes.string,
         PropTypes.number,
@@ -261,18 +262,18 @@ Monitor.propTypes = {
             PropTypes.string,
             PropTypes.number
         ]))
-    ]), // eslint-disable-line react/no-unused-prop-types
+    ]),
     vm: PropTypes.instanceOf(VM),
     width: PropTypes.number,
     x: PropTypes.number,
     y: PropTypes.number
 };
 Monitor.defaultProps = {
-    theme: DEFAULT_THEME
+    colorMode: DEFAULT_MODE
 };
 const mapStateToProps = state => ({
     monitorLayout: state.scratchGui.monitorLayout,
-    theme: state.scratchGui.theme.theme,
+    colorMode: state.scratchGui.settings.colorMode,
     // render on toolbox updates since changes to the blocks could affect monitor labels, i.e. updated locale
     toolboxXML: state.scratchGui.toolbox.toolboxXML,
     vm: state.scratchGui.vm

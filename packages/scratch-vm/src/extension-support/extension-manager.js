@@ -24,7 +24,8 @@ const builtinExtensions = {
     makeymakey: () => require('../extensions/scratch3_makeymakey'),
     boost: () => require('../extensions/scratch3_boost'),
     gdxfor: () => require('../extensions/scratch3_gdx_for'),
-    albilab: () => require('../extensions/scratch3_albilab')
+    albilab: () => require('../extensions/scratch3_albilab'),
+    faceSensing: () => require('../extensions/scratch3_face_sensing')
 };
 
 /**
@@ -70,7 +71,6 @@ class ExtensionManager {
         /**
          * FIFO queue of extensions which have been requested but not yet loaded in a worker,
          * along with promise resolution functions to call once the worker is ready or failed.
-         *
          * @type {Array.<PendingExtensionWorker>}
          */
         this.pendingExtensions = [];
