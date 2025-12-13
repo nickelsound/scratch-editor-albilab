@@ -366,7 +366,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 1000;
+    z-index: $z-index-project-manager !important; /* Higher than Blockly HTML inputs to ensure it appears above them */
 }
 
 .autoSaveManagerDialog {
