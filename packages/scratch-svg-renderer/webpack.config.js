@@ -42,6 +42,16 @@ const nodeConfig = baseConfig.clone()
 const webConfig = baseConfig.clone()
     .setTarget('browserslist')
     .merge({
+        resolve: {
+            fallback: {
+                Buffer: require.resolve('buffer/'),
+                buffer: require.resolve('buffer/'),
+                stream: require.resolve('stream-browserify'),
+                util: require.resolve('util/'),
+                process: require.resolve('process/browser'),
+                jsdom: false
+            }
+        },
         output: {
             path: path.resolve(__dirname, 'dist/web'),
             library: {

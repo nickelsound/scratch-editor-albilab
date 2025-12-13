@@ -145,3 +145,5 @@ uploads/saved-project.json
 uploads/
 
 .cursor/rules/permanent.mdc
+
+package-lock.json

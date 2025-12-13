@@ -34,7 +34,8 @@ const webBuilder = new ScratchWebpackConfigBuilder(common)
                 buffer: require.resolve('buffer/'),
                 stream: require.resolve('stream-browserify'),
                 util: require.resolve('util/'),
-                process: require.resolve('process/browser')
+                process: require.resolve('process/browser'),
+                jsdom: false
             }
         },
         output: {
@@ -123,7 +124,7 @@ const playgroundBuilder = webBuilder
         new CopyWebpackPlugin({
             patterns: [
                 {
-                    from: '../../node_modules/scratch-blocks/media',
+                    from: path.resolve(__dirname, 'node_modules/scratch-blocks/media'),
                     to: 'media'
                 },
                 {

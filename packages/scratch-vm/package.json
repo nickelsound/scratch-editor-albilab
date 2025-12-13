@@ -81,6 +81,7 @@
   },
   "devDependencies": {
     "@babel/core": "7.28.5",
+    "@babel/helpers": "7.28.4",
     "@babel/preset-env": "7.28.5",
     "adm-zip": "0.4.11",
     "babel-loader": "9.2.1",
