@@ -97,3 +97,10 @@
     min-width: auto;
     min-height: auto;
 }
+
+/* Ensure Blockly HTML inputs don't appear above modals like project manager */
+/* Blockly uses inline styles for HTML inputs, so we need to override with !important */
+/* Use body selector to ensure it applies globally, not just within .blocks container */
+body .blocklyWidgetDiv {
+    z-index: 999 !important; /* Lower than project manager overlay (100000) */
+}

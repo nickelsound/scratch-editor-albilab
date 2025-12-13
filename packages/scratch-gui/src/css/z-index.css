@@ -30,3 +30,6 @@ $z-index-stage-wrapper-overlay: 5000;
 
 /* in most interfaces, the context menu is always on top */
 $z-index-context-menu: 10000;
+
+/* Project manager overlay should be above Blockly HTML inputs (blocklyWidgetDiv has z-index 99999) */
+$z-index-project-manager: 100000;

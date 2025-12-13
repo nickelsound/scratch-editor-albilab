@@ -468,10 +468,10 @@ async function checkAndStartMissingProjects() {
                     continue;
                 }
                 
-                // Load project from auto-save (same method as GUI endpoint)
-                const projectData = await loadAutoSaveProject(projectName);
+                // Load project from deployed version (same method as GUI endpoint)
+                const projectData = await loadDeployedProject(projectName);
                 if (!projectData) {
-                    log(`Project "${projectName}" not found in auto-save, skipped`, 'warn');
+                    log(`Project "${projectName}" not found in deployed projects, skipped`, 'warn');
                     continue;
                 }
                 
@@ -1402,12 +1402,12 @@ app.post('/api/start-project', async (req, res) => {
             });
         }
         
-        // Load project from auto-save
-        const projectData = await loadAutoSaveProject(projectName);
+        // Load project from deployed version (not from auto-save/draft)
+        const projectData = await loadDeployedProject(projectName);
         if (!projectData) {
             return res.status(404).json({ 
                 success: false,
-                error: `Project ${projectName} not found` 
+                error: `Project ${projectName} not found in deployed projects` 
             });
         }
         
