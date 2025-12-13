@@ -1,6 +1,6 @@
 {
   "name": "scratch-editor",
-  "version": "11.2.0-svg-sanitization.2",
+  "version": "11.6.0",
   "private": "true",
   "description": "Scratch editor mono-repository",
   "author": "Scratch Foundation",
@@ -13,9 +13,10 @@
   "scripts": {
     "refresh-gh-workflow": "ts-node scripts/build-gha-workflows.ts",
     "build-monorepo": "cross-env-shell ./scripts/build-monorepo.sh",
-    "prepare": "husky install",
+    "prepare": "node -e \"try { require.resolve('husky'); require('husky').install(); } catch (e) { if (e.code === 'MODULE_NOT_FOUND') process.exit(0); throw e; }\"",
     "build": "cross-env NODE_ENV=production npm run --workspaces build",
     "clean": "npm run --workspaces clean",
+    "test": "npm test --workspaces",
     "version": "cross-env-shell ./scripts/npm-version.sh"
   },
   "config": {
@@ -27,14 +28,22 @@
     "packages/scratch-svg-renderer",
     "packages/scratch-render",
     "packages/scratch-vm",
-    "packages/scratch-gui"
+    "packages/scratch-gui",
+    "packages/scratch-backend"
   ],
   "devDependencies": {
     "@commitlint/cli": "17.8.1",
     "@commitlint/config-conventional": "17.8.1",
     "cross-env": "7.0.3",
     "husky": "8.0.3",
-    "npm": "10.9.2",
-    "ts-node": "10.9.2"
+    "npm": "10.9.4",
+    "buffer": "6.0.3",
+    "stream-browserify": "3.0.0",
+    "util": "0.12.5",
+    "process": "0.11.10",
+    "ts-node": "10.9.2",
+    "typescript": "5.3.3",
+    "redux": "^3.7.2",
+    "react-redux": "^5.0.7"
   }
 }

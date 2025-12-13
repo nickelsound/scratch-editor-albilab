@@ -1,8 +1,9 @@
 import {ScratchPaintReducer} from 'scratch-paint';
 import LocalesReducer, {localesInitialState, initLocale} from './reducers/locales.js';
 import GuiReducer, {buildInitialState, guiMiddleware, initEmbedded, initFullScreen, initPlayer} from './reducers/gui';
-import {setFullScreen, setPlayer} from './reducers/mode.js';
+import {setFullScreen, setPlayer, setEmbedded} from './reducers/mode.js';
 import {activateDeck} from './reducers/cards.js';
+import AutoSaveReducer, {setAutoSaveStatus, setLastSaveTime, setSaveError} from './reducers/auto-save.js';
 import {
     LoadingStates,
     onFetchedProjectData,
@@ -22,7 +23,8 @@ import {
 export const guiReducers = {
     locales: LocalesReducer,
     scratchGui: GuiReducer,
-    scratchPaint: ScratchPaintReducer
+    scratchPaint: ScratchPaintReducer,
+    autoSave: AutoSaveReducer
 };
 
 export {
@@ -48,5 +50,10 @@ export {
     localesInitialState,
     setFullScreen,
     setPlayer,
-    activateDeck
+    setEmbedded,
+    activateDeck,
+    
+    setAutoSaveStatus,
+    setLastSaveTime,
+    setSaveError
 };

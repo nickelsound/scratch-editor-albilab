@@ -1,6 +1,6 @@
-import {defineMessages, injectIntl, intlShape} from 'react-intl';
+import {FormattedMessage, defineMessages, injectIntl, intlShape} from 'react-intl';
 import PropTypes from 'prop-types';
-import React from 'react';
+import React, {useCallback} from 'react';
 import {connect} from 'react-redux';
 import VM from '@scratch/scratch-vm';
 
@@ -18,6 +18,9 @@ import unFullScreenIcon from './icon--unfullscreen.svg';
 
 import scratchLogo from '../menu-bar/scratch-logo.svg';
 import styles from './stage-header.css';
+import {storeProjectThumbnail} from '../../lib/store-project-thumbnail.js';
+import dataURItoBlob from '../../lib/data-uri-to-blob.js';
+import throttle from 'lodash.throttle';
 
 const messages = defineMessages({
     largeStageSizeMessage: {
@@ -40,6 +43,11 @@ const messages = defineMessages({
         description: 'Button to get out of full screen mode',
         id: 'gui.stageHeader.stageSizeUnFull'
     },
+    setThumbnail: {
+        defaultMessage: 'Set Thumbnail',
+        description: 'Manually save project thumbnail',
+        id: 'gui.stageHeader.saveThumbnail'
+    },
     fullscreenControl: {
         defaultMessage: 'Full Screen Control',
         description: 'Button to enter/exit full screen mode',
@@ -51,17 +59,36 @@ const StageHeaderComponent = function (props) {
     const {
         isFullScreen,
         isPlayerOnly,
+        manuallySaveThumbnails,
         onKeyPress,
         onSetStageLarge,
         onSetStageSmall,
         onSetStageFull,
         onSetStageUnFull,
+        onUpdateProjectThumbnail,
+        projectId,
         showBranding,
         stageSizeMode,
         vm
     } = props;
 
     let header = null;
+
+    const onUpdateThumbnail = useCallback(
+        throttle(
+            () => {
+                if (!onUpdateProjectThumbnail) {
+                    return;
+                }
+
+                storeProjectThumbnail(vm, dataURI => {
+                    onUpdateProjectThumbnail(projectId, dataURItoBlob(dataURI));
+                });
+            },
+            3000
+        ),
+        [projectId, onUpdateProjectThumbnail]
+    );
 
     if (isFullScreen) {
         const stageDimensions = getStageDimensions(null, true);
@@ -138,7 +165,16 @@ const StageHeaderComponent = function (props) {
                     <Controls vm={vm} />
                     <div className={styles.stageSizeRow}>
                         {stageControls}
-                        <div>
+                        <div className={styles.rightSection}>
+                            {manuallySaveThumbnails && (
+                                <Button
+                                    aria-label={props.intl.formatMessage(messages.setThumbnail)}
+                                    className={styles.setThumbnailButton}
+                                    onClick={onUpdateThumbnail}
+                                >
+                                    <FormattedMessage {...messages.setThumbnail} />
+                                </Button>
+                            )}
                             <Button
                                 className={styles.stageButton}
                                 onClick={onSetStageFull}
@@ -162,6 +198,7 @@ const StageHeaderComponent = function (props) {
 };
 
 const mapStateToProps = state => ({
+    projectId: state.scratchGui.projectState.projectId,
     // This is the button's mode, as opposed to the actual current state
     stageSizeMode: state.scratchGui.stageSize.stageSize
 });
@@ -170,11 +207,14 @@ StageHeaderComponent.propTypes = {
     intl: intlShape,
     isFullScreen: PropTypes.bool.isRequired,
     isPlayerOnly: PropTypes.bool.isRequired,
+    manuallySaveThumbnails: PropTypes.bool,
     onKeyPress: PropTypes.func.isRequired,
     onSetStageFull: PropTypes.func.isRequired,
     onSetStageLarge: PropTypes.func.isRequired,
     onSetStageSmall: PropTypes.func.isRequired,
     onSetStageUnFull: PropTypes.func.isRequired,
+    onUpdateProjectThumbnail: PropTypes.func,
+    projectId: PropTypes.number.isRequired,
     showBranding: PropTypes.bool.isRequired,
     stageSizeMode: PropTypes.oneOf(Object.keys(STAGE_SIZE_MODES)),
     vm: PropTypes.instanceOf(VM).isRequired

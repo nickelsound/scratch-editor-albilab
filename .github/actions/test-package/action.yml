@@ -1,5 +1,7 @@
 name: Test package
 
+description: Test one of the packages in this monorepo.
+
 inputs:
   package_name:
     description: The name of the tested package
@@ -17,9 +19,19 @@ runs:
     - name: Test
       working-directory: ./packages/${{ inputs.package_name }}
       shell: bash
+      env:
+        TAP_REPORTER: "junit"
+        TAP_REPORTER_FILE: "test-results/junit.xml"
       run: |
         mkdir -p test-results
-        npm run test | tee -a ./test-results/${{ inputs.package_name }}-test-results.txt
+        npm run test
+    - name: Publish test reports
+      if: ${{ !cancelled() }}
+      uses: EnricoMi/publish-unit-test-result-action@v2
+      with:
+        files: "./packages/${{ inputs.package_name }}/test-results/**/*"
+        check_name: "Test report for ${{ inputs.package_name }}"
+        test_file_prefix: "+packages/${{ inputs.package_name }}/"
     - name: Store Test Results
       if: ${{ !cancelled() }}
       uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4

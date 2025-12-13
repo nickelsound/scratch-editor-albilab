@@ -6,8 +6,12 @@
 npm-*
 
 # Build
-dist/*
+/dist
 /playground
+
+# Test
+/.tap
+/test-results
 
 # Editors
 /#*

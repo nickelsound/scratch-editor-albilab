@@ -2,8 +2,26 @@ import {addLocaleData} from 'react-intl';
 
 import {localeData, isRtl} from 'scratch-l10n';
 import editorMessages from 'scratch-l10n/locales/editor-msgs';
+import {cs as autoSaveLocalesCs, en as autoSaveLocalesEn} from '../lib/auto-save-locales';
 
 addLocaleData(localeData);
+
+// Merge auto-save locales with editor messages
+const mergeMessages = (baseMessages, additionalMessagesCs, additionalMessagesEn) => {
+    const merged = {};
+    for (const locale in baseMessages) {
+        if (Object.prototype.hasOwnProperty.call(baseMessages, locale)) {
+            merged[locale] = {
+                ...baseMessages[locale],
+                ...(locale === 'cs' ? additionalMessagesCs : {}),
+                ...(locale === 'en' ? additionalMessagesEn : {})
+            };
+        }
+    }
+    return merged;
+};
+
+const messagesByLocale = mergeMessages(editorMessages, autoSaveLocalesCs, autoSaveLocalesEn);
 
 const UPDATE_LOCALES = 'scratch-gui/locales/UPDATE_LOCALES';
 const SELECT_LOCALE = 'scratch-gui/locales/SELECT_LOCALE';
@@ -11,8 +29,8 @@ const SELECT_LOCALE = 'scratch-gui/locales/SELECT_LOCALE';
 const initialState = {
     isRtl: false,
     locale: 'en',
-    messagesByLocale: editorMessages,
-    messages: editorMessages.en
+    messagesByLocale: messagesByLocale,
+    messages: messagesByLocale.en
 };
 
 const reducer = function (state, action) {

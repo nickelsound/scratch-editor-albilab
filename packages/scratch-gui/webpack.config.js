@@ -44,7 +44,17 @@ const baseConfig = new ScratchWebpackConfigBuilder(
             fallback: {
                 Buffer: require.resolve('buffer/'),
                 stream: require.resolve('stream-browserify')
-            }
+            },
+            alias: {
+                'intl-relativeformat/lib/main': path.resolve(__dirname, '../../node_modules/intl-relativeformat/lib/core.js'),
+                'intl-relativeformat': path.resolve(__dirname, '../../node_modules/intl-relativeformat'),
+                'hull.js': path.resolve(__dirname, '../../node_modules/hull.js')
+            },
+            modules: [
+                'node_modules',
+                path.resolve(__dirname, '../../node_modules')
+            ],
+            extensions: ['.ts', '.tsx', '.js', '.jsx', '.json']
         }
     })
     .addModuleRule({
@@ -76,7 +86,7 @@ const baseConfig = new ScratchWebpackConfigBuilder(
                 force: true
             },
             {
-                context: '../../node_modules/@scratch/scratch-vm/dist/web',
+                context: '../scratch-vm/dist/web',
                 from: 'extension-worker.{js,js.map}',
                 noErrorOnMissing: true
             },
@@ -150,6 +160,15 @@ const buildConfig = baseConfig.clone()
             // would be looked for at the root of the filesystem, which is incorrect.
             // Hence, we're resetting the public path to be relative.
             publicPath: ''
+        },
+        devServer: {
+            hot: true,
+            liveReload: true
+        },
+        watchOptions: {
+            poll: process.platform === 'win32' || process.env.WSL_DISTRO_NAME ? 1000 : false,
+            aggregateTimeout: 300,
+            ignored: /node_modules/
         }
     })
     .addPlugin(new HtmlWebpackPlugin({

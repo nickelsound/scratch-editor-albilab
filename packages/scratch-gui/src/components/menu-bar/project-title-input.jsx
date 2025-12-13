@@ -4,6 +4,8 @@ import PropTypes from 'prop-types';
 import React from 'react';
 import {defineMessages, intlShape, injectIntl} from 'react-intl';
 import {setProjectTitle} from '../../reducers/project-title';
+import {getApiUrl} from '../../lib/api-config.js';
+import notificationService from '../../lib/notification-service.js';
 
 import BufferedInputHOC from '../forms/buffered-input-hoc.jsx';
 import Input from '../forms/input.jsx';
@@ -16,6 +18,11 @@ const messages = defineMessages({
         id: 'gui.gui.projectTitlePlaceholder',
         description: 'Placeholder for project title when blank',
         defaultMessage: 'Project title here'
+    },
+    deployCurrentProject: {
+        id: 'gui.menuBar.autoSaveManager.deployCurrentProject',
+        description: 'Deploy and start current project button',
+        defaultMessage: 'Deploy and Start current project'
     }
 });
 
@@ -23,28 +30,135 @@ const ProjectTitleInput = ({
     className,
     intl,
     onSubmit,
-    projectTitle
-}) => (
-    <BufferedInput
-        className={classNames(styles.titleField, className)}
-        maxLength="100"
-        placeholder={intl.formatMessage(messages.projectTitlePlaceholder)}
-        tabIndex="0"
-        type="text"
-        value={projectTitle}
-        onSubmit={onSubmit}
-    />
-);
+    projectTitle,
+    vm
+}) => {
+    const handleManageClick = () => {
+        // Trigger event to open manager
+        window.dispatchEvent(new CustomEvent('openAutoSaveManager'));
+    };
+
+    const handleDeployClick = async () => {
+        try {
+            if (!vm) {
+                notificationService.showWarning(intl.formatMessage({id: 'gui.errors.noProjectLoaded'}));
+                return;
+            }
+
+            // Get current project data from VM
+            const projectData = vm.toJSON();
+            const projectName = projectTitle || intl.formatMessage({id: 'gui.gui.unknownProject'});
+
+            // First save project to auto-save
+            const autoSaveUrl = getApiUrl('/saved-project/auto-save');
+            const autoSaveResponse = await fetch(autoSaveUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    projectData: projectData,
+                    projectName: projectName
+                })
+            });
+
+            if (!autoSaveResponse.ok) {
+                notificationService.showError(intl.formatMessage({id: 'gui.errors.savingProjectWithDetails'}, {details: autoSaveResponse.statusText}));
+                return;
+            }
+
+            // Then deploy project
+            const deployUrl = getApiUrl('deploy-project');
+            const deployResponse = await fetch(deployUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ projectName })
+            });
+            
+            if (deployResponse.ok) {
+                const data = await deployResponse.json();
+                if (data.success) {
+                    // After successful deployment, start the project
+                    const startUrl = getApiUrl('start-project');
+                    const startResponse = await fetch(startUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ projectName })
+                    });
+                    
+                    if (startResponse.ok) {
+                        const startData = await startResponse.json();
+                        if (startData.success) {
+                            notificationService.showSuccess(intl.formatMessage({id: 'gui.success.currentProjectDeployedAndStarted'}, {name: projectName}));
+                        } else {
+                            notificationService.showSuccess(intl.formatMessage({id: 'gui.success.currentProjectDeployed'}, {name: projectName}));
+                            notificationService.showWarning(intl.formatMessage({id: 'gui.warnings.projectDeployedButNotStarted'}));
+                        }
+                    } else {
+                        notificationService.showSuccess(intl.formatMessage({id: 'gui.success.currentProjectDeployed'}, {name: projectName}));
+                        notificationService.showWarning(intl.formatMessage({id: 'gui.warnings.projectDeployedButNotStarted'}));
+                    }
+                } else {
+                    notificationService.showError(data.error || intl.formatMessage({id: 'gui.errors.unknownError'}), intl.formatMessage({id: 'gui.errors.deployingProject'}));
+                }
+            } else {
+                try {
+                    const errorData = await deployResponse.json();
+                    notificationService.showError(errorData.error || deployResponse.statusText, intl.formatMessage({id: 'gui.errors.deployingProject'}));
+                } catch (parseError) {
+                    notificationService.showError(deployResponse.statusText, intl.formatMessage({id: 'gui.errors.deployingProject'}));
+                }
+            }
+        } catch (error) {
+            console.error('Error deploying current project:', error);
+            notificationService.showError(error.message, intl.formatMessage({id: 'gui.errors.deployingCurrentProject'}));
+        }
+    };
+
+    return (
+        <div className={styles.titleFieldContainer}>
+            <BufferedInput
+                className={classNames(styles.titleField, className)}
+                maxLength="100"
+                placeholder={intl.formatMessage(messages.projectTitlePlaceholder)}
+                tabIndex="0"
+                type="text"
+                value={projectTitle}
+                onSubmit={onSubmit}
+            />
+            <button
+                className={styles.deployButton}
+                onClick={handleDeployClick}
+                title={intl.formatMessage(messages.deployCurrentProject)}
+            >
+                🚀
+            </button>
+            <button
+                className={styles.manageButton}
+                onClick={handleManageClick}
+                title={intl.formatMessage({id: 'gui.menuBar.autoSaveManager.manageProjects'})}
+            >
+                📁
+            </button>
+        </div>
+    );
+};
 
 ProjectTitleInput.propTypes = {
     className: PropTypes.string,
     intl: intlShape.isRequired,
     onSubmit: PropTypes.func,
-    projectTitle: PropTypes.string
+    projectTitle: PropTypes.string,
+    vm: PropTypes.object
 };
 
 const mapStateToProps = state => ({
-    projectTitle: state.scratchGui.projectTitle
+    projectTitle: state.scratchGui.projectTitle,
+    vm: state.scratchGui.vm
 });
 
 const mapDispatchToProps = dispatch => ({

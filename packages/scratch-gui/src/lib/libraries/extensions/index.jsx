@@ -46,7 +46,30 @@ import gdxforInsetIconURL from './gdxfor/gdxfor-small.svg';
 import gdxforConnectionIconURL from './gdxfor/gdxfor-illustration.svg';
 import gdxforConnectionSmallIconURL from './gdxfor/gdxfor-small.svg';
 
+import albilabIconURL from './albilab/albilab.png';
+import albilabInsetIconURL from './albilab/albilab-small.svg';
+
 export default [
+    {
+        name: (
+            <FormattedMessage
+                defaultMessage="AlbiLAB"
+                description="Name for the 'AlbiLAB' extension"
+                id="gui.extension.albilab.name"
+            />
+        ),
+        extensionId: 'albilab',
+        iconURL: albilabIconURL,
+        insetIconURL: albilabInsetIconURL,
+        description: (
+            <FormattedMessage
+                defaultMessage="Test extension for AlbiLAB."
+                description="Description for the 'AlbiLAB' extension"
+                id="gui.extension.albilab.description"
+            />
+        ),
+        featured: true
+    },
     {
         name: (
             <FormattedMessage

@@ -12,6 +12,7 @@ const MODAL_SPRITE_LIBRARY = 'spriteLibrary';
 const MODAL_SOUND_RECORDER = 'soundRecorder';
 const MODAL_CONNECTION = 'connectionModal';
 const MODAL_TIPS_LIBRARY = 'tipsLibrary';
+const MODAL_ALBILAB_IP_PROMPT = 'albilabIPPrompt';
 
 const initialState = {
     [MODAL_BACKDROP_LIBRARY]: false,
@@ -24,7 +25,8 @@ const initialState = {
     [MODAL_SPRITE_LIBRARY]: false,
     [MODAL_SOUND_RECORDER]: false,
     [MODAL_CONNECTION]: false,
-    [MODAL_TIPS_LIBRARY]: false
+    [MODAL_TIPS_LIBRARY]: false,
+    [MODAL_ALBILAB_IP_PROMPT]: false
 };
 
 const reducer = function (state, action) {
@@ -120,6 +122,12 @@ const closeTipsLibrary = function () {
 const closeConnectionModal = function () {
     return closeModal(MODAL_CONNECTION);
 };
+const openAlbilabIPPrompt = function () {
+    return openModal(MODAL_ALBILAB_IP_PROMPT);
+};
+const closeAlbilabIPPrompt = function () {
+    return closeModal(MODAL_ALBILAB_IP_PROMPT);
+};
 export {
     reducer as default,
     initialState as modalsInitialState,
@@ -134,6 +142,7 @@ export {
     openTelemetryModal,
     openTipsLibrary,
     openConnectionModal,
+    openAlbilabIPPrompt,
     closeBackdropLibrary,
     closeCostumeLibrary,
     closeDebugModal,
@@ -144,5 +153,6 @@ export {
     closeSoundRecorder,
     closeTelemetryModal,
     closeTipsLibrary,
-    closeConnectionModal
+    closeConnectionModal,
+    closeAlbilabIPPrompt
 };

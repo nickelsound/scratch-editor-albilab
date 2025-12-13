@@ -74,8 +74,7 @@
 }
 
 .menu-bar-item.growable {
-    max-width: $menu-bar-item-max-width;
-    flex: 1;
+    /* Removed max-width and flex constraints for better display */
 }
 
 .title-field-growable {
@@ -235,4 +234,323 @@
     .help-icon {
         margin-right: 0;
     }
+}
+
+/* Service Button Styles */
+.serviceButton {
+    background-color: $motion-primary;
+    border: 1px solid $motion-primary;
+    color: $ui-white;
+    transition: all 0.2s ease;
+}
+
+.serviceButton:hover {
+    background-color: $motion-primary-dark;
+    border-color: $motion-primary-dark;
+}
+
+.serviceButtonRunning {
+    background-color: $looks-secondary;
+    border-color: $looks-secondary;
+    animation: pulse 2s infinite;
+}
+
+.serviceButtonRunning:hover {
+    background-color: $looks-secondary-dark;
+    border-color: $looks-secondary-dark;
+}
+
+.serviceButtonIcon {
+    width: 2rem;
+    height: 2rem;
+    margin-right: 0.25rem;
+    color: $ui-white;
+}
+
+@keyframes pulse {
+    0% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.7;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
+/* Load Project Button uses same styles as Service Button */
+
+/* Larger spacing between buttons */
+.menuBarButton + .menuBarButton {
+    margin-left: 1rem;
+}
+
+/* Auto-save Indicator Styles */
+.autoSaveIndicator {
+    display: flex;
+    align-items: center;
+    padding: 0.25rem 0.5rem;
+    border-radius: $form-radius;
+    font-size: 0.75rem;
+    transition: all 0.2s ease;
+    background-color: transparent;
+    color: $ui-black-transparent;
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.autoSaveIndicatorSaving {
+    background-color: $motion-primary;
+    color: $ui-white;
+    animation: pulse 1s infinite;
+}
+
+.autoSaveIndicatorSaved {
+    background-color: $looks-secondary;
+    color: $ui-white;
+}
+
+.autoSaveIndicatorError {
+    background-color: $red-primary;
+    color: $ui-white;
+}
+
+.autoSaveIndicatorUnsaved {
+    background-color: $ui-tertiary;
+    color: $text-primary;
+    border: 1px solid $ui-black-transparent;
+}
+
+.autoSaveIcon {
+    margin-right: 0.25rem;
+    font-size: 0.875rem;
+}
+
+.autoSaveText {
+    font-weight: 500;
+}
+
+.autoSaveTimeButton {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-weight: 500;
+    color: inherit;
+    padding: 0;
+    margin: 0;
+    font-size: inherit;
+    text-decoration: underline;
+    text-decoration-style: dotted;
+    transition: opacity 0.2s ease;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.autoSaveTimeButton:hover {
+    opacity: 0.8;
+}
+
+/* Auto-save Manager Styles */
+.autoSaveManagerOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.autoSaveManagerDialog {
+    background-color: $ui-white;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    max-width: 600px;
+    width: 90%;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    color: $text-primary;
+}
+
+.autoSaveManagerHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid $motion-primary;
+}
+
+.autoSaveManagerHeaderActions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.autoSaveManagerHeader h3 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: $text-primary;
+}
+
+.autoSaveManagerClose {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: $ui-black-transparent;
+    padding: 0;
+    width: 2rem;
+    height: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+}
+
+.autoSaveManagerClose:hover {
+    background-color: $ui-tertiary;
+    color: $text-primary;
+}
+
+.autoSaveManagerContent {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1rem 1.5rem;
+}
+
+.autoSaveManagerLoading,
+.autoSaveManagerEmpty {
+    text-align: center;
+    padding: 2rem;
+    color: $ui-black-transparent;
+    font-style: italic;
+}
+
+.autoSaveManagerList {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.autoSaveManagerItem {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 1rem;
+    border: 1px solid $motion-primary;
+    border-radius: 6px;
+    background-color: $ui-tertiary;
+    transition: background-color 0.2s ease;
+}
+
+.autoSaveManagerItem:hover {
+    background-color: $ui-tertiary;
+}
+
+.autoSaveManagerItemCurrent {
+    border-color: $motion-primary;
+    border-width: 2px;
+    background-color: rgba(74, 144, 226, 0.1);
+    box-shadow: 0 0 0 1px rgba(74, 144, 226, 0.2);
+}
+
+.autoSaveManagerItemInfo {
+    flex: 1;
+}
+
+.autoSaveManagerItemName {
+    font-weight: 600;
+    font-size: 1rem;
+    color: $text-primary;
+    margin-bottom: 0.25rem;
+}
+
+.autoSaveManagerItemTime {
+    font-size: 0.875rem;
+    color: $ui-black-transparent;
+}
+
+.autoSaveManagerItemStatus {
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.25rem 0.5rem;
+    border-radius: 12px;
+    margin-top: 0.25rem;
+    display: inline-block;
+}
+
+.autoSaveManagerStatusRunning {
+    background-color: $motion-primary;
+    color: $ui-white;
+}
+
+.autoSaveManagerStatusStopped {
+    background-color: $ui-black-transparent;
+    color: $ui-white;
+}
+
+.autoSaveManagerStatusNotDeployed {
+    background-color: $ui-tertiary;
+    color: $text-primary;
+    border: 1px solid $ui-black-transparent;
+}
+
+.autoSaveManagerItemActions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: flex-start;
+    width: 100%;
+}
+
+.autoSaveManagerButtonGroup {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.autoSaveManagerButton {
+    padding: 0.4rem 0.75rem;
+    border: 1px solid $motion-primary;
+    border-radius: 4px;
+    background-color: $ui-white;
+    color: $text-primary;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.autoSaveManagerButton:hover {
+    background-color: $ui-tertiary;
+    border-color: $ui-tertiary;
+}
+
+.autoSaveManagerButtonDanger {
+    color: $error-primary;
+    border-color: $error-primary;
+}
+
+.autoSaveManagerButtonDanger:hover {
+    background-color: $error-primary;
+    color: $ui-white;
+}
+
+.autoSaveManagerFooter {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid $motion-primary;
+    display: flex;
+    justify-content: flex-end;
 }

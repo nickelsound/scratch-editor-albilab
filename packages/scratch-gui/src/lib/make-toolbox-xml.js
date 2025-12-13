@@ -787,6 +787,10 @@ const makeToolboxXML = function (isInitialSetup, isStage = true, targetId, categ
     const variablesXML = moveCategory('data') || variables(isInitialSetup, isStage, targetId, colors.data);
     const myBlocksXML = moveCategory('procedures') || myBlocks(isInitialSetup, isStage, targetId, colors.more);
 
+    // Find AlbiLAB extension and remove it from the list
+    const albilabIndex = categoriesXML.findIndex(categoryInfo => categoryInfo.id === 'albilab');
+    const albilabXML = albilabIndex >= 0 ? categoriesXML.splice(albilabIndex, 1)[0] : null;
+
     const everything = [
         xmlOpen,
         motionXML, gap,
@@ -795,10 +799,18 @@ const makeToolboxXML = function (isInitialSetup, isStage = true, targetId, categ
         eventsXML, gap,
         controlXML, gap,
         sensingXML, gap,
-        operatorsXML, gap,
+        operatorsXML, gap
+    ];
+
+    // Add AlbiLAB between operators and variables
+    if (albilabXML) {
+        everything.push(gap, albilabXML.xml, gap);
+    }
+
+    everything.push(
         variablesXML, gap,
         myBlocksXML
-    ];
+    );
 
     for (const extensionCategory of categoriesXML) {
         everything.push(gap, extensionCategory.xml);

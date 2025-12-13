@@ -145,18 +145,23 @@ class SeleniumHelper {
     /**
      * List of useful xpath scopes for finding elements.
      * @returns {object} An object mapping names to xpath strings.
+     * @note Do not check for an exact class name with `contains(@class, "foo")`: that will match `class="foo2"`.
+     * Instead, use `contains(concat(" ", @class, " "), " foo ")`, which in this example will correctly report that
+     * " foo2 " does not contain " foo ". Similarly, to check if an element has any class starting with "foo", use
+     * `contains(concat(" ", @class), " foo")`. Checking with `starts-with(@class, "foo")`, for example, will only
+     * work if the whole "class" attribute starts with "foo" -- it will fail if another class is listed first.
      */
     get scope () {
         return {
             blocksTab: "*[@id='react-tabs-1']",
             costumesTab: "*[@id='react-tabs-3']",
-            modal: '*[@class="ReactModalPortal"]',
-            reportedValue: '*[@class="blocklyDropDownContent"]',
+            modal: '*[contains(concat(" ", @class, " "), " ReactModalPortal ")]',
+            reportedValue: '*[contains(concat(" ", @class, " "), " blocklyDropDownContent ")]',
             soundsTab: "*[@id='react-tabs-5']",
-            spriteTile: '*[starts-with(@class,"react-contextmenu-wrapper")]',
-            menuBar: '*[contains(@class,"menu-bar_menu-bar_")]',
-            monitors: '*[starts-with(@class,"stage_monitor-wrapper")]',
-            contextMenu: '*[starts-with(@class,"react-contextmenu")]'
+            spriteTile: '*[contains(concat(" ", @class, " "), " react-contextmenu-wrapper ")]',
+            menuBar: '*[contains(concat(" ", @class), " menu-bar_menu-bar_")]',
+            monitors: '*[contains(concat(" ", @class), " stage_monitor-wrapper_")]',
+            contextMenu: '*[contains(concat(" ", @class, " "), " react-contextmenu ")]'
         };
     }
 
@@ -343,9 +348,9 @@ class SeleniumHelper {
         // then finally click the toolbox text.
         try {
             await this.setTitle(`clickBlocksCategory ${categoryText}`);
-            await this.findByXpath('//div[contains(@class, "blocks_blocks")]');
+            await this.findByXpath('//div[contains(concat(" ", @class), " blocks_blocks_")]');
             await this.driver.sleep(100);
-            await this.clickText(categoryText, 'div[contains(@class, "blocks_blocks")]');
+            await this.clickText(categoryText, 'div[contains(concat(" ", @class), " blocks_blocks_")]');
             await this.driver.sleep(500); // Wait for scroll to finish
         } catch (cause) {
             throw await enhanceError(outerError, cause);

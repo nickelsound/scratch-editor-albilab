@@ -1,5 +1,6 @@
 import {createStore, combineReducers, compose, Store} from 'redux';
 import localesReducer, {initLocale, localesInitialState} from '../reducers/locales';
+import autoSaveReducer from '../reducers/auto-save';
 import locales from 'scratch-l10n';
 import {detectLocale} from './detect-locale';
 import {GUIConfig} from '../gui-config';
@@ -20,6 +21,7 @@ export interface EditorStateParams {
     isFullScreen?: boolean;
     isPlayerOnly?: boolean;
     showTelemetryModal?: boolean;
+    isEmbedded?: boolean;
 }
 
 /**
@@ -59,7 +61,8 @@ export class EditorState {
                 guiMiddleware,
                 initFullScreen,
                 initPlayer,
-                initTelemetryModal
+                initTelemetryModal,
+                initEmbedded
             } = guiRedux;
             const {ScratchPaintReducer} = require('scratch-paint');
 
@@ -68,12 +71,15 @@ export class EditorState {
                 require('../legacy-config').legacyConfig;
 
             let initializedGui = buildInitialState(configOrLegacy);
-            if (params.isFullScreen || params.isPlayerOnly) {
+            if (params.isFullScreen || params.isPlayerOnly || params.isEmbedded) {
                 if (params.isFullScreen) {
                     initializedGui = initFullScreen(initializedGui);
                 }
                 if (params.isPlayerOnly) {
                     initializedGui = initPlayer(initializedGui);
+                }
+                if (params.isEmbedded) {
+                    initializedGui = initEmbedded(initializedGui);
                 }
             } else if (params.showTelemetryModal) {
                 initializedGui = initTelemetryModal(initializedGui);
@@ -81,11 +87,17 @@ export class EditorState {
             reducers = {
                 locales: localesReducer,
                 scratchGui: guiReducer,
-                scratchPaint: ScratchPaintReducer
+                scratchPaint: ScratchPaintReducer,
+                autoSave: autoSaveReducer
             };
             initialState = {
                 locales: initializedLocales,
-                scratchGui: initializedGui
+                scratchGui: initializedGui,
+                autoSave: {
+                    isSaving: false,
+                    lastSaveTime: null,
+                    saveError: null
+                }
             };
             enhancer = composeEnhancers(guiMiddleware);
         }
