@@ -1,11 +1,11 @@
 import ScratchBlocks from 'scratch-blocks';
-import {defaultColors} from './themes';
+import {defaultColors} from './settings/color-mode';
 
 const categorySeparator = '<sep gap="36"/>';
 
 const blockSeparator = '<sep gap="36"/>'; // At default scale, about 28px
 
-/* eslint-disable no-unused-vars */
+ 
 const motion = function (isInitialSetup, isStage, targetId, colors) {
     const stageSelected = ScratchBlocks.ScratchMsgs.translate(
         'MOTION_STAGE_SELECTED',
@@ -736,7 +736,7 @@ const myBlocks = function (isInitialSetup, isStage, targetId, colors) {
     </category>
     `;
 };
-/* eslint-enable no-unused-vars */
+ 
 
 const xmlOpen = '<xml style="display: none">';
 const xmlClose = '</xml>';
@@ -754,7 +754,7 @@ const xmlClose = '</xml>';
  * @param {?string} costumeName - The name of the default selected costume dropdown.
  * @param {?string} backdropName - The name of the default selected backdrop dropdown.
  * @param {?string} soundName -  The name of the default selected sound dropdown.
- * @param {?object} colors - The colors for the theme.
+ * @param {?object} colors - The colors for the color mode.
  * @returns {string} - a ScratchBlocks-style XML document for the contents of the toolbox.
  */
 const makeToolboxXML = function (isInitialSetup, isStage = true, targetId, categoriesXML = [],
