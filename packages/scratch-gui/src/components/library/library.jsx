@@ -347,6 +347,7 @@ class LibraryComponent extends React.Component {
         const key = this.constructKey(data);
         const icons = getItemIcons(data);
         return (<LibraryItem
+            backgroundImageURL={data.backgroundImageURL}
             bluetoothRequired={data.bluetoothRequired}
             collaborator={data.collaborator}
             description={data.description}

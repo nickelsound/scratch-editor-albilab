@@ -112,6 +112,7 @@ class LibraryItem extends React.PureComponent {
         const iconSource = this.curIconSource();
         return (
             <LibraryItemComponent
+                backgroundImageURL={this.props.backgroundImageURL}
                 bluetoothRequired={this.props.bluetoothRequired}
                 collaborator={this.props.collaborator}
                 description={this.props.description}
@@ -146,6 +147,7 @@ const mapStateToProps = state => ({
 });
 
 LibraryItem.propTypes = {
+    backgroundImageURL: PropTypes.string,
     bluetoothRequired: PropTypes.bool,
     collaborator: PropTypes.string,
     description: PropTypes.oneOfType([

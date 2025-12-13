@@ -61,7 +61,16 @@ class LibraryItemComponent extends React.PureComponent {
                 onClick={this.props.onClick}
             >
                 <div className={styles.contentWrapper}>
-                    <div className={styles.featuredImageContainer}>
+                    <div 
+                        className={styles.featuredImageContainer}
+                        style={this.props.backgroundImageURL ? {
+                            backgroundImage: `url(${this.props.backgroundImageURL})`,
+                            backgroundSize: 'cover',
+                            backgroundPosition: 'center',
+                            backgroundRepeat: 'no-repeat',
+                            minHeight: '184px'
+                        } : null}
+                    >
                         {this.props.disabled ? (
                             <div className={styles.comingSoonText}>
                                 <FormattedMessage
@@ -71,7 +80,7 @@ class LibraryItemComponent extends React.PureComponent {
                                 />
                             </div>
                         ) : null}
-                        {this.props.iconSource ? (
+                        {this.props.iconSource && !this.props.backgroundImageURL ? (
                             this.renderImage(styles.featuredImage, this.props.iconSource)
                         ) : null}
                     </div>
@@ -181,6 +190,7 @@ class LibraryItemComponent extends React.PureComponent {
 
 
 LibraryItemComponent.propTypes = {
+    backgroundImageURL: PropTypes.string,
     bluetoothRequired: PropTypes.bool,
     collaborator: PropTypes.string,
     description: PropTypes.oneOfType([

@@ -51,6 +51,7 @@ import faceSensingInsetIconURL from './faceSensing/faceSensing-small.svg';
 
 import albilabIconURL from './albilab/albilab.png';
 import albilabInsetIconURL from './albilab/albilab-small.svg';
+import albilabBackgroundURL from './albilab/obsah-baleni.jpg';
 
 export default [
     {
@@ -64,9 +65,10 @@ export default [
         extensionId: 'albilab',
         iconURL: albilabIconURL,
         insetIconURL: albilabInsetIconURL,
+        backgroundImageURL: albilabBackgroundURL,
         description: (
             <FormattedMessage
-                defaultMessage="Test extension for AlbiLAB."
+                defaultMessage="Extension for AlbiLAB."
                 description="Description for the 'AlbiLAB' extension"
                 id="gui.extension.albilab.description"
             />
