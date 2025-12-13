@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import {connect} from 'react-redux';
-import {injectIntl, intlShape} from 'react-intl';
+import {injectIntl} from 'react-intl';
 import AutoSaveManagerComponent from '../components/menu-bar/auto-save-manager.jsx';
 import {setProjectTitle} from '../reducers/project-title.js';
 import {getApiUrl} from '../lib/api-config.js';
@@ -706,7 +706,7 @@ const mapDispatchToProps = dispatch => ({
 });
 
 AutoSaveManager.propTypes = {
-    intl: intlShape.isRequired,
+    intl: PropTypes.object.isRequired,
     vm: PropTypes.object,
     projectTitle: PropTypes.string,
     setProjectTitle: PropTypes.func

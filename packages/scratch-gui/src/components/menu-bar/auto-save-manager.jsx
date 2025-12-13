@@ -1,7 +1,7 @@
 import classNames from 'classnames';
 import PropTypes from 'prop-types';
 import React from 'react';
-import {defineMessages, FormattedMessage, injectIntl, intlShape} from 'react-intl';
+import {defineMessages, FormattedMessage, injectIntl} from 'react-intl';
 
 import styles from './menu-bar.css';
 
@@ -359,7 +359,7 @@ const AutoSaveManager = function (props) {
 
 AutoSaveManager.propTypes = {
     className: PropTypes.string,
-    intl: intlShape.isRequired,
+    intl: PropTypes.object.isRequired,
     isOpen: PropTypes.bool,
     projects: PropTypes.arrayOf(PropTypes.shape({
         projectName: PropTypes.string,

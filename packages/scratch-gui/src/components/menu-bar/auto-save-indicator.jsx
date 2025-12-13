@@ -1,7 +1,7 @@
 import classNames from 'classnames';
 import PropTypes from 'prop-types';
 import React from 'react';
-import {defineMessages, FormattedMessage, injectIntl, intlShape} from 'react-intl';
+import {defineMessages, FormattedMessage, injectIntl} from 'react-intl';
 
 import styles from './menu-bar.css';
 
@@ -128,7 +128,7 @@ const AutoSaveIndicator = function (props) {
 
 AutoSaveIndicator.propTypes = {
     className: PropTypes.string,
-    intl: intlShape.isRequired,
+    intl: PropTypes.object.isRequired,
     isSaving: PropTypes.bool,
     lastSaveTime: PropTypes.string,
     saveError: PropTypes.string

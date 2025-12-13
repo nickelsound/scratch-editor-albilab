@@ -37,18 +37,6 @@ const ProjectTitleInput = ({
         // Trigger event to open manager
         window.dispatchEvent(new CustomEvent('openAutoSaveManager'));
     };
-    return (
-        <BufferedInput
-            className={classNames(styles.titleField, className)}
-            maxLength="100"
-            placeholder={intl.formatMessage(messages.projectTitlePlaceholder)}
-            tabIndex="0"
-            type="text"
-            value={projectTitle}
-            onSubmit={onSubmit}
-        />
-    );
-};
 
     const handleDeployClick = async () => {
         try {
