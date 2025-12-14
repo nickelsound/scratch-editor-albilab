@@ -108,3 +108,22 @@ Thumbs.db
 
 # Uploads
 uploads/
+
+# Documentation, tests, and playground files (not needed in production build)
+**/docs/
+**/test/
+**/playground/
+**/README.md
+**/*.md
+packages/scratch-gui/docs/
+packages/scratch-gui/test/
+packages/scratch-gui/playground/
+packages/scratch-vm/docs/
+packages/scratch-vm/test/
+packages/scratch-vm/playground/
+packages/scratch-render/docs/
+packages/scratch-render/test/
+packages/scratch-render/playground/
+packages/scratch-svg-renderer/docs/
+packages/scratch-svg-renderer/test/
+packages/scratch-svg-renderer/playground/

@@ -24,7 +24,7 @@ RUN npm config set fetch-timeout 300000 && \
     npm config set fetch-retry-maxtimeout 120000 && \
     npm install --ignore-scripts --no-audit --no-fund
 
-# Zkopírujeme zdrojové soubory
+# Zkopírujeme zdrojové soubory (docs, test, playground jsou ignorovány přes .dockerignore)
 COPY packages/ ./packages/
 COPY scripts/ ./scripts/
 
@@ -46,12 +46,12 @@ RUN NODE_ENV=production npm run build --workspace=packages/scratch-svg-renderer 
 # Odstraníme source maps z buildu (ušetří ~200-300MB)
 RUN find packages/*/build packages/*/dist -name "*.map" -type f -delete 2>/dev/null || true
 
-# Odstraníme test soubory a dokumentaci (ušetří ~50-100MB)
+# Odstraníme src adresáře z built packages (už nejsou potřeba po buildu)
 # POZOR: NESMAZAT packages/scratch-backend/src - backend ho potřebuje pro běh!
-RUN rm -rf packages/scratch-gui/test packages/scratch-gui/docs packages/scratch-gui/playground packages/scratch-gui/src \
-           packages/scratch-vm/test packages/scratch-vm/docs packages/scratch-vm/playground packages/scratch-vm/src \
-           packages/scratch-render/test packages/scratch-render/docs packages/scratch-render/playground packages/scratch-render/src \
-           packages/scratch-svg-renderer/test packages/scratch-svg-renderer/docs packages/scratch-svg-renderer/playground packages/scratch-svg-renderer/src \
+RUN rm -rf packages/scratch-gui/src \
+           packages/scratch-vm/src \
+           packages/scratch-render/src \
+           packages/scratch-svg-renderer/src \
            2>/dev/null || true
 
 # Nainstalujeme serve pro frontend (pouze produkční závislosti)
