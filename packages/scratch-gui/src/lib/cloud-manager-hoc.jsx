@@ -99,15 +99,7 @@ const cloudManagerHOC = function (WrappedComponent) {
             }
         }
         handleExtensionAdded (categoryInfo) {
-            // Note that props.vm.extensionManager.isExtensionLoaded('videoSensing') is still false
-            // at the point of this callback, so it is difficult to reuse the canModifyCloudData logic.
-            if (
-                (categoryInfo.id === 'videoSensing' ||
-                    categoryInfo.id === 'faceSensing') &&
-                this.isConnected()
-            ) {
-                this.disconnectFromCloud();
-            }
+            // No extensions that require cloud disconnection
         }
         render () {
             const {
@@ -164,15 +156,8 @@ const cloudManagerHOC = function (WrappedComponent) {
             canModifyCloudData:
                 (!state.scratchGui.mode.hasEverEnteredEditor ||
                     ownProps.canSave) &&
-                // possible security concern if the program attempts to encode webcam data over cloud variables
-                !(
-                    ownProps.vm.extensionManager.isExtensionLoaded(
-                        'videoSensing'
-                    ) ||
-                    ownProps.vm.extensionManager.isExtensionLoaded(
-                        'faceSensing'
-                    )
-                )
+                // No extensions that require cloud data restrictions
+                true
         };
     };
 

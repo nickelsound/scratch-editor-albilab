@@ -59,14 +59,10 @@
     "watch": "webpack --watch"
   },
   "dependencies": {
-    "@mediapipe/face_detection": "0.4.1646425229",
-    "@microbit/microbit-universal-hex": "0.2.2",
     "@radix-ui/react-context-menu": "2.2.16",
     "@scratch/scratch-render": "12.1.2",
     "@scratch/scratch-svg-renderer": "12.1.2",
     "@scratch/scratch-vm": "12.1.2",
-    "@tensorflow-models/face-detection": "1.0.3",
-    "@tensorflow/tfjs": "4.22.0",
     "@testing-library/user-event": "14.6.1",
     "arraybuffer-loader": "1.0.8",
     "autoprefixer": "9.8.8",
@@ -79,7 +75,6 @@
     "copy-webpack-plugin": "6.4.1",
     "core-js": "2.6.12",
     "css-loader": "5.2.7",
-    "dapjs": "2.3.0",
     "driver.js": "1.4.0",
     "es6-object-assign": "1.1.0",
     "fastestsmallesttextencoderdecoder": "1.0.22",

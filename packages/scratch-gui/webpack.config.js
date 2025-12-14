@@ -101,10 +101,6 @@ const baseConfig = new ScratchWebpackConfigBuilder(
                 from: 'chunks/fetch-worker.*.{js,js.map}',
                 noErrorOnMissing: true
             },
-            {
-                from: '../../node_modules/@mediapipe/face_detection',
-                to: 'chunks/mediapipe/face_detection'
-            }
         ]
     }));
 
