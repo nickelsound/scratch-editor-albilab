@@ -319,8 +319,8 @@ chmod +x install.sh
 Instalační skript provede:
 - ✅ Kontrolu kompatibility systému (Raspberry Pi OS, ARM64)
 - ✅ Instalaci Podman a podman-compose
-- ✅ Stažení ARM64 kontejnerů z GitHub releases
-- ✅ Načtení kontejnerů do Podman
+- ✅ Stažení universal ARM64 kontejneru z GitHub releases
+- ✅ Načtení kontejneru do Podman
 - ✅ Vytvoření systemd služby pro automatický start
 - ✅ Spuštění aplikace na pozadí
 - ✅ Zobrazení IP adresy pro síťový přístup
@@ -340,35 +340,42 @@ Pokud preferujete manuální instalaci nebo potřebujete sestavit kontejnery sam
 
 #### Sestavení ARM verzí
 
-1. **Spusťte ARM build script:**
+1. **Spusťte Universal ARM build script:**
    ```bash
-   chmod +x build-arm.sh
-   ./build-arm.sh
+   chmod +x build-arm-universal.sh
+   ./build-arm-universal.sh
    ```
 
 2. **Výsledek:**
-   - `scratch-gui-arm64.tar` - GUI kontejner pro ARM64
-   - `scratch-backend-arm64.tar` - Backend kontejner pro ARM64
+   - `scratch-universal-arm64.tar` - Universal kontejner pro ARM64 (obsahuje frontend i backend)
+   - Pokud je soubor větší než 1.8GB, bude rozdělen na části: `scratch-universal-arm64.tar.00`, `scratch-universal-arm64.tar.01`, atd.
 
 #### Manuální nasazení na Raspberry Pi
 
-1. **Přeneste tar archivy na Raspberry Pi:**
+1. **Přeneste tar archiv na Raspberry Pi:**
+   
+   Pokud byl soubor rozdělen na části, nejdříve ho sestavte:
    ```bash
-   scp scratch-gui-arm64.tar scratch-backend-arm64.tar pi@raspberry-pi-ip:~/
+   cat scratch-universal-arm64.tar.* > scratch-universal-arm64.tar
+   ```
+   
+   Poté přeneste na Raspberry Pi:
+   ```bash
+   scp scratch-universal-arm64.tar pi@raspberry-pi-ip:~/
    ```
 
-2. **Na Raspberry Pi načtěte images:**
+2. **Na Raspberry Pi načtěte image:**
    ```bash
-   podman load -i scratch-gui-arm64.tar
-   podman load -i scratch-backend-arm64.tar
+   podman load -i scratch-universal-arm64.tar
    
    # Přetagujte podle docker-compose.yml
-   podman tag localhost/scratch-gui-temp:latest scratch-gui
-   podman tag localhost/scratch-backend-temp:latest scratch-backend
+   podman tag scratch-universal:latest scratch-universal:latest
    ```
 
-3. **Spusťte aplikaci:**
+3. **Vytvořte docker-compose.yml a spusťte aplikaci:**
    ```bash
+   # Vytvořte docker-compose.yml (viz install.sh pro referenci)
+   # Nebo použijte ten vytvořený install.sh
    podman-compose up -d
    ```
 
@@ -442,61 +449,6 @@ podman-compose logs -f
 ```
 
 Pro podrobné instalační instrukce viz [README-INSTALL.md](README-INSTALL.md).
-
-## 🚀 Produkční nasazení
-
-### Doporučené nastavení
-
-1. **Reverse Proxy** (nginx/Apache):
-   ```nginx
-   server {
-       listen 80;
-       server_name your-domain.com;
-       
-       location / {
-           proxy_pass http://localhost:8601;
-           proxy_set_header Host $host;
-           proxy_set_header X-Real-IP $remote_addr;
-       }
-       
-       location /api/ {
-           proxy_pass http://localhost:3001;
-           proxy_set_header Host $host;
-           proxy_set_header X-Real-IP $remote_addr;
-       }
-   }
-   ```
-
-2. **SSL certifikát** (Let's Encrypt):
-   ```bash
-   certbot --nginx -d your-domain.com
-   ```
-
-3. **Automatický restart** (systemd):
-   ```ini
-   [Unit]
-   Description=Scratch Editor AlbiLAB
-   After=docker.service
-   
-   [Service]
-   Type=oneshot
-   RemainAfterExit=yes
-   WorkingDirectory=/path/to/scratch-editor-albilab
-   ExecStart=/usr/bin/docker-compose up -d
-   ExecStop=/usr/bin/docker-compose down
-   
-   [Install]
-   WantedBy=multi-user.target
-   ```
-
-## 📝 Changelog
-
-### v1.0.0
-- Základní Scratch editor s AlbiLAB integrací
-- Ukládání a načítání projektů
-- Průběžné ukládání
-- Modifikované menu (skryté tlačítka)
-- Docker/Podman Compose podpora
 
 ## 🤝 Podpora
 

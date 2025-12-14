@@ -320,8 +320,8 @@ chmod +x install.sh
 The installation script will:
 - ✅ Check system compatibility (Raspberry Pi OS, ARM64)
 - ✅ Install Podman and podman-compose
-- ✅ Download ARM64 containers from GitHub releases
-- ✅ Load containers into Podman
+- ✅ Download universal ARM64 container from GitHub releases
+- ✅ Load container into Podman
 - ✅ Create systemd service for auto-start
 - ✅ Start the application in background
 - ✅ Display IP address for network access
@@ -341,35 +341,42 @@ If you prefer manual installation or need to build containers yourself:
 
 #### Building ARM versions
 
-1. **Run ARM build script:**
+1. **Run Universal ARM build script:**
    ```bash
-   chmod +x build-arm.sh
-   ./build-arm.sh
+   chmod +x build-arm-universal.sh
+   ./build-arm-universal.sh
    ```
 
 2. **Result:**
-   - `scratch-gui-arm64.tar` - GUI container for ARM64
-   - `scratch-backend-arm64.tar` - Backend container for ARM64
+   - `scratch-universal-arm64.tar` - Universal container for ARM64 (contains both frontend and backend)
+   - If the file is larger than 1.8GB, it will be split into parts: `scratch-universal-arm64.tar.00`, `scratch-universal-arm64.tar.01`, etc.
 
 #### Manual Deployment on Raspberry Pi
 
-1. **Transfer tar archives to Raspberry Pi:**
-   ```bash
-   scp scratch-gui-arm64.tar scratch-backend-arm64.tar pi@raspberry-pi-ip:~/
-   ```
-
-2. **On Raspberry Pi load images:**
-   ```bash
-   podman load -i scratch-gui-arm64.tar
-   podman load -i scratch-backend-arm64.tar
+1. **Transfer tar archive to Raspberry Pi:**
    
-   # Retag according to docker-compose.yml
-   podman tag localhost/scratch-gui-temp:latest scratch-gui
-   podman tag localhost/scratch-backend-temp:latest scratch-backend
+   If the file was split into parts, first assemble it:
+   ```bash
+   cat scratch-universal-arm64.tar.* > scratch-universal-arm64.tar
+   ```
+   
+   Then transfer to Raspberry Pi:
+   ```bash
+   scp scratch-universal-arm64.tar pi@raspberry-pi-ip:~/
    ```
 
-3. **Start the application:**
+2. **On Raspberry Pi load image:**
    ```bash
+   podman load -i scratch-universal-arm64.tar
+   
+   # Tag the image for docker-compose.yml
+   podman tag scratch-universal:latest scratch-universal:latest
+   ```
+
+3. **Create docker-compose.yml and start the application:**
+   ```bash
+   # Create docker-compose.yml (see install.sh for reference)
+   # Or use the one created by install.sh
    podman-compose up -d
    ```
 
@@ -443,61 +450,6 @@ podman-compose logs -f
 ```
 
 For detailed installation instructions, see [README-INSTALL.md](README-INSTALL.md).
-
-## 🚀 Production Deployment
-
-### Recommended Settings
-
-1. **Reverse Proxy** (nginx/Apache):
-   ```nginx
-   server {
-       listen 80;
-       server_name your-domain.com;
-       
-       location / {
-           proxy_pass http://localhost:8601;
-           proxy_set_header Host $host;
-           proxy_set_header X-Real-IP $remote_addr;
-       }
-       
-       location /api/ {
-           proxy_pass http://localhost:3001;
-           proxy_set_header Host $host;
-           proxy_set_header X-Real-IP $remote_addr;
-       }
-   }
-   ```
-
-2. **SSL Certificate** (Let's Encrypt):
-   ```bash
-   certbot --nginx -d your-domain.com
-   ```
-
-3. **Auto-restart** (systemd):
-   ```ini
-   [Unit]
-   Description=Scratch Editor AlbiLAB
-   After=docker.service
-   
-   [Service]
-   Type=oneshot
-   RemainAfterExit=yes
-   WorkingDirectory=/path/to/scratch-editor-albilab
-   ExecStart=/usr/bin/docker-compose up -d
-   ExecStop=/usr/bin/docker-compose down
-   
-   [Install]
-   WantedBy=multi-user.target
-   ```
-
-## 📝 Changelog
-
-### v1.0.0
-- Basic Scratch editor with AlbiLAB integration
-- Project saving and loading
-- Auto-save functionality
-- Modified menu (hidden buttons)
-- Docker/Podman Compose support
 
 ## 🤝 Support
 
