@@ -37,13 +37,27 @@ ENV REACT_APP_API_PORT=3001
 ENV REACT_APP_WS_PORT=3001
 
 # Sestavíme všechny balíčky (potřebné pro obě aplikace)
-RUN npm run build --workspace=packages/scratch-svg-renderer && \
-    npm run build --workspace=packages/scratch-render && \
-    npm run build --workspace=packages/scratch-vm && \
-    npm run build --workspace=packages/scratch-gui
+# Použijeme NODE_ENV=production pro optimalizaci (bez source maps)
+RUN NODE_ENV=production npm run build --workspace=packages/scratch-svg-renderer && \
+    NODE_ENV=production npm run build --workspace=packages/scratch-render && \
+    NODE_ENV=production npm run build --workspace=packages/scratch-vm && \
+    NODE_ENV=production npm run build --workspace=packages/scratch-gui
 
-# Nainstalujeme serve pro frontend
-RUN npm install -g serve
+# Odstraníme source maps z buildu (ušetří ~200-300MB)
+RUN find packages/*/build packages/*/dist -name "*.map" -type f -delete 2>/dev/null || true
+
+# Odstraníme test soubory a dokumentaci (ušetří ~50-100MB)
+RUN rm -rf packages/*/test packages/*/docs packages/*/playground packages/*/src 2>/dev/null || true
+
+# Nainstalujeme serve pro frontend (pouze produkční závislosti)
+RUN npm install -g serve --production
+
+# Odstraníme dev dependencies a node_modules (ušetří ~500-800MB)
+# Ponecháme pouze node_modules pro scratch-backend (potřebuje runtime závislosti)
+RUN npm prune --production && \
+    rm -rf packages/scratch-gui/node_modules packages/scratch-vm/node_modules \
+           packages/scratch-render/node_modules packages/scratch-svg-renderer/node_modules \
+           packages/*/node_modules/.cache 2>/dev/null || true
 
 # Vytvoříme entrypoint script pomocí echo (aby se vyhnulo problémům s heredoc)
 RUN echo '#!/bin/sh' > /app/entrypoint.sh && \
