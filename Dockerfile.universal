@@ -47,7 +47,12 @@ RUN NODE_ENV=production npm run build --workspace=packages/scratch-svg-renderer 
 RUN find packages/*/build packages/*/dist -name "*.map" -type f -delete 2>/dev/null || true
 
 # Odstraníme test soubory a dokumentaci (ušetří ~50-100MB)
-RUN rm -rf packages/*/test packages/*/docs packages/*/playground packages/*/src 2>/dev/null || true
+# POZOR: NESMAZAT packages/scratch-backend/src - backend ho potřebuje pro běh!
+RUN rm -rf packages/scratch-gui/test packages/scratch-gui/docs packages/scratch-gui/playground packages/scratch-gui/src \
+           packages/scratch-vm/test packages/scratch-vm/docs packages/scratch-vm/playground packages/scratch-vm/src \
+           packages/scratch-render/test packages/scratch-render/docs packages/scratch-render/playground packages/scratch-render/src \
+           packages/scratch-svg-renderer/test packages/scratch-svg-renderer/docs packages/scratch-svg-renderer/playground packages/scratch-svg-renderer/src \
+           2>/dev/null || true
 
 # Nainstalujeme serve pro frontend (pouze produkční závislosti)
 RUN npm install -g serve --production
