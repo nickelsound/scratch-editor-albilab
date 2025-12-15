@@ -369,10 +369,7 @@ const GUIComponent = props => {
                                     </Tab>
                                 </TabList>
                             </Box>
-                            <TabPanel
-                                className={tabClassNames.tabPanel}
-                                aria-label="Code Editor Panel"
-                            >
+                            <TabPanel className={tabClassNames.tabPanel}>
                                 <Box
                                     className={styles.blocksWrapper}
                                     role="region"
