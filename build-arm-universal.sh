@@ -104,38 +104,13 @@ fi
 
 # Build universal image
 echo "🔨 Sestavuji Universal image (frontend + backend)..."
+echo "💡 Runtime stage už obsahuje pouze jsdom (backend je zabundlovaný, ušetří ~1.2GB)"
 podman build --platform $TARGET_PLATFORM \
     --ulimit nofile=65536:65536 \
     -f Dockerfile.universal \
     -t scratch-universal:latest .
 
-# Optimalizace: odstraníme zbytečné balíčky z node_modules (ušetří ~1.2GB)
-echo "🧹 Odstraňuji zbytečné balíčky z node_modules (backend je zabundlovaný, ušetří ~1.2GB)..."
-CONTAINER_NAME="scratch-cleanup-$$"
-podman run --name "$CONTAINER_NAME" scratch-universal:latest sh -c "
-    # Ponecháme pouze jsdom (potřebné pro runtime, @scratch/scratch-vm je zabundlovaný)
-    # Nejjednodušší způsob: odstraníme všechny balíčky a pak nainstalujeme pouze jsdom
-    if [ -d /app/node_modules ]; then
-        # Zkopírujeme package.json pro reinstalaci
-        cp /app/package.json /tmp/package.json.bak 2>/dev/null || true
-        # Odstraníme všechny node_modules
-        rm -rf /app/node_modules
-        # Nainstalujeme pouze jsdom (a jeho dependencies se nainstalují automaticky)
-        cd /app && \
-        npm install jsdom --save --ignore-scripts --no-audit --no-fund 2>/dev/null || true && \
-        npm cache clean --force 2>/dev/null || true && \
-        echo '✅ Zbytečné balíčky odstraněny, ponechán pouze jsdom a jeho dependencies'
-    else
-        echo '⚠️  node_modules již neexistuje'
-    fi
-" || true
-
-# Vytvoříme nový image z vyčištěného kontejneru
-echo "💾 Vytvářím optimalizovaný image..."
-podman commit "$CONTAINER_NAME" scratch-universal:latest
-podman rm "$CONTAINER_NAME" 2>/dev/null || true
-
-echo "📦 Ukládám optimalizovaný universal image do tar..."
+echo "📦 Ukládám universal image do tar..."
 rm -f scratch-universal-${ARCH_SUFFIX}.tar*
 podman save -o scratch-universal-${ARCH_SUFFIX}.tar scratch-universal:latest
 
