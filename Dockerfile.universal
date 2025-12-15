@@ -59,10 +59,40 @@ RUN npm install -g serve --production
 
 # Odstraníme dev dependencies a node_modules (ušetří ~500-800MB)
 # Ponecháme pouze node_modules pro scratch-backend (potřebuje runtime závislosti)
-RUN npm prune --production && \
-    rm -rf packages/scratch-gui/node_modules packages/scratch-vm/node_modules \
-           packages/scratch-render/node_modules packages/scratch-svg-renderer/node_modules \
+RUN npm prune --omit=dev && \
+    npm cache clean --force && \
+    # Odstraníme extraneous balíčky (TensorFlow, MediaPipe - byly odstraněny z package.json)
+    rm -rf node_modules/@tensorflow \
+           node_modules/@mediapipe \
+           node_modules/@tensorflow-models \
+           # Odstraníme node_modules z built packages
+           packages/scratch-gui/node_modules \
+           packages/scratch-vm/node_modules \
+           packages/scratch-render/node_modules \
+           packages/scratch-svg-renderer/node_modules \
            packages/*/node_modules/.cache 2>/dev/null || true
+
+# Odstraníme zbytečné soubory z node_modules (ušetří ~100-150MB)
+# - Source maps, README, LICENSE, CHANGELOG soubory
+# - TypeScript source files (ne .d.ts)
+# - Test adresáře a cache
+RUN find node_modules -type f \( \
+        -name '*.map' \
+        -o -name '*.md' \
+        -o -name 'CHANGELOG*' \
+        -o -name 'LICENSE*' \
+        -o -name 'README*' \
+        -o -name '*.ts' ! -name '*.d.ts' \
+    \) -delete 2>/dev/null || true && \
+    find node_modules -type d \( \
+        -name '__tests__' \
+        -o -name 'test' \
+        -o -name 'tests' \
+        -o -name '.cache' \
+        -o -name '.rollup.cache' \
+        -o -name '.nyc_output' \
+        -o -name 'coverage' \
+    \) -exec rm -rf {} + 2>/dev/null || true
 
 # Vytvoříme entrypoint script pomocí echo (aby se vyhnulo problémům s heredoc)
 RUN echo '#!/bin/sh' > /app/entrypoint.sh && \
