@@ -105,7 +105,276 @@ class AutoSaveManager extends React.Component {
         }
     }
 
+    // Fix and validate project data before loading into VM
+    // Returns fixed projectData as JSON string
+    fixProjectData = (projectData) => {
+        // Ensure projectData is a string
+        if (typeof projectData === 'object' && projectData !== null) {
+            projectData = JSON.stringify(projectData);
+        }
+        
+        if (typeof projectData !== 'string') {
+            throw new Error('Invalid project data format');
+        }
+        
+        // Parse and fix project
+        let parsedProject;
+        try {
+            parsedProject = JSON.parse(projectData);
+            console.log('Loaded project - validation:', {
+                hasTargets: !!parsedProject.targets,
+                targetsCount: parsedProject.targets ? parsedProject.targets.length : 0,
+                projectVersion: parsedProject.projectVersion,
+                hasMeta: !!parsedProject.meta
+            });
+            
+            // Ensure project has projectVersion = 3 (SB3 format)
+            if (!parsedProject.projectVersion) {
+                console.warn('Project does not have projectVersion, setting to 3');
+                parsedProject.projectVersion = 3;
+            }
+            
+            // Ensure project has meta object
+            if (!parsedProject.meta) {
+                console.warn('Project does not have meta object, creating it');
+                parsedProject.meta = {
+                    semver: '3.0.0',
+                    vm: '0.2.0',
+                    agent: 'Mozilla/5.0'
+                };
+            }
+            
+            let needsFix = false;
+            
+            // Check targets and fix any problems
+            if (!parsedProject.targets || !Array.isArray(parsedProject.targets) || parsedProject.targets.length === 0) {
+                console.warn('Project has no targets! Creating minimal valid project with stage.');
+                // Create minimal valid project with stage
+                parsedProject.targets = [{
+                    isStage: true,
+                    name: 'Stage',
+                    variables: {},
+                    lists: {},
+                    broadcasts: {},
+                    blocks: {},
+                    currentCostume: 0,
+                    costumes: [{
+                        assetId: 'cd21514d0531fdffb22204e0ec5ed84a',
+                        name: 'backdrop1',
+                        md5ext: 'cd21514d0531fdffb22204e0ec5ed84a.svg',
+                        dataFormat: 'svg',
+                        rotationCenterX: 240,
+                        rotationCenterY: 180
+                    }],
+                    sounds: [],
+                    volume: 100
+                }];
+                needsFix = true;
+            }
+            
+            if (parsedProject.targets && Array.isArray(parsedProject.targets) && parsedProject.targets.length > 0) {
+                // Find stage (should be only one and at first position)
+                let stageIndex = -1;
+                let stageTarget = null;
+                
+                // Find stage
+                parsedProject.targets.forEach((target, index) => {
+                    if (target.isStage === true) {
+                        if (stageIndex === -1) {
+                            stageIndex = index;
+                            stageTarget = target;
+                        } else {
+                            // More than one stage - fix
+                            console.warn(`Fixing duplicate stage at index ${index}: ${target.name}`);
+                            target.isStage = false;
+                            needsFix = true;
+                        }
+                    }
+                });
+                
+                // If stage doesn't exist, create it from first target or add new one
+                if (stageIndex === -1) {
+                    console.warn('Stage not found, creating it from first target');
+                    if (parsedProject.targets.length > 0) {
+                        // Use first target as stage
+                        parsedProject.targets[0].isStage = true;
+                        parsedProject.targets[0].name = 'Stage';
+                        stageIndex = 0;
+                        stageTarget = parsedProject.targets[0];
+                        needsFix = true;
+                    } else {
+                        console.error('Project has no targets! Creating new stage.');
+                        // Create new stage
+                        const newStage = {
+                            isStage: true,
+                            name: 'Stage',
+                            variables: {},
+                            lists: {},
+                            broadcasts: {},
+                            blocks: {},
+                            currentCostume: 0,
+                            costumes: [{
+                                assetId: 'cd21514d0531fdffb22204e0ec5ed84a',
+                                name: 'backdrop1',
+                                md5ext: 'cd21514d0531fdffb22204e0ec5ed84a.svg',
+                                dataFormat: 'svg',
+                                rotationCenterX: 240,
+                                rotationCenterY: 180
+                            }],
+                            sounds: [],
+                            volume: 100
+                        };
+                        parsedProject.targets.unshift(newStage);
+                        stageIndex = 0;
+                        stageTarget = newStage;
+                        needsFix = true;
+                    }
+                }
+                
+                // Ensure stage is at first position
+                if (stageIndex > 0 && stageTarget) {
+                    console.warn(`Moving stage from index ${stageIndex} to index 0`);
+                    parsedProject.targets.splice(stageIndex, 1);
+                    parsedProject.targets.unshift(stageTarget);
+                    stageIndex = 0;
+                    needsFix = true;
+                }
+                
+                // Ensure stage has isStage = true
+                if (stageTarget && stageTarget.isStage !== true) {
+                    console.warn('Fixing isStage for stage to true');
+                    stageTarget.isStage = true;
+                    needsFix = true;
+                }
+                
+                // Ensure stage has all necessary properties
+                if (stageTarget) {
+                    if (!stageTarget.variables) {
+                        console.warn('Adding empty variables to stage');
+                        stageTarget.variables = {};
+                        needsFix = true;
+                    }
+                    if (!stageTarget.lists) {
+                        console.warn('Adding empty lists to stage');
+                        stageTarget.lists = {};
+                        needsFix = true;
+                    }
+                    if (!stageTarget.broadcasts) {
+                        console.warn('Adding empty broadcasts to stage');
+                        stageTarget.broadcasts = {};
+                        needsFix = true;
+                    }
+                    if (!stageTarget.blocks) {
+                        console.warn('Adding empty blocks to stage');
+                        stageTarget.blocks = {};
+                        needsFix = true;
+                    }
+                    if (!stageTarget.costumes || !Array.isArray(stageTarget.costumes) || stageTarget.costumes.length === 0) {
+                        console.warn('Adding default costume to stage');
+                        if (!stageTarget.costumes) {
+                            stageTarget.costumes = [];
+                        }
+                        if (stageTarget.costumes.length === 0) {
+                            stageTarget.costumes.push({
+                                assetId: 'cd21514d0531fdffb22204e0ec5ed84a',
+                                name: 'backdrop1',
+                                md5ext: 'cd21514d0531fdffb22204e0ec5ed84a.svg',
+                                dataFormat: 'svg',
+                                rotationCenterX: 240,
+                                rotationCenterY: 180
+                            });
+                        }
+                        stageTarget.currentCostume = 0;
+                        needsFix = true;
+                    }
+                }
+                
+                // Fix all sprites - isStage must be false
+                parsedProject.targets.forEach((target, index) => {
+                    if (index !== 0 && target.isStage !== false) {
+                        console.warn(`Fixing isStage for sprite ${index}: ${target.name}`, {
+                            oldValue: target.isStage,
+                            newValue: false
+                        });
+                        target.isStage = false;
+                        needsFix = true;
+                    }
+                });
+                
+                if (needsFix) {
+                    // Re-parse fixed project
+                    projectData = JSON.stringify(parsedProject);
+                    console.log('Project was fixed before loading');
+                }
+                
+                // Final check - verify that stage exists and has all necessary properties
+                const finalStage = parsedProject.targets && parsedProject.targets.length > 0 && parsedProject.targets[0].isStage === true
+                    ? parsedProject.targets[0]
+                    : null;
+                
+                if (!finalStage) {
+                    throw new Error('Project does not have valid stage at first position. Cannot load project.');
+                }
+                
+                // Check that stage has all critical properties
+                if (!finalStage.variables || !finalStage.lists || !finalStage.broadcasts || !finalStage.blocks) {
+                    console.warn('Stage does not have all necessary properties, adding them...');
+                    finalStage.variables = finalStage.variables || {};
+                    finalStage.lists = finalStage.lists || {};
+                    finalStage.broadcasts = finalStage.broadcasts || {};
+                    finalStage.blocks = finalStage.blocks || {};
+                    projectData = JSON.stringify(parsedProject);
+                }
+                
+                if (!finalStage.costumes || !Array.isArray(finalStage.costumes) || finalStage.costumes.length === 0) {
+                    console.warn('Stage does not have costumes, adding default...');
+                    finalStage.costumes = [{
+                        assetId: 'cd21514d0531fdffb22204e0ec5ed84a',
+                        name: 'backdrop1',
+                        md5ext: 'cd21514d0531fdffb22204e0ec5ed84a.svg',
+                        dataFormat: 'svg',
+                        rotationCenterX: 240,
+                        rotationCenterY: 180
+                    }];
+                    finalStage.currentCostume = 0;
+                    projectData = JSON.stringify(parsedProject);
+                }
+            } else {
+                // If targets don't exist, create minimal project
+                console.warn('Project does not have targets array, creating minimal valid project');
+                parsedProject.targets = [{
+                    isStage: true,
+                    name: 'Stage',
+                    variables: {},
+                    lists: {},
+                    broadcasts: {},
+                    blocks: {},
+                    currentCostume: 0,
+                    costumes: [{
+                        assetId: 'cd21514d0531fdffb22204e0ec5ed84a',
+                        name: 'backdrop1',
+                        md5ext: 'cd21514d0531fdffb22204e0ec5ed84a.svg',
+                        dataFormat: 'svg',
+                        rotationCenterX: 240,
+                        rotationCenterY: 180
+                    }],
+                    sounds: [],
+                    volume: 100
+                }];
+                projectData = JSON.stringify(parsedProject);
+            }
+        } catch (parseError) {
+            console.error('Error parsing project before loading:', parseError);
+            throw new Error(`Error parsing project: ${parseError.message}`);
+        }
+        
+        return projectData;
+    }
+
     handleLoadProject = async (projectName) => {
+        // Close manager immediately when loading project
+        this.handleClose();
+        
         try {
             const apiUrl = getApiUrl(`/saved-project/auto-save/load?projectName=${encodeURIComponent(projectName)}`);
             const response = await fetch(apiUrl);
@@ -116,268 +385,8 @@ class AutoSaveManager extends React.Component {
                     // projectData can be a string (JSON string) or already an object (due to escaping)
                     let projectData = data.projectData;
                     
-                    // If it's a string, use it directly (vm.loadProject() accepts string)
-                    // If it's an object, convert it to JSON string
-                    if (typeof projectData === 'object' && projectData !== null) {
-                        // Object - convert to JSON string
-                        projectData = JSON.stringify(projectData);
-                    }
-                    
-                    // Verify that projectData is a string
-                    if (typeof projectData !== 'string') {
-                        throw new Error('Invalid project data format');
-                    }
-                    
-                    // Check and fix project before loading
-                    let parsedProject;
-                    try {
-                        parsedProject = JSON.parse(projectData);
-                        console.log('Loaded project - validation:', {
-                            hasTargets: !!parsedProject.targets,
-                            targetsCount: parsedProject.targets ? parsedProject.targets.length : 0,
-                            projectVersion: parsedProject.projectVersion,
-                            hasMeta: !!parsedProject.meta
-                        });
-                        
-                        // Ensure project has projectVersion = 3 (SB3 format)
-                        if (!parsedProject.projectVersion) {
-                            console.warn('Project does not have projectVersion, setting to 3');
-                            parsedProject.projectVersion = 3;
-                        }
-                        
-                        // Ensure project has meta object
-                        if (!parsedProject.meta) {
-                            console.warn('Project does not have meta object, creating it');
-                            parsedProject.meta = {
-                                semver: '3.0.0',
-                                vm: '0.2.0',
-                                agent: 'Mozilla/5.0'
-                            };
-                        }
-                        
-                        let needsFix = false;
-                        
-                        // Check targets and fix any problems
-                        if (!parsedProject.targets || !Array.isArray(parsedProject.targets) || parsedProject.targets.length === 0) {
-                            console.warn('Project has no targets! Creating minimal valid project with stage.');
-                            // Create minimal valid project with stage
-                            parsedProject.targets = [{
-                                isStage: true,
-                                name: 'Stage',
-                                variables: {},
-                                lists: {},
-                                broadcasts: {},
-                                blocks: {},
-                                currentCostume: 0,
-                                costumes: [{
-                                    assetId: 'cd21514d0531fdffb22204e0ec5ed84a',
-                                    name: 'backdrop1',
-                                    md5ext: 'cd21514d0531fdffb22204e0ec5ed84a.svg',
-                                    dataFormat: 'svg',
-                                    rotationCenterX: 240,
-                                    rotationCenterY: 180
-                                }],
-                                sounds: [],
-                                volume: 100
-                            }];
-                            needsFix = true;
-                        }
-                        
-                        if (parsedProject.targets && Array.isArray(parsedProject.targets) && parsedProject.targets.length > 0) {
-                            // Find stage (should be only one and at first position)
-                            let stageIndex = -1;
-                            let stageTarget = null;
-                            
-                            // Find stage
-                            parsedProject.targets.forEach((target, index) => {
-                                if (target.isStage === true) {
-                                    if (stageIndex === -1) {
-                                        stageIndex = index;
-                                        stageTarget = target;
-                                    } else {
-                                        // More than one stage - fix
-                                        console.warn(`Fixing duplicate stage at index ${index}: ${target.name}`);
-                                        target.isStage = false;
-                                        needsFix = true;
-                                    }
-                                }
-                            });
-                            
-                            // If stage doesn't exist, create it from first target or add new one
-                            if (stageIndex === -1) {
-                                console.warn('Stage not found, creating it from first target');
-                                if (parsedProject.targets.length > 0) {
-                                    // Use first target as stage
-                                    parsedProject.targets[0].isStage = true;
-                                    parsedProject.targets[0].name = 'Stage';
-                                    stageIndex = 0;
-                                    stageTarget = parsedProject.targets[0];
-                                    needsFix = true;
-                                } else {
-                                    console.error('Project has no targets! Creating new stage.');
-                                    // Create new stage
-                                    const newStage = {
-                                        isStage: true,
-                                        name: 'Stage',
-                                        variables: {},
-                                        lists: {},
-                                        broadcasts: {},
-                                        blocks: {},
-                                        currentCostume: 0,
-                                        costumes: [{
-                                            assetId: 'cd21514d0531fdffb22204e0ec5ed84a',
-                                            name: 'backdrop1',
-                                            md5ext: 'cd21514d0531fdffb22204e0ec5ed84a.svg',
-                                            dataFormat: 'svg',
-                                            rotationCenterX: 240,
-                                            rotationCenterY: 180
-                                        }],
-                                        sounds: [],
-                                        volume: 100
-                                    };
-                                    parsedProject.targets.unshift(newStage);
-                                    stageIndex = 0;
-                                    stageTarget = newStage;
-                                    needsFix = true;
-                                }
-                            }
-                            
-                            // Ensure stage is at first position
-                            if (stageIndex > 0 && stageTarget) {
-                                console.warn(`Moving stage from index ${stageIndex} to index 0`);
-                                parsedProject.targets.splice(stageIndex, 1);
-                                parsedProject.targets.unshift(stageTarget);
-                                stageIndex = 0;
-                                needsFix = true;
-                            }
-                            
-                            // Ensure stage has isStage = true
-                            if (stageTarget && stageTarget.isStage !== true) {
-                                console.warn('Fixing isStage for stage to true');
-                                stageTarget.isStage = true;
-                                needsFix = true;
-                            }
-                            
-                            // Ensure stage has all necessary properties
-                            if (stageTarget) {
-                                if (!stageTarget.variables) {
-                                    console.warn('Adding empty variables to stage');
-                                    stageTarget.variables = {};
-                                    needsFix = true;
-                                }
-                                if (!stageTarget.lists) {
-                                    console.warn('Adding empty lists to stage');
-                                    stageTarget.lists = {};
-                                    needsFix = true;
-                                }
-                                if (!stageTarget.broadcasts) {
-                                    console.warn('Adding empty broadcasts to stage');
-                                    stageTarget.broadcasts = {};
-                                    needsFix = true;
-                                }
-                                if (!stageTarget.blocks) {
-                                    console.warn('Adding empty blocks to stage');
-                                    stageTarget.blocks = {};
-                                    needsFix = true;
-                                }
-                                if (!stageTarget.costumes || !Array.isArray(stageTarget.costumes) || stageTarget.costumes.length === 0) {
-                                    console.warn('Adding default costume to stage');
-                                    if (!stageTarget.costumes) {
-                                        stageTarget.costumes = [];
-                                    }
-                                    if (stageTarget.costumes.length === 0) {
-                                        stageTarget.costumes.push({
-                                            assetId: 'cd21514d0531fdffb22204e0ec5ed84a',
-                                            name: 'backdrop1',
-                                            md5ext: 'cd21514d0531fdffb22204e0ec5ed84a.svg',
-                                            dataFormat: 'svg',
-                                            rotationCenterX: 240,
-                                            rotationCenterY: 180
-                                        });
-                                    }
-                                    stageTarget.currentCostume = 0;
-                                    needsFix = true;
-                                }
-                            }
-                            
-                            // Fix all sprites - isStage must be false
-                            parsedProject.targets.forEach((target, index) => {
-                                if (index !== 0 && target.isStage !== false) {
-                                    console.warn(`Fixing isStage for sprite ${index}: ${target.name}`, {
-                                        oldValue: target.isStage,
-                                        newValue: false
-                                    });
-                                    target.isStage = false;
-                                    needsFix = true;
-                                }
-                            });
-                            
-                            if (needsFix) {
-                                // Re-parse fixed project
-                                projectData = JSON.stringify(parsedProject);
-                                console.log('Project was fixed before loading');
-                            }
-                            
-                            // Final check - verify that stage exists and has all necessary properties
-                            const finalStage = parsedProject.targets && parsedProject.targets.length > 0 && parsedProject.targets[0].isStage === true
-                                ? parsedProject.targets[0]
-                                : null;
-                            
-                            if (!finalStage) {
-                                throw new Error('Project does not have valid stage at first position. Cannot load project.');
-                            }
-                            
-                            // Check that stage has all critical properties
-                            if (!finalStage.variables || !finalStage.lists || !finalStage.broadcasts || !finalStage.blocks) {
-                                console.warn('Stage does not have all necessary properties, adding them...');
-                                finalStage.variables = finalStage.variables || {};
-                                finalStage.lists = finalStage.lists || {};
-                                finalStage.broadcasts = finalStage.broadcasts || {};
-                                finalStage.blocks = finalStage.blocks || {};
-                                projectData = JSON.stringify(parsedProject);
-                            }
-                            
-                            if (!finalStage.costumes || !Array.isArray(finalStage.costumes) || finalStage.costumes.length === 0) {
-                                console.warn('Stage does not have costumes, adding default...');
-                                finalStage.costumes = [{
-                                    assetId: 'cd21514d0531fdffb22204e0ec5ed84a',
-                                    name: 'backdrop1',
-                                    md5ext: 'cd21514d0531fdffb22204e0ec5ed84a.svg',
-                                    dataFormat: 'svg',
-                                    rotationCenterX: 240,
-                                    rotationCenterY: 180
-                                }];
-                                finalStage.currentCostume = 0;
-                                projectData = JSON.stringify(parsedProject);
-                            }
-                        } else {
-                            // If targets don't exist, create minimal project
-                            console.warn('Project does not have targets array, creating minimal valid project');
-                            parsedProject.targets = [{
-                                isStage: true,
-                                name: 'Stage',
-                                variables: {},
-                                lists: {},
-                                broadcasts: {},
-                                blocks: {},
-                                currentCostume: 0,
-                                costumes: [{
-                                    assetId: 'cd21514d0531fdffb22204e0ec5ed84a',
-                                    name: 'backdrop1',
-                                    md5ext: 'cd21514d0531fdffb22204e0ec5ed84a.svg',
-                                    dataFormat: 'svg',
-                                    rotationCenterX: 240,
-                                    rotationCenterY: 180
-                                }],
-                                sounds: [],
-                                volume: 100
-                            }];
-                            projectData = JSON.stringify(parsedProject);
-                        }
-                    } catch (parseError) {
-                        console.error('Error parsing project before loading:', parseError);
-                        throw new Error(`Error parsing project: ${parseError.message}`);
-                    }
+                    // Fix and validate project before loading
+                    projectData = this.fixProjectData(projectData);
                     
                     // Load project into VM - loadProject() accepts JSON string
                     try {
@@ -401,9 +410,6 @@ class AutoSaveManager extends React.Component {
                     
                     // Update project title
                     this.props.setProjectTitle(data.projectName);
-                    
-                    // Close manager
-                    this.handleClose();
                     
                     notificationService.showSuccess(this.props.intl.formatMessage({id: 'gui.success.projectLoaded'}, {name: data.projectName}));
                 } else {
@@ -666,6 +672,9 @@ class AutoSaveManager extends React.Component {
             isProcessingDrop: false
         });
 
+        // Close manager immediately when loading project
+        this.handleClose();
+
         try {
             const apiUrl = getApiUrl('restore-from-deploy');
             const response = await fetch(apiUrl, {
@@ -687,19 +696,31 @@ class AutoSaveManager extends React.Component {
                         try {
                             let projectData = data.projectData;
                             
-                            // Ensure projectData is a string
-                            if (typeof projectData !== 'string') {
-                                projectData = JSON.stringify(projectData);
-                            }
+                            // Fix and validate project before loading
+                            projectData = this.fixProjectData(projectData);
                             
-                            // Load project into VM
-                            await this.props.vm.loadProject(projectData);
+                            // Load project into VM - loadProject() accepts JSON string
+                            try {
+                                await this.props.vm.loadProject(projectData);
+                            } catch (loadError) {
+                                console.error('Error loading project into VM:', loadError);
+                                // Try to check if problem is with stage
+                                try {
+                                    const parsed = JSON.parse(projectData);
+                                    if (parsed.targets && parsed.targets.length > 0) {
+                                        const firstTarget = parsed.targets[0];
+                                        if (!firstTarget.isStage) {
+                                            throw new Error('First target is not stage. Project has invalid structure.');
+                                        }
+                                    }
+                                } catch (checkError) {
+                                    console.error('Error checking project structure:', checkError);
+                                }
+                                throw loadError;
+                            }
                             
                             // Update project title
                             this.props.setProjectTitle(projectName);
-                            
-                            // Close manager
-                            this.handleClose();
                             
                             notificationService.showSuccess(this.props.intl.formatMessage({id: 'gui.success.projectRestoredFromDeploy'}, {name: projectName}));
                         } catch (loadError) {
