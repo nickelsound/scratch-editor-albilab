@@ -10,6 +10,8 @@ build/
 */build/
 **/dist/
 **/build/
+# But keep backend dist (it's bundled and needed)
+!packages/scratch-backend/dist/
 
 # Logs
 *.log
