@@ -399,7 +399,7 @@ const GUIComponent = props => {
                                     aria-label="Code Editor Panel"
                                 >
                                     <Blocks
-                                        key={`${blocksId}/${theme}`}
+                                        key={`${blocksId}/${colorMode}/${theme}`}
                                         canUseCloud={canUseCloud}
                                         grow={1}
                                         isVisible={blocksTabVisible}
