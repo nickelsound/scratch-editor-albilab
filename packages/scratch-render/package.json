@@ -57,8 +57,8 @@
     "raw-loader": "0.5.1",
     "stream-browserify": "3.0.0",
     "twgl.js": "4.24.0",
-    "util": "0.12.5"
-    "tslog": "4.10.2",
+    "util": "0.12.5",
+    "tslog": "4.10.2"
   },
   "peerDependencies": {
     "scratch-render-fonts": "^1.0.0"
