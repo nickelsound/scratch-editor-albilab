@@ -1116,7 +1116,8 @@ app.delete('/api/saved-project', async (req, res) => {
 app.delete('/api/saved-project/auto-save', async (req, res) => {
     try {
         const projectName = req.query.projectName;
-        log('API: Delete auto-save project requested', 'info', { projectName });
+        const deleteType = req.query.type || 'both'; // 'auto-save', 'deployed', or 'both'
+        log('API: Delete auto-save project requested', 'info', { projectName, deleteType });
         
         if (!projectName) {
             return res.status(400).json({
@@ -1126,10 +1127,11 @@ app.delete('/api/saved-project/auto-save', async (req, res) => {
         }
         
         // If project is running, stop it (this updates the list of running projects)
-        if (runningServices.has(projectName)) {
+        // Only stop if we're deleting deployed version or both
+        if ((deleteType === 'deployed' || deleteType === 'both') && runningServices.has(projectName)) {
             log(`Project ${projectName} is running, stopping it before deletion...`, 'info');
             await stopService(projectName);
-        } else {
+        } else if (deleteType === 'deployed' || deleteType === 'both') {
             // Even if project is not running, remove it from running-projects.json
             // (it might have been terminated but still be in the file)
             log(`Project ${projectName} not running, removing from running-projects.json if present...`, 'info');
@@ -1139,8 +1141,8 @@ app.delete('/api/saved-project/auto-save', async (req, res) => {
         let autoSaveDeleted = false;
         let deployedDeleted = false;
         
-        // Delete auto-save version
-        if (await fs.pathExists(AUTO_SAVE_DIR)) {
+        // Delete auto-save version (only if type is 'auto-save' or 'both')
+        if ((deleteType === 'auto-save' || deleteType === 'both') && await fs.pathExists(AUTO_SAVE_DIR)) {
             const safeFileName = sanitizeFileName(projectName);
             const directFilePath = path.join(AUTO_SAVE_DIR, safeFileName);
             
@@ -1183,45 +1185,47 @@ app.delete('/api/saved-project/auto-save', async (req, res) => {
             }
         }
         
-        // Delete deployed version if it exists
-        const deployedProjectsDir = path.join(UPLOADS_BASE, 'deployed-projects');
-        if (await fs.pathExists(deployedProjectsDir)) {
-            const safeFileName = sanitizeFileName(projectName);
-            const deployedFilePath = path.join(deployedProjectsDir, safeFileName);
-            
-            if (await fs.pathExists(deployedFilePath)) {
-                try {
-                    const projectInfo = await fs.readJson(deployedFilePath);
-                    // Verify that original name in file matches searched name
-                    if (projectInfo.projectName === projectName) {
-                        await fs.remove(deployedFilePath);
-                        deployedDeleted = true;
-                        log(`Deployed project ${projectName} deleted`, 'success');
-                    }
-                } catch (error) {
-                    log(`Error deleting deployed file ${safeFileName}: ${error.message}`, 'error');
-                }
-            }
-            
-            // Fallback: Go through all files and search by original name
-            if (!deployedDeleted) {
-                const files = await fs.readdir(deployedProjectsDir);
+        // Delete deployed version if it exists (only if type is 'deployed' or 'both')
+        if (deleteType === 'deployed' || deleteType === 'both') {
+            const deployedProjectsDir = path.join(UPLOADS_BASE, 'deployed-projects');
+            if (await fs.pathExists(deployedProjectsDir)) {
+                const safeFileName = sanitizeFileName(projectName);
+                const deployedFilePath = path.join(deployedProjectsDir, safeFileName);
                 
-                for (const file of files) {
-                    if (file.endsWith('.json')) {
-                        try {
-                            const filePath = path.join(deployedProjectsDir, file);
-                            const projectInfo = await fs.readJson(filePath);
-                            
-                            // Compare original names (case-sensitive)
-                            if (projectInfo.projectName === projectName) {
-                                await fs.remove(filePath);
-                                deployedDeleted = true;
-                                log(`Deployed project ${projectName} deleted (fallback)`, 'success');
-                                break;
+                if (await fs.pathExists(deployedFilePath)) {
+                    try {
+                        const projectInfo = await fs.readJson(deployedFilePath);
+                        // Verify that original name in file matches searched name
+                        if (projectInfo.projectName === projectName) {
+                            await fs.remove(deployedFilePath);
+                            deployedDeleted = true;
+                            log(`Deployed project ${projectName} deleted`, 'success');
+                        }
+                    } catch (error) {
+                        log(`Error deleting deployed file ${safeFileName}: ${error.message}`, 'error');
+                    }
+                }
+                
+                // Fallback: Go through all files and search by original name
+                if (!deployedDeleted) {
+                    const files = await fs.readdir(deployedProjectsDir);
+                    
+                    for (const file of files) {
+                        if (file.endsWith('.json')) {
+                            try {
+                                const filePath = path.join(deployedProjectsDir, file);
+                                const projectInfo = await fs.readJson(filePath);
+                                
+                                // Compare original names (case-sensitive)
+                                if (projectInfo.projectName === projectName) {
+                                    await fs.remove(filePath);
+                                    deployedDeleted = true;
+                                    log(`Deployed project ${projectName} deleted (fallback)`, 'success');
+                                    break;
+                                }
+                            } catch (error) {
+                                log(`Error loading deployed file ${file}: ${error.message}`, 'error');
                             }
-                        } catch (error) {
-                            log(`Error loading deployed file ${file}: ${error.message}`, 'error');
                         }
                     }
                 }
