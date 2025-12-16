@@ -1112,7 +1112,171 @@ app.delete('/api/saved-project', async (req, res) => {
     }
 });
 
-// Delete auto-save project by name
+// Delete auto-save project version only
+app.delete('/api/saved-project/auto-save-delete', async (req, res) => {
+    try {
+        const projectName = req.query.projectName;
+        log('API: Delete auto-save project version requested', 'info', { projectName });
+        
+        if (!projectName) {
+            return res.status(400).json({
+                success: false,
+                error: 'Project name is required'
+            });
+        }
+        
+        let autoSaveDeleted = false;
+        
+        // Delete auto-save version only
+        if (await fs.pathExists(AUTO_SAVE_DIR)) {
+            const safeFileName = sanitizeFileName(projectName);
+            const directFilePath = path.join(AUTO_SAVE_DIR, safeFileName);
+            
+            if (await fs.pathExists(directFilePath)) {
+                try {
+                    const projectInfo = await fs.readJson(directFilePath);
+                    // Verify that original name in file matches searched name
+                    if (projectInfo.projectName === projectName) {
+                        await fs.remove(directFilePath);
+                        autoSaveDeleted = true;
+                        log(`Auto-save project ${projectName} deleted (direct access)`, 'success');
+                    }
+                } catch (error) {
+                    log(`Error loading file ${safeFileName}: ${error.message}`, 'error');
+                }
+            }
+            
+            // Fallback: Go through all files and search by original name
+            if (!autoSaveDeleted) {
+                const files = await fs.readdir(AUTO_SAVE_DIR);
+                
+                for (const file of files) {
+                    if (file.endsWith('.json')) {
+                        try {
+                            const filePath = path.join(AUTO_SAVE_DIR, file);
+                            const projectInfo = await fs.readJson(filePath);
+                            
+                            // Compare original names (case-sensitive)
+                            if (projectInfo.projectName === projectName) {
+                                await fs.remove(filePath);
+                                autoSaveDeleted = true;
+                                log(`Auto-save project ${projectName} deleted (fallback)`, 'success');
+                                break;
+                            }
+                        } catch (error) {
+                            log(`Error loading file ${file}: ${error.message}`, 'error');
+                        }
+                    }
+                }
+            }
+        }
+        
+        if (autoSaveDeleted) {
+            return res.json({ 
+                success: true, 
+                message: `Auto-save version of project "${projectName}" deleted` 
+            });
+        }
+        
+        res.json({ success: true, message: `Auto-save version of project "${projectName}" not found` });
+    } catch (error) {
+        log(`API: Error deleting auto-save project: ${error.message}`, 'error');
+        res.status(500).json({ 
+            error: 'Error deleting auto-save project', 
+            details: error.message 
+        });
+    }
+});
+
+// Delete deployed project version only
+app.delete('/api/saved-project/deployed-delete', async (req, res) => {
+    try {
+        const projectName = req.query.projectName;
+        log('API: Delete deployed project version requested', 'info', { projectName });
+        
+        if (!projectName) {
+            return res.status(400).json({
+                success: false,
+                error: 'Project name is required'
+            });
+        }
+        
+        // If project is running, stop it (this updates the list of running projects)
+        if (runningServices.has(projectName)) {
+            log(`Project ${projectName} is running, stopping it before deletion...`, 'info');
+            await stopService(projectName);
+        } else {
+            // Even if project is not running, remove it from running-projects.json
+            // (it might have been terminated but still be in the file)
+            log(`Project ${projectName} not running, removing from running-projects.json if present...`, 'info');
+            await removeProjectFromRunningProjects(projectName);
+        }
+        
+        let deployedDeleted = false;
+        
+        // Delete deployed version only
+        const deployedProjectsDir = path.join(UPLOADS_BASE, 'deployed-projects');
+        if (await fs.pathExists(deployedProjectsDir)) {
+            const safeFileName = sanitizeFileName(projectName);
+            const deployedFilePath = path.join(deployedProjectsDir, safeFileName);
+            
+            if (await fs.pathExists(deployedFilePath)) {
+                try {
+                    const projectInfo = await fs.readJson(deployedFilePath);
+                    // Verify that original name in file matches searched name
+                    if (projectInfo.projectName === projectName) {
+                        await fs.remove(deployedFilePath);
+                        deployedDeleted = true;
+                        log(`Deployed project ${projectName} deleted`, 'success');
+                    }
+                } catch (error) {
+                    log(`Error deleting deployed file ${safeFileName}: ${error.message}`, 'error');
+                }
+            }
+            
+            // Fallback: Go through all files and search by original name
+            if (!deployedDeleted) {
+                const files = await fs.readdir(deployedProjectsDir);
+                
+                for (const file of files) {
+                    if (file.endsWith('.json')) {
+                        try {
+                            const filePath = path.join(deployedProjectsDir, file);
+                            const projectInfo = await fs.readJson(filePath);
+                            
+                            // Compare original names (case-sensitive)
+                            if (projectInfo.projectName === projectName) {
+                                await fs.remove(filePath);
+                                deployedDeleted = true;
+                                log(`Deployed project ${projectName} deleted (fallback)`, 'success');
+                                break;
+                            }
+                        } catch (error) {
+                            log(`Error loading deployed file ${file}: ${error.message}`, 'error');
+                        }
+                    }
+                }
+            }
+        }
+        
+        if (deployedDeleted) {
+            return res.json({ 
+                success: true, 
+                message: `Deployed version of project "${projectName}" deleted` 
+            });
+        }
+        
+        res.json({ success: true, message: `Deployed version of project "${projectName}" not found` });
+    } catch (error) {
+        log(`API: Error deleting deployed project: ${error.message}`, 'error');
+        res.status(500).json({ 
+            error: 'Error deleting deployed project', 
+            details: error.message 
+        });
+    }
+});
+
+// Delete auto-save project by name (legacy endpoint - kept for backward compatibility)
 app.delete('/api/saved-project/auto-save', async (req, res) => {
     try {
         const projectName = req.query.projectName;
@@ -1186,7 +1350,11 @@ app.delete('/api/saved-project/auto-save', async (req, res) => {
         }
         
         // Delete deployed version if it exists (only if type is 'deployed' or 'both')
-        if (deleteType === 'deployed' || deleteType === 'both') {
+        // IMPORTANT: Do NOT delete deployed version if deleteType is 'auto-save'
+        if (deleteType === 'auto-save') {
+            log(`Delete type is '${deleteType}', explicitly skipping deployed version deletion (only deleting auto-save)`, 'info');
+        } else if (deleteType === 'deployed' || deleteType === 'both') {
+            log(`Delete type is '${deleteType}', checking deployed version for deletion...`, 'info');
             const deployedProjectsDir = path.join(UPLOADS_BASE, 'deployed-projects');
             if (await fs.pathExists(deployedProjectsDir)) {
                 const safeFileName = sanitizeFileName(projectName);
@@ -1229,7 +1397,11 @@ app.delete('/api/saved-project/auto-save', async (req, res) => {
                         }
                     }
                 }
+            } else {
+                log(`Deployed projects directory does not exist, skipping deployed version deletion`, 'info');
             }
+        } else {
+            log(`Unknown delete type '${deleteType}', skipping deployed version deletion`, 'warning');
         }
         
         // Return success if at least one version was deleted or if project doesn't exist
@@ -1578,52 +1750,90 @@ app.get('/api/projects-status', async (req, res) => {
     try {
         log('API: Projects status requested', 'info');
         
-        if (!await fs.pathExists(AUTO_SAVE_DIR)) {
-            return res.json({
-                success: true,
-                projects: []
-            });
-        }
-        
-        const files = await fs.readdir(AUTO_SAVE_DIR);
         const projects = [];
+        const projectNames = new Set(); // Track project names to avoid duplicates
         
-        for (const file of files) {
-            if (file.endsWith('.json')) {
-                try {
-                    const filePath = path.join(AUTO_SAVE_DIR, file);
-                    const projectInfo = await fs.readJson(filePath);
-                    
-                    const projectName = projectInfo.projectName;
-                    const isRunning = runningServices.has(projectName);
-                    const isDeployed = await isProjectDeployed(projectName);
-                    
-                    // Get deployed version date if project is deployed
-                    let deployedAt = null;
-                    if (isDeployed) {
-                        const deployedProject = await loadDeployedProject(projectName);
-                        if (deployedProject && deployedProject.savedAt) {
-                            deployedAt = deployedProject.savedAt;
+        // Load projects from auto-save directory
+        if (await fs.pathExists(AUTO_SAVE_DIR)) {
+            const files = await fs.readdir(AUTO_SAVE_DIR);
+            
+            for (const file of files) {
+                if (file.endsWith('.json')) {
+                    try {
+                        const filePath = path.join(AUTO_SAVE_DIR, file);
+                        const projectInfo = await fs.readJson(filePath);
+                        
+                        const projectName = projectInfo.projectName;
+                        projectNames.add(projectName);
+                        const isRunning = runningServices.has(projectName);
+                        const isDeployed = await isProjectDeployed(projectName);
+                        
+                        // Get deployed version date if project is deployed
+                        let deployedAt = null;
+                        if (isDeployed) {
+                            const deployedProject = await loadDeployedProject(projectName);
+                            if (deployedProject && deployedProject.savedAt) {
+                                deployedAt = deployedProject.savedAt;
+                            }
                         }
+                        
+                        projects.push({
+                            fileName: file,
+                            projectName: projectName,
+                            savedAt: projectInfo.savedAt,
+                            deployedAt: deployedAt,
+                            version: projectInfo.version,
+                            isRunning: isRunning,
+                            isDeployed: isDeployed
+                        });
+                    } catch (error) {
+                        log(`Error loading file ${file}: ${error.message}`, 'error');
                     }
-                    
-                    projects.push({
-                        fileName: file,
-                        projectName: projectName,
-                        savedAt: projectInfo.savedAt,
-                        deployedAt: deployedAt,
-                        version: projectInfo.version,
-                        isRunning: isRunning,
-                        isDeployed: isDeployed
-                    });
-                } catch (error) {
-                    log(`Error loading file ${file}: ${error.message}`, 'error');
                 }
             }
         }
         
-        // Sort by save time (newest first)
-        projects.sort((a, b) => new Date(b.savedAt) - new Date(a.savedAt));
+        // Also load projects that are deployed but don't have auto-save version
+        const deployedProjectsDir = path.join(UPLOADS_BASE, 'deployed-projects');
+        if (await fs.pathExists(deployedProjectsDir)) {
+            const deployedFiles = await fs.readdir(deployedProjectsDir);
+            
+            for (const file of deployedFiles) {
+                if (file.endsWith('.json')) {
+                    try {
+                        const filePath = path.join(deployedProjectsDir, file);
+                        const deployedProject = await fs.readJson(filePath);
+                        const projectName = deployedProject.projectName;
+                        
+                        // Only add if not already in the list (i.e., no auto-save version exists)
+                        if (!projectNames.has(projectName)) {
+                            projectNames.add(projectName);
+                            const isRunning = runningServices.has(projectName);
+                            
+                            projects.push({
+                                fileName: null, // No auto-save file
+                                projectName: projectName,
+                                savedAt: null, // No auto-save version
+                                deployedAt: deployedProject.savedAt || null,
+                                version: deployedProject.version || null,
+                                isRunning: isRunning,
+                                isDeployed: true
+                            });
+                        }
+                    } catch (error) {
+                        log(`Error loading deployed file ${file}: ${error.message}`, 'error');
+                    }
+                }
+            }
+        }
+        
+        // Sort by save time (newest first), projects without savedAt go to the end
+        projects.sort((a, b) => {
+            if (!a.savedAt && !b.savedAt) return 0;
+            if (!a.savedAt) return 1;
+            if (!b.savedAt) return -1;
+            return new Date(b.savedAt) - new Date(a.savedAt);
+        });
         
         res.json({
             success: true,

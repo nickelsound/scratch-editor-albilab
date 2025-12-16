@@ -17,7 +17,13 @@ class AutoSaveManager extends React.Component {
         this.state = {
             isOpen: false,
             projects: [],
-            isLoading: false
+            isLoading: false,
+            showLoadConfirmModal: false,
+            pendingLoadProjectName: null,
+            isProcessingDrop: false,
+            showDeleteConfirmModal: false,
+            pendingDeleteProjectName: null,
+            pendingDeleteIsDeployed: false
         };
         bindAll(this, [
             'handleOpen',
@@ -33,7 +39,11 @@ class AutoSaveManager extends React.Component {
             'handleDrag',
             'handleDragEnd',
             'handleDropDraft',
-            'handleDropDeployed'
+            'handleDropDeployed',
+            'handleLoadConfirmCancel',
+            'handleLoadConfirmOk',
+            'handleDeleteConfirmCancel',
+            'handleDeleteConfirmOk'
         ]);
         this.dragRecognizers = new Map();
     }
@@ -633,16 +643,28 @@ class AutoSaveManager extends React.Component {
     }
 
     handleRestoreFromDeploy = async (projectName) => {
-        // Show warning before loading project to editor
-        const confirmMessage = this.props.intl.formatMessage(
-            {id: 'gui.menuBar.autoSaveManager.confirmLoadToEditor'},
-            {defaultMessage: 'Loading this project will overwrite your current work in the editor. If you want to keep your current work, you can export it first using File → Save to your computer. Do you want to continue?'}
-        );
-        
-        const confirmed = window.confirm(confirmMessage);
-        if (!confirmed) {
-            return;
-        }
+        // Show confirmation modal before loading project to editor
+        this.setState({
+            showLoadConfirmModal: true,
+            pendingLoadProjectName: projectName
+        });
+    }
+
+    handleLoadConfirmCancel = () => {
+        this.setState({
+            showLoadConfirmModal: false,
+            pendingLoadProjectName: null,
+            isProcessingDrop: false
+        });
+    }
+
+    handleLoadConfirmOk = async () => {
+        const projectName = this.state.pendingLoadProjectName;
+        this.setState({
+            showLoadConfirmModal: false,
+            pendingLoadProjectName: null,
+            isProcessingDrop: false
+        });
 
         try {
             const apiUrl = getApiUrl('restore-from-deploy');
@@ -706,11 +728,37 @@ class AutoSaveManager extends React.Component {
         }
     }
 
-    handleDeleteProject = async (projectName, isDeployed) => {
+    handleDeleteProject = (projectName, isDeployed) => {
+        // Show confirmation modal before deleting project
+        this.setState({
+            showDeleteConfirmModal: true,
+            pendingDeleteProjectName: projectName,
+            pendingDeleteIsDeployed: isDeployed
+        });
+    }
+
+    handleDeleteConfirmCancel = () => {
+        this.setState({
+            showDeleteConfirmModal: false,
+            pendingDeleteProjectName: null,
+            pendingDeleteIsDeployed: false
+        });
+    }
+
+    handleDeleteConfirmOk = async () => {
+        const projectName = this.state.pendingDeleteProjectName;
+        const isDeployed = this.state.pendingDeleteIsDeployed;
+        
+        this.setState({
+            showDeleteConfirmModal: false,
+            pendingDeleteProjectName: null,
+            pendingDeleteIsDeployed: false
+        });
+
         try {
-            // Determine delete type based on project location
-            const deleteType = isDeployed ? 'deployed' : 'auto-save';
-            const apiUrl = getApiUrl(`/saved-project/auto-save?projectName=${encodeURIComponent(projectName)}&type=${deleteType}`);
+            // Use separate endpoints for each version type
+            const endpoint = isDeployed ? 'deployed-delete' : 'auto-save-delete';
+            const apiUrl = getApiUrl(`/saved-project/${endpoint}?projectName=${encodeURIComponent(projectName)}`);
             const response = await fetch(apiUrl, {
                 method: 'DELETE'
             });
@@ -824,8 +872,12 @@ class AutoSaveManager extends React.Component {
         if (dragInfo.dragType === DragConstants.PROJECT && dragInfo.payload) {
             const {projectName, isDeployed} = dragInfo.payload;
             // If dragging from deployed section, load deployed version to editor
-            if (isDeployed) {
-                this.handleRestoreFromDeploy(projectName);
+            if (isDeployed && !this.state.isProcessingDrop) {
+                this.setState({isProcessingDrop: true});
+                // Use setTimeout to ensure modal is shown after drag state is cleared
+                setTimeout(() => {
+                    this.handleRestoreFromDeploy(projectName);
+                }, 100);
             }
             // If dragging from draft section, do nothing (already in draft section)
         }
@@ -874,22 +926,33 @@ class AutoSaveManager extends React.Component {
         });
 
         return (
-            <AutoSaveManagerComponent
-                isOpen={isOpen}
-                projects={projectsWithDrag}
-                isLoading={isLoading}
-                currentProjectTitle={this.props.projectTitle}
-                onClose={this.handleClose}
-                onLoadProject={this.handleLoadProject}
-                onDeployProject={this.handleDeployProject}
-                onDeployCurrentProject={this.handleDeployCurrentProject}
-                onStartProject={this.handleStartProject}
-                onStopProject={this.handleStopProject}
-                onRestoreFromDeploy={this.handleRestoreFromDeploy}
-                onDeleteProject={this.handleDeleteProject}
-                onDropDraft={this.handleDropDraft}
-                onDropDeployed={this.handleDropDeployed}
-            />
+            <>
+                <AutoSaveManagerComponent
+                    isOpen={isOpen}
+                    projects={projectsWithDrag}
+                    isLoading={isLoading}
+                    currentProjectTitle={this.props.projectTitle}
+                    onClose={this.handleClose}
+                    onLoadProject={this.handleLoadProject}
+                    onDeployProject={this.handleDeployProject}
+                    onDeployCurrentProject={this.handleDeployCurrentProject}
+                    onStartProject={this.handleStartProject}
+                    onStopProject={this.handleStopProject}
+                    onRestoreFromDeploy={this.handleRestoreFromDeploy}
+                    onDeleteProject={this.handleDeleteProject}
+                    onDropDraft={this.handleDropDraft}
+                    onDropDeployed={this.handleDropDeployed}
+                    showLoadConfirmModal={this.state.showLoadConfirmModal}
+                    onLoadConfirmCancel={this.handleLoadConfirmCancel}
+                    onLoadConfirmOk={this.handleLoadConfirmOk}
+                    pendingLoadProjectName={this.state.pendingLoadProjectName}
+                    showDeleteConfirmModal={this.state.showDeleteConfirmModal}
+                    onDeleteConfirmCancel={this.handleDeleteConfirmCancel}
+                    onDeleteConfirmOk={this.handleDeleteConfirmOk}
+                    pendingDeleteProjectName={this.state.pendingDeleteProjectName}
+                    pendingDeleteIsDeployed={this.state.pendingDeleteIsDeployed}
+                />
+            </>
         );
     }
 }

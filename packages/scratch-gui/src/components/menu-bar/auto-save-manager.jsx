@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import React from 'react';
 import {defineMessages, FormattedMessage, injectIntl} from 'react-intl';
 import {connect} from 'react-redux';
+import ReactModal from 'react-modal';
 import DragRecognizer from '../../lib/drag-recognizer';
 import {updateAssetDrag} from '../../reducers/asset-drag';
 import DragConstants from '../../lib/drag-constants';
@@ -28,7 +29,7 @@ const messages = defineMessages({
     },
     loadProject: {
         id: 'gui.menuBar.autoSaveManager.loadProject',
-        defaultMessage: 'Load',
+        defaultMessage: 'Open in editor',
         description: 'Load project button'
     },
     deployProject: {
@@ -96,6 +97,21 @@ const messages = defineMessages({
         defaultMessage: 'Do you really want to delete project "{name}"?',
         description: 'Delete confirmation'
     },
+    confirmDeleteTitle: {
+        id: 'gui.menuBar.autoSaveManager.confirmDeleteTitle',
+        defaultMessage: 'Delete project?',
+        description: 'Title for delete confirmation modal'
+    },
+    confirmDeleteDraft: {
+        id: 'gui.menuBar.autoSaveManager.confirmDeleteDraft',
+        defaultMessage: 'This will delete the editing version of project "{name}". The deployed version (if it exists) will remain. Do you want to continue?',
+        description: 'Delete draft project confirmation message'
+    },
+    confirmDeleteDeployed: {
+        id: 'gui.menuBar.autoSaveManager.confirmDeleteDeployed',
+        defaultMessage: 'This will delete the deployed version of project "{name}". The project will stop running and will no longer control AlbiLAB. Do you want to continue?',
+        description: 'Delete deployed project confirmation message'
+    },
     statusRunning: {
         id: 'gui.menuBar.autoSaveManager.statusRunning',
         defaultMessage: 'Running',
@@ -110,6 +126,11 @@ const messages = defineMessages({
         id: 'gui.menuBar.autoSaveManager.statusNotDeployed',
         defaultMessage: 'Not deployed',
         description: 'Not deployed status'
+    },
+    statusDeployed: {
+        id: 'gui.menuBar.autoSaveManager.statusDeployed',
+        defaultMessage: 'Deployed',
+        description: 'Deployed status'
     },
     tooltipLoadProject: {
         id: 'gui.menuBar.autoSaveManager.tooltip.loadProject',
@@ -173,7 +194,7 @@ const messages = defineMessages({
     },
     draftSectionDescription: {
         id: 'gui.menuBar.autoSaveManager.draftSectionDescription',
-        defaultMessage: 'These projects are for editing and testing. They are not permanently running and do not control AlbiLAB.',
+        defaultMessage: 'These projects are for editing and testing. They do not run permanently.',
         description: 'Description for draft projects section'
     },
     deployedSectionTitle: {
@@ -205,6 +226,21 @@ const messages = defineMessages({
         id: 'gui.menuBar.autoSaveManager.tooltip.dragProject',
         defaultMessage: 'Drag to move project between sections',
         description: 'Tooltip for drag handle'
+    },
+    confirmLoadToEditorTitle: {
+        id: 'gui.menuBar.autoSaveManager.confirmLoadToEditorTitle',
+        defaultMessage: 'Load project to editor?',
+        description: 'Title for load to editor confirmation modal'
+    },
+    confirmYes: {
+        id: 'gui.menuBar.autoSaveManager.confirmYes',
+        defaultMessage: 'Yes, continue',
+        description: 'Yes button in confirmation modal'
+    },
+    confirmNo: {
+        id: 'gui.menuBar.autoSaveManager.confirmNo',
+        defaultMessage: 'Cancel',
+        description: 'Cancel button in confirmation modal'
     }
 });
 
@@ -328,7 +364,15 @@ const AutoSaveManager = function (props) {
         onDrag,
         onDropDraft,
         onDropDeployed,
-        ...componentProps
+        showLoadConfirmModal,
+        onLoadConfirmCancel,
+        onLoadConfirmOk,
+        pendingLoadProjectName,
+        showDeleteConfirmModal,
+        onDeleteConfirmCancel,
+        onDeleteConfirmOk,
+        pendingDeleteProjectName,
+        pendingDeleteIsDeployed
     } = props;
 
     const formatLastSaveTime = (time) => {
@@ -346,40 +390,53 @@ const AutoSaveManager = function (props) {
         });
     };
 
-    const getProjectStatus = (project) => {
-        if (project.isRunning) {
-            return intl.formatMessage(messages.statusRunning);
-        } else if (project.isDeployed) {
-            return intl.formatMessage(messages.statusStopped);
+    const getProjectStatus = (project, isDeployedSection) => {
+        if (isDeployedSection) {
+            // In deployed section: show Running or Stopped
+            if (project.isRunning) {
+                return intl.formatMessage(messages.statusRunning);
+            } else if (project.isDeployed) {
+                return intl.formatMessage(messages.statusStopped);
+            }
         } else {
-            return intl.formatMessage(messages.statusNotDeployed);
+            // In draft section: show only Deployed or Not deployed
+            if (project.isDeployed) {
+                return intl.formatMessage(messages.statusDeployed);
+            } else {
+                return intl.formatMessage(messages.statusNotDeployed);
+            }
         }
+        return null;
     };
 
-    const getStatusClass = (project) => {
-        if (project.isRunning) {
-            return styles.autoSaveManagerStatusRunning;
-        } else if (project.isDeployed) {
-            return styles.autoSaveManagerStatusStopped;
+    const getStatusClass = (project, isDeployedSection) => {
+        if (isDeployedSection) {
+            // In deployed section: Running or Stopped styles
+            if (project.isRunning) {
+                return styles.autoSaveManagerStatusRunning;
+            } else if (project.isDeployed) {
+                return styles.autoSaveManagerStatusStopped;
+            }
         } else {
-            return styles.autoSaveManagerStatusNotDeployed;
+            // In draft section: Deployed or Not deployed styles
+            if (project.isDeployed) {
+                return styles.autoSaveManagerStatusStopped; // Use stopped style for deployed
+            } else {
+                return styles.autoSaveManagerStatusNotDeployed;
+            }
         }
+        return null;
     };
 
     const handleDeleteProject = (project, isDeployedSection = false) => {
-        const confirmed = window.confirm(
-            intl.formatMessage(messages.confirmDelete, { name: project.projectName })
-        );
-        if (confirmed) {
-            // In draft section, delete auto-save version; in deployed section, delete deployed version
-            onDeleteProject(project.projectName, isDeployedSection);
-        }
+        // Show confirmation modal before deleting project
+        onDeleteProject(project.projectName, isDeployedSection);
     };
 
     // Split projects: 
-    // - Draft section: all projects (they all have auto-save version)
+    // - Draft section: projects with auto-save version (savedAt !== null)
     // - Deployed section: only projects that are deployed (they have deployed version)
-    const draftProjects = projects; // All projects have auto-save version
+    const draftProjects = projects.filter(p => p.savedAt !== null); // Only projects with auto-save version
     const deployedProjects = projects.filter(p => p.isDeployed); // Only deployed projects
 
     const renderProjectItem = (project, index, isDeployedSection = false) => {
@@ -451,9 +508,11 @@ const AutoSaveManager = function (props) {
                             })}
                         </div>
                     )}
-                    <div className={classNames(styles.autoSaveManagerItemStatus, getStatusClass(project))}>
-                        {getProjectStatus(project)}
-                    </div>
+                    {getProjectStatus(project, isDeployedSection) && (
+                        <div className={classNames(styles.autoSaveManagerItemStatus, getStatusClass(project, isDeployedSection))}>
+                            {getProjectStatus(project, isDeployedSection)}
+                        </div>
+                    )}
                 </div>
                 <div className={styles.autoSaveManagerItemActions}>
                     {!isDeployedSection && (
@@ -550,7 +609,75 @@ const AutoSaveManager = function (props) {
     if (!isOpen) return null;
 
     return (
-        <div className={classNames(className, styles.autoSaveManagerOverlay)}>
+        <>
+            {showLoadConfirmModal && (
+                <ReactModal
+                    isOpen={showLoadConfirmModal}
+                    onRequestClose={onLoadConfirmCancel}
+                    contentLabel={intl.formatMessage(messages.confirmLoadToEditorTitle)}
+                    className={styles.loadConfirmModal}
+                    overlayClassName={styles.loadConfirmModalOverlay}
+                >
+                    <div className={styles.loadConfirmModalContent}>
+                        <h3 className={styles.loadConfirmModalTitle}>
+                            {intl.formatMessage(messages.confirmLoadToEditorTitle)}
+                        </h3>
+                        <p className={styles.loadConfirmModalMessage}>
+                            {intl.formatMessage(messages.confirmLoadToEditor)}
+                        </p>
+                        <div className={styles.loadConfirmModalButtons}>
+                            <button
+                                className={classNames(styles.autoSaveManagerButton, styles.autoSaveManagerButtonPrimary)}
+                                onClick={onLoadConfirmOk}
+                            >
+                                {intl.formatMessage(messages.confirmYes)}
+                            </button>
+                            <button
+                                className={styles.autoSaveManagerButton}
+                                onClick={onLoadConfirmCancel}
+                            >
+                                {intl.formatMessage(messages.confirmNo)}
+                            </button>
+                        </div>
+                    </div>
+                </ReactModal>
+            )}
+            {showDeleteConfirmModal && (
+                <ReactModal
+                    isOpen={showDeleteConfirmModal}
+                    onRequestClose={onDeleteConfirmCancel}
+                    contentLabel={intl.formatMessage(messages.confirmDeleteTitle)}
+                    className={styles.loadConfirmModal}
+                    overlayClassName={styles.loadConfirmModalOverlay}
+                >
+                    <div className={styles.loadConfirmModalContent}>
+                        <h3 className={styles.loadConfirmModalTitle}>
+                            {intl.formatMessage(messages.confirmDeleteTitle)}
+                        </h3>
+                        <p className={styles.loadConfirmModalMessage}>
+                            {pendingDeleteIsDeployed
+                                ? intl.formatMessage(messages.confirmDeleteDeployed, { name: pendingDeleteProjectName })
+                                : intl.formatMessage(messages.confirmDeleteDraft, { name: pendingDeleteProjectName })
+                            }
+                        </p>
+                        <div className={styles.loadConfirmModalButtons}>
+                            <button
+                                className={classNames(styles.autoSaveManagerButton, styles.autoSaveManagerButtonPrimary)}
+                                onClick={onDeleteConfirmOk}
+                            >
+                                {intl.formatMessage(messages.confirmYes)}
+                            </button>
+                            <button
+                                className={styles.autoSaveManagerButton}
+                                onClick={onDeleteConfirmCancel}
+                            >
+                                {intl.formatMessage(messages.confirmNo)}
+                            </button>
+                        </div>
+                    </div>
+                </ReactModal>
+            )}
+            <div className={classNames(className, styles.autoSaveManagerOverlay)}>
             <div className={styles.autoSaveManagerDialog}>
                 <div className={styles.autoSaveManagerHeader}>
                     <h3>{intl.formatMessage(messages.title)}</h3>
@@ -610,6 +737,7 @@ const AutoSaveManager = function (props) {
                 </div>
             </div>
         </div>
+        </>
     );
 };
 
@@ -650,7 +778,16 @@ AutoSaveManager.propTypes = {
     onDeleteProject: PropTypes.func,
     onDrag: PropTypes.func,
     onDropDraft: PropTypes.func,
-    onDropDeployed: PropTypes.func
+    onDropDeployed: PropTypes.func,
+    showLoadConfirmModal: PropTypes.bool,
+    onLoadConfirmCancel: PropTypes.func,
+    onLoadConfirmOk: PropTypes.func,
+    pendingLoadProjectName: PropTypes.string,
+    showDeleteConfirmModal: PropTypes.bool,
+    onDeleteConfirmCancel: PropTypes.func,
+    onDeleteConfirmOk: PropTypes.func,
+    pendingDeleteProjectName: PropTypes.string,
+    pendingDeleteIsDeployed: PropTypes.bool
 };
 
 
@@ -675,7 +812,16 @@ AutoSaveManager.defaultProps = {
     onDeleteProject: () => {},
     onDrag: () => {},
     onDropDraft: () => {},
-    onDropDeployed: () => {}
+    onDropDeployed: () => {},
+    showLoadConfirmModal: false,
+    onLoadConfirmCancel: () => {},
+    onLoadConfirmOk: () => {},
+    pendingLoadProjectName: null,
+    showDeleteConfirmModal: false,
+    onDeleteConfirmCancel: () => {},
+    onDeleteConfirmOk: () => {},
+    pendingDeleteProjectName: null,
+    pendingDeleteIsDeployed: false
 };
 
 const mapStateToProps = state => ({

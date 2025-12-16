@@ -34,3 +34,6 @@ $z-index-context-menu: 10000;
 
 /* Project manager overlay should be above Blockly HTML inputs (blocklyWidgetDiv has z-index 99999) */
 $z-index-project-manager: 100000;
+
+/* Confirm modal should be above project manager */
+$z-index-confirm-modal: 100200;
