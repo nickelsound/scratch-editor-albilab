@@ -276,6 +276,8 @@ const GUIComponent = props => {
                     />
                 ) : null}
                 {!menuBarHidden && <MenuBar
+                    ariaRole="banner"
+                    ariaLabel="Menu topbar"
                     accountNavOpen={accountNavOpen}
                     authorId={authorId}
                     authorThumbnailUrl={authorThumbnailUrl}
@@ -314,27 +316,34 @@ const GUIComponent = props => {
                     username={username}
                     accountMenuOptions={accountMenuOptions}
                 />}
-                <Box className={boxStyles}>
-                    <Box className={styles.flexWrapper}>
-                        <Box className={styles.editorWrapper}>
-                            <Tabs
-                                forceRenderTabPanel
-                                className={tabClassNames.tabs}
-                                selectedIndex={activeTabIndex}
-                                selectedTabClassName={tabClassNames.tabSelected}
-                                selectedTabPanelClassName={tabClassNames.tabPanelSelected}
-                                onSelect={onActivateTab}
+                <Box className={classNames(boxStyles, styles.flexWrapper)}>
+                    <Box
+                        role="main"
+                        aria-label="Editor"
+                        className={styles.editorWrapper}
+                    >
+                        <Tabs
+                            forceRenderTabPanel
+                            className={tabClassNames.tabs}
+                            selectedIndex={activeTabIndex}
+                            selectedTabClassName={tabClassNames.tabSelected}
+                            selectedTabPanelClassName={tabClassNames.tabPanelSelected}
+                            onSelect={onActivateTab}
 
-                                // TODO: focusTabOnClick should be true for accessibility, but currently conflicts
-                                // with nudge operations in the paint editor. We'll likely need to manage focus
-                                // differently within the paint editor before we can turn this back on.
-                                // Repro steps:
-                                // 1. Click the Costumes tab
-                                // 2. Select something in the paint editor (say, the cat's face)
-                                // 3. Press the left or right arrow key
-                                // Desired behavior: the face should nudge left or right
-                                // Actual behavior: the Code or Sounds tab is now focused
-                                focusTabOnClick={false}
+                            // TODO: focusTabOnClick should be true for accessibility, but currently conflicts
+                            // with nudge operations in the paint editor. We'll likely need to manage focus
+                            // differently within the paint editor before we can turn this back on.
+                            // Repro steps:
+                            // 1. Click the Costumes tab
+                            // 2. Select something in the paint editor (say, the cat's face)
+                            // 3. Press the left or right arrow key
+                            // Desired behavior: the face should nudge left or right
+                            // Actual behavior: the Code or Sounds tab is now focused
+                            focusTabOnClick={false}
+                        >
+                            <Box
+                                role="region"
+                                aria-label="Tab List"
                             >
                                 <TabList className={tabClassNames.tabList}>
                                     <Tab className={tabClassNames.tab}>
@@ -385,8 +394,13 @@ const GUIComponent = props => {
                                         />
                                     </Tab>
                                 </TabList>
+                            </Box>
                                 <TabPanel className={tabClassNames.tabPanel}>
-                                    <Box className={styles.blocksWrapper}>
+                                    <Box
+                                        className={styles.blocksWrapper}
+                                        role="region"
+                                        aria-label="Code Editor Panel"
+                                    >
                                         <Blocks
                                             key={`${blocksId}/${colorMode}/${theme}`}
                                             canUseCloud={canUseCloud}
@@ -413,38 +427,58 @@ const GUIComponent = props => {
                                         <Watermark />
                                     </Box>
                                 </TabPanel>
-                                <TabPanel className={tabClassNames.tabPanel}>
-                                    {costumesTabVisible ? <CostumeTab
+                            <TabPanel className={tabClassNames.tabPanel}>
+                                {costumesTabVisible ? <CostumeTab
+                                    ariaLabel={targetIsStage ? 'Backdrops Editor Panel' : 'Costumes Editor Panel'}
+                                    ariaRole="region"
+                                    vm={vm}
+                                    onNewLibraryBackdropClick={onNewLibraryBackdropClick}
+                                    onNewLibraryCostumeClick={onNewLibraryCostumeClick}
+                                /> : null}
+                            </TabPanel>
+                            <TabPanel className={tabClassNames.tabPanel}>
+                                {soundsTabVisible ?
+                                    <SoundTab
+                                        ariaLabel="Sounds Editor Panel"
+                                        ariaRole="region"
                                         vm={vm}
-                                        onNewLibraryBackdropClick={onNewLibraryBackdropClick}
-                                        onNewLibraryCostumeClick={onNewLibraryCostumeClick}
                                     /> : null}
-                                </TabPanel>
-                                <TabPanel className={tabClassNames.tabPanel}>
-                                    {soundsTabVisible ? <SoundTab vm={vm} /> : null}
-                                </TabPanel>
-                            </Tabs>
-                            {backpackVisible ? (
-                                <Backpack host={backpackHost} />
-                            ) : null}
-                        </Box>
+                            </TabPanel>
+                        </Tabs>
+                        {backpackVisible ? (
+                            <Backpack
+                                host={backpackHost}
+                                ariaRole="region"
+                                ariaLabel="Backpack"
+                            />
+                        ) : null}
+                    </Box>
 
-                        <Box className={classNames(styles.stageAndTargetWrapper, styles[stageSize])}>
-                            <StageWrapper
-                                isFullScreen={isFullScreen}
-                                isRendererSupported={isRendererSupported}
-                                isRtl={isRtl}
+                    <Box
+                        role="complementary"
+                        aria-label="Stage and Target"
+                        className={classNames(styles.stageAndTargetWrapper, styles[stageSize])}
+                    >
+                        <StageWrapper
+                            isFullScreen={isFullScreen}
+                            isRendererSupported={isRendererSupported}
+                            isRtl={isRtl}
+                            stageSize={stageSize}
+                            vm={vm}
+                            ariaRole="region"
+                            ariaLabel="Stage"
+                        />
+                        <Box
+                            className={styles.targetWrapper}
+                            role="region"
+                            aria-label="Target Pane"
+                        >
+                            <TargetPane
                                 stageSize={stageSize}
                                 vm={vm}
+                                onNewSpriteClick={onNewSpriteClick}
+                                onNewBackdropClick={onNewLibraryBackdropClick}
                             />
-                            <Box className={styles.targetWrapper}>
-                                <TargetPane
-                                    stageSize={stageSize}
-                                    vm={vm}
-                                    onNewSpriteClick={onNewSpriteClick}
-                                    onNewBackdropClick={onNewLibraryBackdropClick}
-                                />
-                            </Box>
                         </Box>
                     </Box>
                 </Box>

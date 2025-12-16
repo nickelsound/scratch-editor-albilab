@@ -13,6 +13,11 @@ body .drag-layer {
     direction: ltr;
 }
 
+body .drag-layer[data-over-modal="true"] {
+    /* Override z-index for project drag to be above project manager modal */
+    z-index: $z-index-drag-layer-over-modal !important;
+}
+
 .image-wrapper {
     /* Absolute allows wrapper to snuggly fit image */
     position: absolute;
@@ -35,4 +40,25 @@ body .drag-layer {
 
     /* Use the same drop shadow as stage dragging */
     box-shadow: 5px 5px 5px $ui-black-transparent;
+}
+
+.image-large {
+    max-width: 320px;
+    max-height: 100px;
+    min-width: 200px;
+    min-height: 60px;
+    width: auto;
+    height: auto;
+
+    /* Center the dragging image on the given position */
+    margin-left: -50%;
+    margin-top: -50%;
+
+    padding: 0;
+    border: none;
+    background: transparent;
+    border-radius: 0;
+
+    /* Enhanced shadow for project cards */
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
 }

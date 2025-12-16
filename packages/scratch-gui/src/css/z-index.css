@@ -22,6 +22,7 @@ $z-index-drag-layer: 1000;
 /* Block drag z-index: 1000; default 50 is overriden in blocks.css */
 $z-index-monitor-dragging: 1010;
 $z-index-dragging-sprite: 1020; /* so it is draggable into other panes */
+$z-index-drag-layer-over-modal: 100001; /* Drag layer over project manager and other modals */
 
 $z-index-stage-color-picker-background: 2000;
 $z-index-stage-with-color-picker: 2010;
@@ -33,3 +34,6 @@ $z-index-context-menu: 10000;
 
 /* Project manager overlay should be above Blockly HTML inputs (blocklyWidgetDiv has z-index 99999) */
 $z-index-project-manager: 100000;
+
+/* Confirm modal should be above project manager */
+$z-index-confirm-modal: 100200;
