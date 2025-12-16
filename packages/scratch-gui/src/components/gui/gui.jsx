@@ -394,6 +394,7 @@ const GUIComponent = props => {
                                         />
                                     </Tab>
                                 </TabList>
+                            </Box>
                                 <TabPanel className={tabClassNames.tabPanel}>
                                     <Box
                                         className={styles.blocksWrapper}
@@ -419,20 +420,13 @@ const GUIComponent = props => {
                                         activeTabIndex={activeTabIndex}
                                         intl={intl}
                                         showNewFeatureCallouts={showNewFeatureCallouts}
+                                        onExtensionButtonClick={onExtensionButtonClick}
                                         username={username}
                                     />
-                                </Box>
-                                <ExtensionsButton
-                                    activeTabIndex={activeTabIndex}
-                                    intl={intl}
-                                    showNewFeatureCallouts={showNewFeatureCallouts}
-                                    onExtensionButtonClick={onExtensionButtonClick}
-                                    username={username}
-                                />
-                                <Box className={styles.watermark}>
-                                    <Watermark />
-                                </Box>
-                            </TabPanel>
+                                    <Box className={styles.watermark}>
+                                        <Watermark />
+                                    </Box>
+                                </TabPanel>
                             <TabPanel className={tabClassNames.tabPanel}>
                                 {costumesTabVisible ? <CostumeTab
                                     ariaLabel={targetIsStage ? 'Backdrops Editor Panel' : 'Costumes Editor Panel'}

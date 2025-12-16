@@ -229,6 +229,7 @@ const DraftSectionComponent = function (props) {
         >
             <div className={styles.autoSaveManagerSectionHeader}>
                 <h4 className={styles.autoSaveManagerSectionTitle}>
+                    <span className={styles.autoSaveManagerSectionIcon}>🧪</span>
                     {intl.formatMessage(messages.draftSectionTitle)}
                 </h4>
                 <p className={styles.autoSaveManagerSectionDescription}>
@@ -278,6 +279,7 @@ const DeployedSectionComponent = function (props) {
         >
             <div className={styles.autoSaveManagerSectionHeader}>
                 <h4 className={styles.autoSaveManagerSectionTitle}>
+                    <span className={styles.autoSaveManagerSectionIcon}>🚀</span>
                     {intl.formatMessage(messages.deployedSectionTitle)}
                 </h4>
                 <p className={styles.autoSaveManagerSectionDescription}>
@@ -449,16 +451,9 @@ const AutoSaveManager = function (props) {
                             })}
                         </div>
                     )}
-                    {showDeployedInfo && (
-                        <div className={classNames(styles.autoSaveManagerItemStatus, getStatusClass(project))}>
-                            {getProjectStatus(project)}
-                        </div>
-                    )}
-                    {!showDeployedInfo && (
-                        <div className={classNames(styles.autoSaveManagerItemStatus, styles.autoSaveManagerStatusNotDeployed)}>
-                            {intl.formatMessage(messages.statusNotDeployed)}
-                        </div>
-                    )}
+                    <div className={classNames(styles.autoSaveManagerItemStatus, getStatusClass(project))}>
+                        {getProjectStatus(project)}
+                    </div>
                 </div>
                 <div className={styles.autoSaveManagerItemActions}>
                     {!isDeployedSection && (
