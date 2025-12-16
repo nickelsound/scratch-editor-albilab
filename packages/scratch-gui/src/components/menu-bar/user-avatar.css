@@ -17,10 +17,10 @@
 }
 
 .avatar-badge-wrapper {
-    display: inline-block;
+    display: inline-flex;
     background: url('./cat-ears.svg') no-repeat top ;
     background-size: contain;
-    align-content: end;
+    align-items: flex-end;
 
     width: $menu-bar-button-size;
     height: calc($menu-bar-button-size * 1.28);
