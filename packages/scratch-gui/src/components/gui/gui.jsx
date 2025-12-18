@@ -404,7 +404,7 @@ const GUIComponent = props => {
                                         grow={1}
                                         isVisible={blocksTabVisible}
                                         options={{
-                                            media: `${basePath}static/${themeMap[theme].blocksMediaFolder}/`
+                                            media: `${basePath}static/${colorModeMap[colorMode].blocksMediaFolder}/`
                                         }}
                                         stageSize={stageSize}
                                         theme={theme}
