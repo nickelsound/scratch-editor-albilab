@@ -117,7 +117,14 @@ class AutoSaveService {
     scheduleNextSave() {
         if (!this.isEnabled) return;
 
+        // Zrušit existující timeout, aby se nehromadily
+        if (this.saveTimeout) {
+            clearTimeout(this.saveTimeout);
+            this.saveTimeout = null;
+        }
+
         this.saveTimeout = setTimeout(() => {
+            this.saveTimeout = null;
             this.performAutoSave();
         }, this.saveInterval);
     }
@@ -126,14 +133,45 @@ class AutoSaveService {
      * Performs automatic save
      */
     async performAutoSave() {
+        // Zrušit timeout, protože už začínáme save
+        if (this.saveTimeout) {
+            clearTimeout(this.saveTimeout);
+            this.saveTimeout = null;
+        }
+
         if (this.isSaving || !this.vm) {
             this.scheduleNextSave();
             return;
         }
 
         try {
-            // Get current project data from VM as JSON
-            const projectData = this.vm.toJSON();
+            // Přesunout vm.toJSON() do asynchronního bloku, aby se neblokoval hlavní thread
+            // Použít requestIdleCallback pokud je dostupné, jinak setTimeout s malým delay
+            const projectData = await new Promise((resolve) => {
+                const getProjectData = () => {
+                    try {
+                        const data = this.vm.toJSON();
+                        resolve(data);
+                    } catch (error) {
+                        console.error('Error getting project data:', error);
+                        resolve(null);
+                    }
+                };
+
+                // Použít requestIdleCallback pokud je dostupné (lepší pro UX)
+                if (typeof requestIdleCallback !== 'undefined') {
+                    requestIdleCallback(getProjectData, { timeout: 1000 });
+                } else {
+                    // Fallback na setTimeout s malým delay, aby se neblokoval thread
+                    setTimeout(getProjectData, 0);
+                }
+            });
+
+            if (!projectData) {
+                console.error('Failed to get project data');
+                this.scheduleNextSave();
+                return;
+            }
             
             // Check if project is empty (has no blocks) - if so, skip saving
             const isEmpty = this.isProjectEmpty(projectData);
@@ -180,7 +218,10 @@ class AutoSaveService {
             this.isSaving = false;
             this.updateSaveStatus('error');
         } finally {
-            this.scheduleNextSave();
+            // Naplánovat další save pouze pokud není už jeden naplánovaný
+            if (!this.saveTimeout && this.isEnabled) {
+                this.scheduleNextSave();
+            }
         }
     }
 
@@ -189,9 +230,16 @@ class AutoSaveService {
      */
     updateSaveStatus(status) {
         if (this.onSaveStatusChange) {
+            // Převést lastSaveTime na ISO string, pokud je to Date objekt
+            const lastSaveTimeString = this.lastSaveTime 
+                ? (this.lastSaveTime instanceof Date 
+                    ? this.lastSaveTime.toISOString() 
+                    : this.lastSaveTime)
+                : null;
+            
             this.onSaveStatusChange({
                 status: status,
-                lastSaveTime: this.lastSaveTime,
+                lastSaveTime: lastSaveTimeString,
                 isSaving: status === 'saving' ? true : false
             });
         }
