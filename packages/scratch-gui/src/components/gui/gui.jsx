@@ -395,30 +395,31 @@ const GUIComponent = props => {
                                     </Tab>
                                 </TabList>
                             </Box>
-                                <TabPanel className={tabClassNames.tabPanel}>
-                                    <Box
-                                        className={styles.blocksWrapper}
-                                        role="region"
-                                        aria-label="Code Editor Panel"
-                                    >
-                                        <Blocks
-                                            key={`${blocksId}/${colorMode}/${theme}`}
-                                            canUseCloud={canUseCloud}
-                                            grow={1}
-                                            isVisible={blocksTabVisible}
-                                            options={{
-                                                media: `${basePath}static/${colorModeMap[colorMode].blocksMediaFolder}/`
-                                            }}
-                                            stageSize={stageSize}
-                                            colorMode={colorMode}
-                                            vm={vm}
-                                            showNewFeatureCallouts={showNewFeatureCallouts}
-                                            username={username}
-                                        />
-                                    </Box>
-                                    <ExtensionsButton
-                                        activeTabIndex={activeTabIndex}
-                                        intl={intl}
+                            <TabPanel className={tabClassNames.tabPanel}>
+                                <Box
+                                    className={styles.blocksWrapper}
+                                    role="region"
+                                    aria-label="Code Editor Panel"
+                                >
+                                    <Blocks
+                                        key={`${blocksId}/${colorMode}/${theme}`}
+                                        canUseCloud={canUseCloud}
+                                        grow={1}
+                                        isVisible={blocksTabVisible}
+                                        options={{
+                                            media: `${basePath}static/${colorModeMap[colorMode].blocksMediaFolder}/`
+                                        }}
+                                        stageSize={stageSize}
+                                        colorMode={colorMode}
+                                        theme={theme}
+                                        vm={vm}
+                                        showNewFeatureCallouts={showNewFeatureCallouts}
+                                        username={username}
+                                    />
+                                </Box>
+                                <ExtensionsButton
+                                    activeTabIndex={activeTabIndex}
+                                    intl={intl}
                                         showNewFeatureCallouts={showNewFeatureCallouts}
                                         onExtensionButtonClick={onExtensionButtonClick}
                                         username={username}
