@@ -22,7 +22,6 @@ import CostumeLibrary from '../../containers/costume-library.jsx';
 import BackdropLibrary from '../../containers/backdrop-library.jsx';
 import Watermark from '../../containers/watermark.jsx';
 
-import Backpack from '../../containers/backpack.jsx';
 import ExtensionsButton from '../extension-button/extension-button.jsx';
 import WebGlModal from '../../containers/webgl-modal.jsx';
 import TipsLibrary from '../../containers/tips-library.jsx';
@@ -44,6 +43,8 @@ import styles from './gui.css';
 import codeIcon from './icon--code.svg';
 import costumesIcon from './icon--costumes.svg';
 import soundsIcon from './icon--sounds.svg';
+import fullScreenIcon from '../stage-header/icon--fullscreen.svg';
+import Button from '../button/button.jsx';
 import DebugModal from '../debug-modal/debug-modal.jsx';
 import {setPlatform} from '../../reducers/platform.js';
 import {setTheme} from '../../reducers/settings.js';
@@ -113,6 +114,7 @@ const GUIComponent = props => {
         onActivateCostumesTab,
         onActivateSoundsTab,
         onActivateTab,
+        onToggleStageVisibility,
         onClickLogo,
         onExtensionButtonClick,
         onNewSpriteClick,
@@ -135,6 +137,7 @@ const GUIComponent = props => {
         showNewFeatureCallouts,
         soundsTabVisible,
         stageSizeMode,
+        stageVisible,
         targetIsStage,
         telemetryModalVisible,
         colorMode,
@@ -169,6 +172,15 @@ const GUIComponent = props => {
             props.setTheme(DEFAULT_THEME);
         }
     }, [theme, hasActiveMembership, props.setTheme]);
+
+    useEffect(() => {
+        // Force Blockly workspace to resize when stage visibility changes
+        // Use setTimeout to ensure DOM has updated
+        const timeoutId = setTimeout(() => {
+            window.dispatchEvent(new Event('resize'));
+        }, 0);
+        return () => clearTimeout(timeoutId);
+    }, [stageVisible]);
 
     const tabClassNames = {
         tabs: styles.tabs,
@@ -320,7 +332,9 @@ const GUIComponent = props => {
                     <Box
                         role="main"
                         aria-label="Editor"
-                        className={styles.editorWrapper}
+                        className={classNames(styles.editorWrapper, {
+                            [styles.editorWrapperMaximized]: !stageVisible
+                        })}
                     >
                         <Tabs
                             forceRenderTabPanel
@@ -344,6 +358,7 @@ const GUIComponent = props => {
                             <Box
                                 role="region"
                                 aria-label="Tab List"
+                                className={styles.tabListWrapper}
                             >
                                 <TabList className={tabClassNames.tabList}>
                                     <Tab className={tabClassNames.tab}>
@@ -394,6 +409,20 @@ const GUIComponent = props => {
                                         />
                                     </Tab>
                                 </TabList>
+                                <div className={styles.tabListRightSection}>
+                                    <Button
+                                        className={styles.maximizeButton}
+                                        onClick={onToggleStageVisibility}
+                                    >
+                                        <img
+                                            alt={intl.formatMessage({defaultMessage: 'Maximize coding area', id: 'gui.gui.maximizeCodingArea'})}
+                                            className={styles.maximizeButtonIcon}
+                                            draggable={false}
+                                            src={fullScreenIcon}
+                                            title={intl.formatMessage({defaultMessage: 'Maximize coding area', id: 'gui.gui.maximizeCodingArea'})}
+                                        />
+                                    </Button>
+                                </div>
                             </Box>
                             <TabPanel className={tabClassNames.tabPanel}>
                                 <Box
@@ -446,20 +475,14 @@ const GUIComponent = props => {
                                     /> : null}
                             </TabPanel>
                         </Tabs>
-                        {backpackVisible ? (
-                            <Backpack
-                                host={backpackHost}
-                                ariaRole="region"
-                                ariaLabel="Backpack"
-                            />
-                        ) : null}
                     </Box>
 
-                    <Box
-                        role="complementary"
-                        aria-label="Stage and Target"
-                        className={classNames(styles.stageAndTargetWrapper, styles[stageSize])}
-                    >
+                    {stageVisible ? (
+                        <Box
+                            role="complementary"
+                            aria-label="Stage and Target"
+                            className={classNames(styles.stageAndTargetWrapper, styles[stageSize])}
+                        >
                         <StageWrapper
                             isFullScreen={isFullScreen}
                             isRendererSupported={isRendererSupported}
@@ -482,6 +505,7 @@ const GUIComponent = props => {
                             />
                         </Box>
                     </Box>
+                    ) : null}
                 </Box>
                 <DragLayer />
                 <AutoSaveManager />
@@ -538,6 +562,7 @@ GUIComponent.propTypes = {
     onActivateCostumesTab: PropTypes.func,
     onActivateSoundsTab: PropTypes.func,
     onActivateTab: PropTypes.func,
+    onToggleStageVisibility: PropTypes.func,
     onClickAccountNav: PropTypes.func,
     onClickLogo: PropTypes.func,
     onCloseAccountNav: PropTypes.func,
@@ -567,6 +592,7 @@ GUIComponent.propTypes = {
     showNewFeatureCallouts: PropTypes.bool,
     soundsTabVisible: PropTypes.bool,
     stageSizeMode: PropTypes.oneOf(Object.keys(STAGE_SIZE_MODES)),
+    stageVisible: PropTypes.bool,
     setPlatform: PropTypes.func,
     targetIsStage: PropTypes.bool,
     telemetryModalVisible: PropTypes.bool,
