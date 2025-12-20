@@ -28,6 +28,7 @@ import {
     closeDebugModal,
     openAlbilabIPPrompt
 } from '../reducers/modals';
+import {toggleStageVisibility} from '../reducers/stage-visibility';
 import {getAlbilabIP, hasPromptBeenShown} from '../lib/albilab-ip-storage';
 
 import {setPlatform} from '../reducers/platform';
@@ -191,6 +192,7 @@ const mapStateToProps = (state, ownProps) => {
         platform: ownProps.platform,
         projectId: state.scratchGui.projectState.projectId,
         soundsTabVisible: state.scratchGui.editorTab.activeTabIndex === SOUNDS_TAB_INDEX,
+        stageVisible: state.scratchGui.stageVisibility.isVisible,
         targetIsStage: (
             state.scratchGui.targets.stage &&
             state.scratchGui.targets.stage.id === state.scratchGui.targets.editingTarget
@@ -211,7 +213,8 @@ const mapDispatchToProps = dispatch => ({
     onRequestCloseCostumeLibrary: () => dispatch(closeCostumeLibrary()),
     onRequestCloseDebugModal: () => dispatch(closeDebugModal()),
     onRequestCloseTelemetryModal: () => dispatch(closeTelemetryModal()),
-    onOpenAlbilabIPPrompt: () => dispatch(openAlbilabIPPrompt())
+    onOpenAlbilabIPPrompt: () => dispatch(openAlbilabIPPrompt()),
+    onToggleStageVisibility: () => dispatch(toggleStageVisibility())
 });
 
 const ConnectedGUI = injectIntl(connect(
