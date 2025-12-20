@@ -686,34 +686,6 @@ class MenuBar extends React.Component {
                     ) : null)}
                     <Divider className={classNames(styles.divider)} />
                     <div className={styles.fileGroup}>
-                        <div
-                            aria-label={this.props.intl.formatMessage(ariaMessages.tutorials)}
-                            className={
-                                classNames(styles.menuBarItem, styles.noOffset, styles.hoverable, 'tutorials-button')
-                            }
-                            onClick={this.props.onOpenTipLibrary}
-                        >
-                            <img
-                                className={styles.helpIcon}
-                                src={helpIcon}
-                            />
-                            <span className={styles.tutorialsLabel}>
-                                <FormattedMessage {...ariaMessages.tutorials} />
-                            </span>
-                        </div>
-                        <div
-                            aria-label={this.props.intl.formatMessage(ariaMessages.debug)}
-                            className={classNames(styles.menuBarItem, styles.noOffset, styles.hoverable)}
-                            onClick={this.props.onOpenDebugModal}
-                        >
-                            <img
-                                className={styles.helpIcon}
-                                src={debugIcon}
-                            />
-                            <span className={styles.debugLabel}>
-                                <FormattedMessage {...ariaMessages.debug} />
-                            </span>
-                        </div>
                         <div className={classNames(styles.menuBarItem)}>
                             {/* AutoSaveIndicator - continuous saving indicator */}
                             <AutoSaveIndicator />
@@ -728,6 +700,34 @@ class MenuBar extends React.Component {
                         {this.props.canSave && (
                             <SaveStatus />
                         )}
+                    </div>
+                    <div
+                        aria-label={this.props.intl.formatMessage(ariaMessages.tutorials)}
+                        className={
+                            classNames(styles.menuBarItem, styles.noOffset, styles.hoverable, 'tutorials-button')
+                        }
+                        onClick={this.props.onOpenTipLibrary}
+                    >
+                        <img
+                            className={styles.helpIcon}
+                            src={helpIcon}
+                        />
+                        <span className={styles.tutorialsLabel}>
+                            <FormattedMessage {...ariaMessages.tutorials} />
+                        </span>
+                    </div>
+                    <div
+                        aria-label={this.props.intl.formatMessage(ariaMessages.debug)}
+                        className={classNames(styles.menuBarItem, styles.noOffset, styles.hoverable)}
+                        onClick={this.props.onOpenDebugModal}
+                    >
+                        <img
+                            className={styles.helpIcon}
+                            src={debugIcon}
+                        />
+                        <span className={styles.debugLabel}>
+                            <FormattedMessage {...ariaMessages.debug} />
+                        </span>
                     </div>
 
                     {menuOpts.canHaveSession ? (
