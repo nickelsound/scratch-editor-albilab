@@ -95,6 +95,8 @@ import ninetiesLogo from './nineties_logo.svg';
 import catLogo from './cat_logo.svg';
 import prehistoricLogo from './prehistoric-logo.svg';
 import oldtimeyLogo from './oldtimey-logo.svg';
+import fullScreenIcon from '../stage-header/icon--fullscreen.svg';
+import {toggleFullscreen, isFullscreen} from '../../lib/browser-fullscreen';
 
 import sharedMessages from '../../lib/shared-messages';
 
@@ -196,14 +198,39 @@ class MenuBar extends React.Component {
             'handleKeyPress',
             'handleRestoreOption',
             'getSaveToComputerHandler',
-            'restoreOptionMessage'
+            'restoreOptionMessage',
+            'handleToggleFullscreen',
+            'handleFullscreenChange'
         ]);
+        this.state = {
+            isBrowserFullscreen: isFullscreen()
+        };
     }
     componentDidMount () {
         document.addEventListener('keydown', this.handleKeyPress);
+        // Listen for fullscreen changes
+        document.addEventListener('fullscreenchange', this.handleFullscreenChange);
+        document.addEventListener('webkitfullscreenchange', this.handleFullscreenChange);
+        document.addEventListener('mozfullscreenchange', this.handleFullscreenChange);
+        document.addEventListener('MSFullscreenChange', this.handleFullscreenChange);
     }
     componentWillUnmount () {
         document.removeEventListener('keydown', this.handleKeyPress);
+        document.removeEventListener('fullscreenchange', this.handleFullscreenChange);
+        document.removeEventListener('webkitfullscreenchange', this.handleFullscreenChange);
+        document.removeEventListener('mozfullscreenchange', this.handleFullscreenChange);
+        document.removeEventListener('MSFullscreenChange', this.handleFullscreenChange);
+    }
+    handleFullscreenChange () {
+        this.setState({
+            isBrowserFullscreen: isFullscreen()
+        });
+    }
+    handleToggleFullscreen () {
+        toggleFullscreen().catch(err => {
+            // Silently handle errors (e.g., user cancelled fullscreen request)
+            console.log('Fullscreen toggle failed:', err);
+        });
     }
     handleClickNew () {
         // if the project is dirty, and user owns the project, we will autosave.
@@ -789,6 +816,24 @@ class MenuBar extends React.Component {
                             {/* My Stuff and scratch-cat buttons - hidden */}
                         </React.Fragment>
                     )}
+                    <div
+                        className={classNames(styles.menuBarItem, styles.noOffset, styles.hoverable, styles.fullscreenButton)}
+                        onClick={this.handleToggleFullscreen}
+                        title={this.props.intl.formatMessage({
+                            defaultMessage: 'Toggle fullscreen',
+                            id: 'gui.menuBar.toggleFullscreen'
+                        })}
+                    >
+                        <img
+                            className={styles.fullscreenButtonIcon}
+                            draggable={false}
+                            src={fullScreenIcon}
+                            alt={this.props.intl.formatMessage({
+                                defaultMessage: 'Toggle fullscreen',
+                                id: 'gui.menuBar.toggleFullscreen'
+                            })}
+                        />
+                    </div>
                 </div>
 
                 {aboutButton}

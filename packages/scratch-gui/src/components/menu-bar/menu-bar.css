@@ -150,6 +150,31 @@
     padding: 0 0.75rem;
 }
 
+.account-info-group .menu-bar-item.fullscreen-button {
+    margin: 0;
+    padding: 0 20px;
+}
+
+.fullscreen-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    margin: 0;
+    min-width: 0;
+    width: auto;
+}
+
+.fullscreen-button-icon {
+    width: 1.25rem;
+    height: 1.25rem;
+    filter: brightness(0) invert(1); /* Make icon white */
+}
+
+[dir="rtl"] .fullscreen-button-icon {
+    transform: scaleX(-1);
+}
+
 .mystuff-icon {
     margin: 0 .25rem;
     height: 1rem;
