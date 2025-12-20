@@ -103,9 +103,6 @@ const AutoSaveIndicator = function (props) {
             }) : intl.formatMessage(messages.unsaved)}
             {...componentProps}
         >
-            <span className={styles.autoSaveIcon}>
-                {getStatusIcon()}
-            </span>
             {!isSaving && !saveError ? (
                 <button
                     className={styles.autoSaveTimeButton}
@@ -115,12 +112,22 @@ const AutoSaveIndicator = function (props) {
                         defaultMessage: 'Click for immediate save'
                     })}
                 >
-                    {getStatusMessage()}
+                    <span className={styles.autoSaveIcon}>
+                        {getStatusIcon()}
+                    </span>
+                    <span className={styles.autoSaveButtonText}>
+                        {getStatusMessage()}
+                    </span>
                 </button>
             ) : (
-                <span className={styles.autoSaveText}>
-                    {getStatusMessage()}
-                </span>
+                <>
+                    <span className={styles.autoSaveIcon}>
+                        {getStatusIcon()}
+                    </span>
+                    <span className={styles.autoSaveText}>
+                        {getStatusMessage()}
+                    </span>
+                </>
             )}
         </div>
     );
