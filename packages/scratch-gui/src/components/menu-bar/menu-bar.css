@@ -39,7 +39,6 @@
     align-items: center;
     flex-grow: 1;
     min-width: 0;
-    overflow: hidden;
 }
 .inactive {
     opacity: 0;
@@ -253,6 +252,11 @@
     margin: 0 0.25rem 0 0.5rem;
 }
 
+.tutorialsButton,
+.debugButton {
+    /* Base styles for tutorials and debug buttons */
+}
+
 @media only screen and (max-width: 1024px) {
     .tutorials-label, .collapsible-label, .debug-label{
         display: none;
@@ -263,6 +267,12 @@
     }
 
     .autoSaveText, .autoSaveButtonText {
+        display: none;
+    }
+
+    /* Hide Tutorials and Debug buttons when text labels are hidden */
+    .tutorialsButton,
+    .debugButton {
         display: none;
     }
 }

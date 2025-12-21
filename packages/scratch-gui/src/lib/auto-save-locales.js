@@ -104,7 +104,8 @@ export const cs = {
     'gui.albilabIPPrompt.cancel': 'Zrušit',
     'gui.albilabIPPrompt.currentIPLabel': 'Aktuální IP adresa: {ip}',
     'gui.albilabIPPrompt.noCurrentIP': 'Aktuálně není nastavena žádná IP adresa',
-    'gui.albilabIPMenu.title': 'IP adresa AlbiLAB'
+    'gui.albilabIPMenu.title': 'IP adresa AlbiLAB',
+    'gui.menuBar.toggleFullscreen': 'Přepnout celou obrazovku'
 };
 
 export const en = {
@@ -190,6 +191,7 @@ export const en = {
     'gui.albilabIPPrompt.cancel': 'Cancel',
     'gui.albilabIPPrompt.currentIPLabel': 'Current IP address: {ip}',
     'gui.albilabIPPrompt.noCurrentIP': 'No IP address is currently set',
-    'gui.albilabIPMenu.title': 'AlbiLAB IP Address'
+    'gui.albilabIPMenu.title': 'AlbiLAB IP Address',
+    'gui.menuBar.toggleFullscreen': 'Toggle fullscreen'
 };
 
