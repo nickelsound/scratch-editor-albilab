@@ -1,23 +1,24 @@
 import {isRtl} from 'scratch-l10n';
 import editorMessages from 'scratch-l10n/locales/editor-msgs';
 import {cs as autoSaveLocalesCs, en as autoSaveLocalesEn} from '../lib/auto-save-locales';
+import {cs as landscapeOverlayLocalesCs, en as landscapeOverlayLocalesEn} from '../lib/landscape-overlay-locales';
 
 // Merge auto-save locales with editor messages
-const mergeMessages = (baseMessages, additionalMessagesCs, additionalMessagesEn) => {
+const mergeMessages = (baseMessages, additionalMessagesCs, additionalMessagesEn, additionalMessagesCs2, additionalMessagesEn2) => {
     const merged = {};
     for (const locale in baseMessages) {
         if (Object.prototype.hasOwnProperty.call(baseMessages, locale)) {
             merged[locale] = {
                 ...baseMessages[locale],
-                ...(locale === 'cs' ? additionalMessagesCs : {}),
-                ...(locale === 'en' ? additionalMessagesEn : {})
+                ...(locale === 'cs' ? {...additionalMessagesCs, ...additionalMessagesCs2} : {}),
+                ...(locale === 'en' ? {...additionalMessagesEn, ...additionalMessagesEn2} : {})
             };
         }
     }
     return merged;
 };
 
-const messagesByLocale = mergeMessages(editorMessages, autoSaveLocalesCs, autoSaveLocalesEn);
+const messagesByLocale = mergeMessages(editorMessages, autoSaveLocalesCs, autoSaveLocalesEn, landscapeOverlayLocalesCs, landscapeOverlayLocalesEn);
 
 const UPDATE_LOCALES = 'scratch-gui/locales/UPDATE_LOCALES';
 const SELECT_LOCALE = 'scratch-gui/locales/SELECT_LOCALE';

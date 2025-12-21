@@ -96,6 +96,7 @@ import catLogo from './cat_logo.svg';
 import prehistoricLogo from './prehistoric-logo.svg';
 import oldtimeyLogo from './oldtimey-logo.svg';
 import fullScreenIcon from '../stage-header/icon--fullscreen.svg';
+import unFullScreenIcon from '../stage-header/icon--unfullscreen.svg';
 import {toggleFullscreen, isFullscreen} from '../../lib/browser-fullscreen';
 
 import sharedMessages from '../../lib/shared-messages';
@@ -704,7 +705,7 @@ class MenuBar extends React.Component {
                     <div
                         aria-label={this.props.intl.formatMessage(ariaMessages.tutorials)}
                         className={
-                            classNames(styles.menuBarItem, styles.noOffset, styles.hoverable, 'tutorials-button')
+                            classNames(styles.menuBarItem, styles.noOffset, styles.hoverable, styles.tutorialsButton)
                         }
                         onClick={this.props.onOpenTipLibrary}
                     >
@@ -718,7 +719,7 @@ class MenuBar extends React.Component {
                     </div>
                     <div
                         aria-label={this.props.intl.formatMessage(ariaMessages.debug)}
-                        className={classNames(styles.menuBarItem, styles.noOffset, styles.hoverable)}
+                        className={classNames(styles.menuBarItem, styles.noOffset, styles.hoverable, styles.debugButton)}
                         onClick={this.props.onOpenDebugModal}
                     >
                         <img
@@ -827,7 +828,7 @@ class MenuBar extends React.Component {
                         <img
                             className={styles.fullscreenButtonIcon}
                             draggable={false}
-                            src={fullScreenIcon}
+                            src={this.state.isBrowserFullscreen ? unFullScreenIcon : fullScreenIcon}
                             alt={this.props.intl.formatMessage({
                                 defaultMessage: 'Toggle fullscreen',
                                 id: 'gui.menuBar.toggleFullscreen'

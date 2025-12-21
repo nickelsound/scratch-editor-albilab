@@ -11,5 +11,53 @@ body,
     min-height: 640px; /* Min height to fit sprite/backdrop button */
 }
 
+/* Mobile devices - allow smaller width to fit viewport */
+@media only screen and (max-width: 768px) {
+    html,
+    body,
+    .app {
+        min-width: 0;
+        width: 100vw;
+        overflow-x: auto;
+    }
+}
+
+/* Touch devices (phones/tablets) - allow smaller width */
+@media (hover: none) and (pointer: coarse) {
+    html,
+    body,
+    .app {
+        min-width: 0;
+        width: 100vw;
+        overflow-x: auto;
+    }
+}
+
+/* Optimize for landscape orientation on mobile */
+@media (hover: none) and (pointer: coarse) and (orientation: landscape) {
+    html,
+    body,
+    .app {
+        min-width: 0;
+        width: 100vw;
+        height: 100vh;
+        overflow: hidden;
+    }
+}
+
+/* Ensure zooming is not blocked on mobile devices */
+@media (hover: none) and (pointer: coarse) {
+    html {
+        touch-action: manipulation;
+        -webkit-touch-callout: default;
+        -webkit-user-select: text;
+        user-select: text;
+    }
+    
+    body {
+        touch-action: manipulation;
+    }
+}
+
 /* @todo: move globally? Safe / side FX, for blocks particularly? */
 * { box-sizing: border-box; }

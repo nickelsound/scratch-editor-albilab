@@ -32,6 +32,7 @@ import ConnectionModal from '../../containers/connection-modal.jsx';
 import TelemetryModal from '../telemetry-modal/telemetry-modal.jsx';
 import AutoSaveManager from '../../containers/auto-save-manager.jsx';
 import AlbilabIPPrompt from '../../containers/albilab-ip-prompt.jsx';
+import LandscapeOverlay from '../landscape-overlay/landscape-overlay.jsx';
 
 import layout, {STAGE_SIZE_MODES} from '../../lib/layout-constants';
 import {resolveStageSize} from '../../lib/screen-utils';
@@ -44,6 +45,7 @@ import codeIcon from './icon--code.svg';
 import costumesIcon from './icon--costumes.svg';
 import soundsIcon from './icon--sounds.svg';
 import fullScreenIcon from '../stage-header/icon--fullscreen.svg';
+import unFullScreenIcon from '../stage-header/icon--unfullscreen.svg';
 import Button from '../button/button.jsx';
 import DebugModal from '../debug-modal/debug-modal.jsx';
 import {setPlatform} from '../../reducers/platform.js';
@@ -281,6 +283,7 @@ const GUIComponent = props => {
                     onClose={onCloseDebugModal}
                 />}
                 <AlbilabIPPrompt />
+                <LandscapeOverlay />
                 {backdropLibraryVisible ? (
                     <BackdropLibrary
                         vm={vm}
@@ -415,11 +418,11 @@ const GUIComponent = props => {
                                         onClick={onToggleStageVisibility}
                                     >
                                         <img
-                                            alt={intl.formatMessage({defaultMessage: 'Maximize coding area', id: 'gui.gui.maximizeCodingArea'})}
+                                            alt={intl.formatMessage({defaultMessage: stageVisible ? 'Maximize coding area' : 'Restore stage', id: stageVisible ? 'gui.gui.maximizeCodingArea' : 'gui.gui.restoreStage'})}
                                             className={styles.maximizeButtonIcon}
                                             draggable={false}
-                                            src={fullScreenIcon}
-                                            title={intl.formatMessage({defaultMessage: 'Maximize coding area', id: 'gui.gui.maximizeCodingArea'})}
+                                            src={stageVisible ? fullScreenIcon : unFullScreenIcon}
+                                            title={intl.formatMessage({defaultMessage: stageVisible ? 'Maximize coding area' : 'Restore stage', id: stageVisible ? 'gui.gui.maximizeCodingArea' : 'gui.gui.restoreStage'})}
                                         />
                                     </Button>
                                 </div>
