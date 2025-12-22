@@ -43,10 +43,16 @@ ENV REACT_APP_WS_PORT=3001
 
 # Stáhneme už zbuildované balíčky z npm (rychlejší než build)
 # Tyto balíčky jsou publikované na npm s už zbuildovanými dist/ adresáři
-RUN npm install @scratch/scratch-svg-renderer@12.3.1 @scratch/scratch-render@12.3.1 @scratch/scratch-vm@12.3.1 --save --no-audit --no-fund && \
-    cp -r node_modules/@scratch/scratch-svg-renderer/dist packages/scratch-svg-renderer/ && \
-    cp -r node_modules/@scratch/scratch-render/dist packages/scratch-render/ && \
-    cp -r node_modules/@scratch/scratch-vm/dist packages/scratch-vm/
+# Instalujeme do dočasného adresáře, protože workspaces by jinak použily lokální verze
+RUN mkdir -p /tmp/npm-packages && \
+    cd /tmp/npm-packages && \
+    npm init -y && \
+    npm install @scratch/scratch-svg-renderer@12.3.1 @scratch/scratch-render@12.3.1 @scratch/scratch-vm@12.3.1 --no-audit --no-fund && \
+    cp -r node_modules/@scratch/scratch-svg-renderer/dist /app/packages/scratch-svg-renderer/ && \
+    cp -r node_modules/@scratch/scratch-render/dist /app/packages/scratch-render/ && \
+    cp -r node_modules/@scratch/scratch-vm/dist /app/packages/scratch-vm/ && \
+    cd /app && \
+    rm -rf /tmp/npm-packages
 
 # Sestavíme pouze scratch-gui a scratch-backend (ty nejsou na npm)
 # Pro scratch-gui buildujeme pouze build:dev (produkční build pro server), ne dist/standalone (ty jsou pro distribuci jako knihovny)
