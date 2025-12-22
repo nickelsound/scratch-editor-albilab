@@ -42,10 +42,11 @@ ENV REACT_APP_API_PORT=3001
 ENV REACT_APP_WS_PORT=3001
 
 # Sestavíme všechny balíčky (potřebné pro obě aplikace)
+# Pro scratch-gui buildujeme pouze build:dev (produkční build pro server), ne dist/standalone (ty jsou pro distribuci jako knihovny)
 RUN npm run build --workspace=packages/scratch-svg-renderer && \
     npm run build --workspace=packages/scratch-render && \
     npm run build --workspace=packages/scratch-vm && \
-    npm run build --workspace=packages/scratch-gui && \
+    npm run build:dev --workspace=packages/scratch-gui && \
     npm run build --workspace=packages/scratch-backend
 
 # ============================================
