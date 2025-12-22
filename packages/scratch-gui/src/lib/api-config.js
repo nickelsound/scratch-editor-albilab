@@ -28,6 +28,13 @@ const isDevelopment = () => {
  * Gets base API URL
  */
 export const getApiBaseUrl = () => {
+    // Check for runtime configuration first (injected by server-runtime.js)
+    if (typeof window !== 'undefined' && window.__RUNTIME_CONFIG__ && window.__RUNTIME_CONFIG__.REACT_APP_API_BASE_URL) {
+        const runtimeUrl = window.__RUNTIME_CONFIG__.REACT_APP_API_BASE_URL;
+        console.log('Runtime configuration - using API URL:', runtimeUrl);
+        return runtimeUrl;
+    }
+    
     if (isDevelopment()) {
         // Development environment - connect directly to backend
         const devApiUrl = (typeof process !== 'undefined' && process.env && process.env.REACT_APP_API_BASE_URL) || 'http://localhost:3001';
@@ -47,6 +54,13 @@ export const getApiBaseUrl = () => {
  * Gets WebSocket URL
  */
 export const getWebSocketBaseUrl = () => {
+    // Check for runtime configuration first (injected by server-runtime.js)
+    if (typeof window !== 'undefined' && window.__RUNTIME_CONFIG__ && window.__RUNTIME_CONFIG__.REACT_APP_WS_BASE_URL) {
+        const runtimeWsUrl = window.__RUNTIME_CONFIG__.REACT_APP_WS_BASE_URL;
+        console.log('Runtime configuration - using WebSocket URL:', runtimeWsUrl);
+        return runtimeWsUrl;
+    }
+    
     if (isDevelopment()) {
         // Development environment - connect directly to backend
         const devWsUrl = (typeof process !== 'undefined' && process.env && process.env.REACT_APP_WS_BASE_URL) || 'ws://localhost:3001';

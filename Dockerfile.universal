@@ -77,15 +77,18 @@ COPY --from=builder /app/packages/scratch-render/dist ./packages/scratch-render/
 COPY --from=builder /app/packages/scratch-svg-renderer/dist ./packages/scratch-svg-renderer/dist
 COPY --from=builder /app/packages/scratch-backend/dist ./packages/scratch-backend/dist
 
-# Nainstalujeme serve pro frontend (pouze produkční závislosti)
-RUN npm install -g serve --production
+# Zkopírujeme runtime server pro frontend
+COPY --from=builder /app/packages/scratch-gui/server-runtime.js ./packages/scratch-gui/server-runtime.js
+
+# Nainstalujeme express pro runtime server (pouze produkční závislosti)
+RUN npm install express --save --production --no-audit --no-fund
 
 # Vytvoříme entrypoint script pomocí echo (aby se vyhnulo problémům s heredoc)
 RUN echo '#!/bin/sh' > /app/entrypoint.sh && \
     echo 'case "${APP_MODE:-backend}" in' >> /app/entrypoint.sh && \
     echo '  frontend|gui)' >> /app/entrypoint.sh && \
     echo '    echo "🚀 Spouštím Frontend server na portu ${PORT:-8601}..."' >> /app/entrypoint.sh && \
-    echo '    exec serve -s packages/scratch-gui/build -l ${PORT:-8601}' >> /app/entrypoint.sh && \
+    echo '    cd /app/packages/scratch-gui && exec node server-runtime.js' >> /app/entrypoint.sh && \
     echo '    ;;' >> /app/entrypoint.sh && \
     echo '  backend|api)' >> /app/entrypoint.sh && \
     echo '    echo "🚀 Spouštím Backend server na portu ${PORT:-3001}..."' >> /app/entrypoint.sh && \
