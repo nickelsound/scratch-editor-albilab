@@ -219,11 +219,16 @@ class AlbiLABAPIClient {
     /**
      * Extract temperature from device info
      * @param {object} deviceInfo - Device information
-     * @returns {number} Temperature in Celsius
+     * @returns {number|string} Temperature in Celsius or empty string if sensor not available
      */
     extractTemperature(deviceInfo) {
+        // Check if sensor is active (type is not "none")
+        if (deviceInfo.sensors?.thermoHumid?.type === 'none') {
+            return ''; // Sensor not available
+        }
+        
         // If thermoHumid sensor is available, use it
-        if (deviceInfo.sensors?.thermoHumid?.values?.temperature) {
+        if (deviceInfo.sensors?.thermoHumid?.values?.temperature !== undefined) {
             return deviceInfo.sensors.thermoHumid.values.temperature;
         }
         
@@ -234,11 +239,16 @@ class AlbiLABAPIClient {
     /**
      * Extract humidity from device info
      * @param {object} deviceInfo - Device information
-     * @returns {number} Humidity percentage
+     * @returns {number|string} Humidity percentage or empty string if sensor not available
      */
     extractHumidity(deviceInfo) {
+        // Check if sensor is active (type is not "none")
+        if (deviceInfo.sensors?.thermoHumid?.type === 'none') {
+            return ''; // Sensor not available
+        }
+        
         // If thermoHumid sensor is available, use it
-        if (deviceInfo.sensors?.thermoHumid?.values?.humidity) {
+        if (deviceInfo.sensors?.thermoHumid?.values?.humidity !== undefined) {
             return deviceInfo.sensors.thermoHumid.values.humidity;
         }
         
@@ -249,9 +259,14 @@ class AlbiLABAPIClient {
     /**
      * Extract soil moisture from device info
      * @param {object} deviceInfo - Device information
-     * @returns {number} Soil moisture percentage
+     * @returns {number|string} Soil moisture percentage or empty string if sensor not available
      */
     extractSoilMoisture(deviceInfo) {
+        // Check if sensor is active (type is not "none")
+        if (deviceInfo.sensors?.soilMoisture?.type === 'none') {
+            return ''; // Sensor not available
+        }
+        
         if (deviceInfo.sensors?.soilMoisture?.values?.moisture !== undefined) {
             return deviceInfo.sensors.soilMoisture.values.moisture;
         }
@@ -263,9 +278,19 @@ class AlbiLABAPIClient {
     /**
      * Extract water level from device info
      * @param {object} deviceInfo - Device information
-     * @returns {boolean} Water level status
+     * @returns {boolean|string} Water level status or empty string if sensor not available
      */
     extractWaterLevel(deviceInfo) {
+        // Check if sensor is active (type is not "none")
+        if (deviceInfo.sensors?.waterSwitch?.type === 'none') {
+            return ''; // Sensor not available
+        }
+        
+        // Check for waterLowLevel (new API format) or waterPresent (old format)
+        if (deviceInfo.sensors?.waterSwitch?.values?.waterLowLevel !== undefined) {
+            return !deviceInfo.sensors.waterSwitch.values.waterLowLevel; // Invert: lowLevel = false means water present
+        }
+        
         if (deviceInfo.sensors?.waterSwitch?.values?.waterPresent !== undefined) {
             return deviceInfo.sensors.waterSwitch.values.waterPresent;
         }
@@ -276,27 +301,20 @@ class AlbiLABAPIClient {
 
     /**
      * Get fallback device info when device is not available
-     * @returns {object} Fallback device info
+     * @returns {object} Fallback device info with all sensors disabled (type: "none")
      */
     getFallbackDeviceInfo() {
         return {
             version: "1.0.182",
             sensors: {
                 soilMoisture: {
-                    values: {
-                        moisture: 45 + (Math.random() - 0.5) * 20
-                    }
+                    type: "none"
                 },
                 thermoHumid: {
-                    values: {
-                        temperature: 22.5 + (Math.random() - 0.5) * 2,
-                        humidity: 65 + (Math.random() - 0.5) * 10
-                    }
+                    type: "none"
                 },
                 waterSwitch: {
-                    values: {
-                        waterPresent: Math.random() > 0.1
-                    }
+                    type: "none"
                 }
             }
         };
