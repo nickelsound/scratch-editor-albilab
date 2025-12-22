@@ -31,9 +31,14 @@ const getRuntimeConfig = () => {
 };
 
 // Middleware pro vložení runtime konfigurace do index.html
-app.get('*', (req, res, next) => {
+app.use((req, res, next) => {
     // Pokud není index.html, pokračuj normálně
     if (req.path !== '/' && req.path !== '/index.html') {
+        return next();
+    }
+    
+    // Pouze pro GET requesty
+    if (req.method !== 'GET') {
         return next();
     }
     
@@ -87,7 +92,12 @@ app.get('*', (req, res, next) => {
 app.use(express.static(BUILD_DIR));
 
 // Fallback: pro SPA routování, servuj index.html pro všechny ostatní cesty
-app.get('*', (req, res) => {
+app.use((req, res) => {
+    // Pouze pro GET requesty
+    if (req.method !== 'GET') {
+        return res.status(405).send('Method not allowed');
+    }
+    
     const indexPath = path.join(BUILD_DIR, 'index.html');
     if (fs.existsSync(indexPath)) {
         res.sendFile(indexPath);
