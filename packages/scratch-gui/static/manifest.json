@@ -3,10 +3,11 @@
   "short_name": "AlbiLAB Scratch",
   "description": "AlbiLAB Scratch 3.0 GUI Editor",
   "start_url": "/",
-  "display": "fullscreen",
+  "display": "standalone",
   "orientation": "any",
   "theme_color": "#4C97FF",
   "background_color": "#FFFFFF",
+  "scope": "/",
   "icons": [
     {
       "src": "static/favicon.png",
