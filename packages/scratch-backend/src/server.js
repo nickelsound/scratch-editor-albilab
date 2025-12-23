@@ -4,8 +4,22 @@ const multer = require('multer');
 const fs = require('fs-extra');
 const path = require('path');
 const WebSocket = require('ws');
+
+// Setup Worker polyfill for Node.js environment
+// In Node.js, Worker is not available globally, so we need to use web-worker polyfill
+// This must be done BEFORE requiring scratch-vm, so that Worker is available when VM initializes
+if (typeof global.Worker === 'undefined') {
+    global.Worker = require('web-worker');
+}
+
 const VirtualMachine = require('@scratch/scratch-vm');
 const { runStartupScript } = require('./startup');
+
+// Also set Worker in the dispatch system if it wasn't set during VM initialization
+const dispatch = require('@scratch/scratch-vm/src/dispatch/central-dispatch');
+if (dispatch && dispatch.workerClass === null && typeof global.Worker !== 'undefined') {
+    dispatch.workerClass = global.Worker;
+}
 
 const app = express();
 const PORT = process.env.PORT || 3001;

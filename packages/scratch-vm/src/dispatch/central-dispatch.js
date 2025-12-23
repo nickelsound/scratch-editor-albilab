@@ -93,6 +93,11 @@ class CentralDispatch extends SharedDispatch {
      * @param {Worker} worker - the worker to add into the dispatch system.
      */
     addWorker (worker) {
+        if (!worker) {
+            log.error('Cannot add null or undefined worker to dispatch system');
+            return;
+        }
+        
         if (this.workers.indexOf(worker) === -1) {
             this.workers.push(worker);
             worker.onmessage = this._onMessage.bind(this, worker);
