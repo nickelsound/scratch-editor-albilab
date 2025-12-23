@@ -70,16 +70,18 @@ RUN echo "* soft nofile 65536" >> /etc/security/limits.conf 2>/dev/null || true 
 
 WORKDIR /app
 
-# Backend je zabundlovaný pomocí esbuild, ale potřebuje jsdom jako external (native modul)
-# Instalujeme pouze jsdom (jediná runtime závislost)
+# Backend je zabundlovaný pomocí esbuild, ale potřebuje jsdom a web-worker jako external (native moduly)
+# Instalujeme pouze jsdom a web-worker (runtime závislosti)
 COPY package*.json ./
 
-# Nainstalujeme pouze jsdom (jediná runtime závislost pro backend)
+# Nainstalujeme pouze jsdom a web-worker (runtime závislosti pro backend)
 RUN npm config set fetch-timeout 300000 && \
     npm config set fetch-retry-mintimeout 20000 && \
     npm config set fetch-retry-maxtimeout 120000 && \
-    npm install jsdom --save --ignore-scripts --no-audit --no-fund && \
-    npm cache clean --force
+    npm install jsdom web-worker --save --ignore-scripts --no-audit --no-fund && \
+    npm cache clean --force && \
+    # Ověříme, že web-worker je nainstalován
+    test -d node_modules/web-worker || (echo "ERROR: web-worker not installed" && exit 1)
 
 # Zkopírujeme build soubory z builder stage
 COPY --from=builder /app/packages/scratch-gui/build ./packages/scratch-gui/build
