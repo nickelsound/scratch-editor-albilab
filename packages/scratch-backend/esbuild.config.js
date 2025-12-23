@@ -43,9 +43,7 @@ const buildOptions = {
         'canvas',
         'canvas-toBlob',
         // jsdom has issues with require.resolve for relative paths - mark as external
-        'jsdom',
-        // web-worker is needed for Worker polyfill in Node.js environment
-        'web-worker'
+        'jsdom'
         // @scratch/scratch-vm will be bundled (it's a local workspace package)
     ],
     minify: isProduction,
