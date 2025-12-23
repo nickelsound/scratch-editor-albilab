@@ -1,6 +1,51 @@
 const AlbiLABConfig = require('./config');
 
 /**
+ * Normalize IP address or URL to full URL format
+ * - IP address (10.0.0.10) -> http://10.0.0.10
+ * - Domain (albilab.home) -> http://albilab.home
+ * - https://neco -> https://neco:443 (if no port)
+ * - If port already present, keep it
+ * @param {string} address - IP address, domain, or URL
+ * @returns {string} Normalized URL
+ */
+function normalizeAddress(address) {
+    if (!address || typeof address !== 'string') {
+        return null;
+    }
+    
+    const trimmed = address.trim();
+    if (!trimmed) {
+        return null;
+    }
+    
+    // Check if it already has a protocol
+    if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+        // Already has protocol
+        try {
+            const url = new URL(trimmed);
+            // If https:// and no port specified, add :443
+            if (url.protocol === 'https:' && !url.port) {
+                url.port = '443';
+            }
+            return url.toString().replace(/\/$/, ''); // Remove trailing slash
+        } catch (e) {
+            // Invalid URL format
+            return null;
+        }
+    }
+    
+    // No protocol - add http://
+    try {
+        const url = new URL(`http://${trimmed}`);
+        return url.toString().replace(/\/$/, ''); // Remove trailing slash
+    } catch (e) {
+        // Invalid format
+        return null;
+    }
+}
+
+/**
  * AlbiLAB API Client
  * Handles communication with the AlbiLAB device
  */
@@ -16,11 +61,14 @@ class AlbiLABAPIClient {
      * Make HTTP request to AlbiLAB device
      * @param {string} endpoint - API endpoint
      * @param {object} params - Query parameters
-     * @param {?string} ipAddress - Optional IP address to use instead of baseURL
+     * @param {?string} ipAddress - Optional IP address, domain, or URL to use instead of baseURL
      * @returns {Promise<object>} Response data
      */
     async makeRequest(endpoint, params = {}, ipAddress = null) {
-        const baseURL = ipAddress ? `http://${ipAddress}` : this.baseURL;
+        const baseURL = ipAddress ? normalizeAddress(ipAddress) : this.baseURL;
+        if (!baseURL) {
+            throw new Error('Invalid address format');
+        }
         const url = new URL(endpoint, baseURL);
         
         // Add query parameters
@@ -232,8 +280,8 @@ class AlbiLABAPIClient {
             return deviceInfo.sensors.thermoHumid.values.temperature;
         }
         
-        // Fallback to simulated temperature
-        return 22.5 + (Math.random() - 0.5) * 2;
+        // No data available
+        return '';
     }
 
     /**
@@ -252,8 +300,8 @@ class AlbiLABAPIClient {
             return deviceInfo.sensors.thermoHumid.values.humidity;
         }
         
-        // Fallback to simulated humidity
-        return 65.0 + (Math.random() - 0.5) * 10;
+        // No data available
+        return '';
     }
 
     /**
@@ -271,8 +319,8 @@ class AlbiLABAPIClient {
             return deviceInfo.sensors.soilMoisture.values.moisture;
         }
         
-        // Fallback to simulated moisture
-        return 45.0 + (Math.random() - 0.5) * 20;
+        // No data available
+        return '';
     }
 
     /**
@@ -295,8 +343,8 @@ class AlbiLABAPIClient {
             return deviceInfo.sensors.waterSwitch.values.waterPresent;
         }
         
-        // Fallback to simulated water level
-        return Math.random() > 0.1; // 90% chance of water present
+        // No data available
+        return '';
     }
 
     /**
@@ -329,12 +377,16 @@ class AlbiLABAPIClient {
 
     /**
      * Update base URL for device IP
-     * @param {string} ipAddress - New IP address
+     * @param {string} ipAddress - New IP address, domain, or URL
      */
     updateBaseURL(ipAddress) {
-        this.baseURL = `http://${ipAddress}`;
-        this.clearCache();
+        const normalized = normalizeAddress(ipAddress);
+        if (normalized) {
+            this.baseURL = normalized;
+            this.clearCache();
+        }
     }
 }
 
 module.exports = AlbiLABAPIClient;
+module.exports.normalizeAddress = normalizeAddress;

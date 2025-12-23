@@ -5,12 +5,40 @@
 const STORAGE_KEY = 'albilab-default-ip';
 const PROMPT_SHOWN_KEY = 'albilab-ip-prompt-shown';
 
-// IP address validation regex (same as in extension)
-const IP_REGEX = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+/**
+ * Validate IP address, domain, or URL
+ * @param {string} address - IP address, domain, or URL to validate
+ * @returns {boolean} True if valid
+ */
+const isValidAddress = (address) => {
+    if (!address || typeof address !== 'string') {
+        return false;
+    }
+    
+    const trimmed = address.trim();
+    if (!trimmed) {
+        return false;
+    }
+    
+    // Check if it's a valid URL format
+    try {
+        // If it has protocol, validate as URL
+        if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+            new URL(trimmed);
+            return true;
+        }
+        
+        // If no protocol, try adding http:// to validate
+        new URL(`http://${trimmed}`);
+        return true;
+    } catch (e) {
+        return false;
+    }
+};
 
 /**
  * Get stored AlbiLAB IP address from localStorage
- * @returns {?string} IP address or null if not set
+ * @returns {?string} IP address, domain, or URL or null if not set
  */
 const getAlbilabIP = () => {
     try {
@@ -18,7 +46,7 @@ const getAlbilabIP = () => {
             return null;
         }
         const ip = window.localStorage.getItem(STORAGE_KEY);
-        if (ip && IP_REGEX.test(ip.trim())) {
+        if (ip && isValidAddress(ip)) {
             return ip.trim();
         }
         return null;
@@ -30,7 +58,7 @@ const getAlbilabIP = () => {
 
 /**
  * Set AlbiLAB IP address in localStorage
- * @param {string} ip - IP address to store
+ * @param {string} ip - IP address, domain, or URL to store
  * @returns {boolean} True if successfully stored, false otherwise
  */
 const setAlbilabIP = (ip) => {
@@ -40,8 +68,8 @@ const setAlbilabIP = (ip) => {
         }
         
         const trimmedIP = ip.trim();
-        if (!IP_REGEX.test(trimmedIP)) {
-            console.error('Invalid IP address format:', trimmedIP);
+        if (!isValidAddress(trimmedIP)) {
+            console.error('Invalid address format:', trimmedIP);
             return false;
         }
         
