@@ -30,7 +30,7 @@ const messages = defineMessages({
         id: 'gui.albilabIPPrompt.reloadNotice'
     },
     placeholder: {
-        defaultMessage: 'e.g. 192.168.1.100 or albilab.home or https://albilab.home:8040',
+        defaultMessage: 'e.g. 192.168.1.100 or albilab.local or https://albilab.local:8040',
         description: 'Placeholder text for IP address input',
         id: 'gui.albilabIPPrompt.placeholder'
     },
