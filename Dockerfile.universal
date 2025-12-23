@@ -41,22 +41,11 @@ RUN npm run prepare --workspace=packages/scratch-gui
 ENV REACT_APP_API_PORT=3001
 ENV REACT_APP_WS_PORT=3001
 
-# Stáhneme už zbuildované balíčky z npm (rychlejší než build)
-# Tyto balíčky jsou publikované na npm s už zbuildovanými dist/ adresáři
-# Instalujeme do dočasného adresáře, protože workspaces by jinak použily lokální verze
-RUN mkdir -p /tmp/npm-packages && \
-    cd /tmp/npm-packages && \
-    npm init -y && \
-    npm install @scratch/scratch-svg-renderer@12.3.1 @scratch/scratch-render@12.3.1 @scratch/scratch-vm@12.3.1 --no-audit --no-fund && \
-    cp -r node_modules/@scratch/scratch-svg-renderer/dist /app/packages/scratch-svg-renderer/ && \
-    cp -r node_modules/@scratch/scratch-render/dist /app/packages/scratch-render/ && \
-    cp -r node_modules/@scratch/scratch-vm/dist /app/packages/scratch-vm/ && \
-    cd /app && \
-    rm -rf /tmp/npm-packages
-
-# Sestavíme pouze scratch-gui a scratch-backend (ty nejsou na npm)
-# Pro scratch-gui buildujeme pouze build:dev (produkční build pro server), ne dist/standalone (ty jsou pro distribuci jako knihovny)
-RUN npm run build:dev --workspace=packages/scratch-gui && \
+# Sestavíme všechny balíčky (potřebné pro obě aplikace)
+RUN npm run build --workspace=packages/scratch-svg-renderer && \
+    npm run build --workspace=packages/scratch-render && \
+    npm run build --workspace=packages/scratch-vm && \
+    npm run build --workspace=packages/scratch-gui && \
     npm run build --workspace=packages/scratch-backend
 
 # ============================================
@@ -70,18 +59,16 @@ RUN echo "* soft nofile 65536" >> /etc/security/limits.conf 2>/dev/null || true 
 
 WORKDIR /app
 
-# Backend je zabundlovaný pomocí esbuild, ale potřebuje jsdom a web-worker jako external (native moduly)
-# Instalujeme pouze jsdom a web-worker (runtime závislosti)
+# Backend je zabundlovaný pomocí esbuild, ale potřebuje jsdom jako external (native modul)
+# Instalujeme pouze jsdom (jediná runtime závislost)
 COPY package*.json ./
 
-# Nainstalujeme pouze jsdom a web-worker (runtime závislosti pro backend)
+# Nainstalujeme pouze jsdom (jediná runtime závislost pro backend)
 RUN npm config set fetch-timeout 300000 && \
     npm config set fetch-retry-mintimeout 20000 && \
     npm config set fetch-retry-maxtimeout 120000 && \
-    npm install jsdom web-worker --save --ignore-scripts --no-audit --no-fund && \
-    npm cache clean --force && \
-    # Ověříme, že web-worker je nainstalován
-    test -d node_modules/web-worker || (echo "ERROR: web-worker not installed" && exit 1)
+    npm install jsdom --save --ignore-scripts --no-audit --no-fund && \
+    npm cache clean --force
 
 # Zkopírujeme build soubory z builder stage
 COPY --from=builder /app/packages/scratch-gui/build ./packages/scratch-gui/build
@@ -90,25 +77,15 @@ COPY --from=builder /app/packages/scratch-render/dist ./packages/scratch-render/
 COPY --from=builder /app/packages/scratch-svg-renderer/dist ./packages/scratch-svg-renderer/dist
 COPY --from=builder /app/packages/scratch-backend/dist ./packages/scratch-backend/dist
 
-# Zkopírujeme extension-worker.js do root adresáře (potřebné pro web-worker v Node.js)
-# extension-manager.js hledá './extension-worker.js' relativně k working directory
-COPY --from=builder /app/packages/scratch-vm/dist/node/extension-worker.js ./extension-worker.js
-
-# Ověříme, že extension-worker.js je zkopírován
-RUN test -f extension-worker.js || (echo "ERROR: extension-worker.js not copied" && exit 1)
-
-# Zkopírujeme runtime server pro frontend
-COPY --from=builder /app/packages/scratch-gui/server-runtime.js ./packages/scratch-gui/server-runtime.js
-
-# Nainstalujeme express pro runtime server (pouze produkční závislosti)
-RUN npm install express --save --production --no-audit --no-fund
+# Nainstalujeme serve pro frontend (pouze produkční závislosti)
+RUN npm install -g serve --production
 
 # Vytvoříme entrypoint script pomocí echo (aby se vyhnulo problémům s heredoc)
 RUN echo '#!/bin/sh' > /app/entrypoint.sh && \
     echo 'case "${APP_MODE:-backend}" in' >> /app/entrypoint.sh && \
     echo '  frontend|gui)' >> /app/entrypoint.sh && \
     echo '    echo "🚀 Spouštím Frontend server na portu ${PORT:-8601}..."' >> /app/entrypoint.sh && \
-    echo '    cd /app/packages/scratch-gui && exec node server-runtime.js' >> /app/entrypoint.sh && \
+    echo '    exec serve -s packages/scratch-gui/build -l ${PORT:-8601}' >> /app/entrypoint.sh && \
     echo '    ;;' >> /app/entrypoint.sh && \
     echo '  backend|api)' >> /app/entrypoint.sh && \
     echo '    echo "🚀 Spouštím Backend server na portu ${PORT:-3001}..."' >> /app/entrypoint.sh && \
