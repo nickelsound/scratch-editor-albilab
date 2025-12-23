@@ -90,6 +90,13 @@ COPY --from=builder /app/packages/scratch-render/dist ./packages/scratch-render/
 COPY --from=builder /app/packages/scratch-svg-renderer/dist ./packages/scratch-svg-renderer/dist
 COPY --from=builder /app/packages/scratch-backend/dist ./packages/scratch-backend/dist
 
+# Zkopírujeme extension-worker.js do root adresáře (potřebné pro web-worker v Node.js)
+# extension-manager.js hledá './extension-worker.js' relativně k working directory
+COPY --from=builder /app/packages/scratch-vm/dist/node/extension-worker.js ./extension-worker.js
+
+# Ověříme, že extension-worker.js je zkopírován
+RUN test -f extension-worker.js || (echo "ERROR: extension-worker.js not copied" && exit 1)
+
 # Zkopírujeme runtime server pro frontend
 COPY --from=builder /app/packages/scratch-gui/server-runtime.js ./packages/scratch-gui/server-runtime.js
 
