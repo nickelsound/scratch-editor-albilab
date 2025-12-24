@@ -1325,20 +1325,35 @@ class Runtime extends EventEmitter {
                 typeof argInfo.defaultValue === 'undefined' ? '' :
                     xmlEscape(maybeFormatMessage(argInfo.defaultValue, this.makeMessageContextForTarget()).toString());
             
-            // Special handling for AlbiLAB IP address - check localStorage if available
+            // Special handling for AlbiLAB IP address - check localStorage if available (browser only)
+            // In backend/Node.js environment, this will be skipped and default value from project will be used
             if (placeholder === 'ALBILAB' && context.categoryInfo.id === 'albilab') {
                 try {
                     if (typeof window !== 'undefined' && window.localStorage) {
                         const storedIP = window.localStorage.getItem('albilab-default-ip');
                         if (storedIP) {
-                            const IP_REGEX = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
-                            if (IP_REGEX.test(storedIP.trim())) {
-                                defaultValue = xmlEscape(storedIP.trim());
+                            const trimmed = storedIP.trim();
+                            // Validate IP address, domain, or URL
+                            try {
+                                // If it has protocol, validate as URL
+                                if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+                                    new URL(trimmed);
+                                    defaultValue = xmlEscape(trimmed);
+                                } else {
+                                    // If no protocol, try adding http:// to validate
+                                    new URL(`http://${trimmed}`);
+                                    defaultValue = xmlEscape(trimmed);
+                                }
+                            } catch (e) {
+                                // Invalid format, skip - will use default from project
                             }
                         }
                     }
+                    // In Node.js/backend environment, window.localStorage is undefined
+                    // IP address will come from project data (saved in blocks)
+                    // Normalization happens in getValidatedIP() method in extension
                 } catch (e) {
-                    // Ignore errors accessing localStorage
+                    // Ignore errors accessing localStorage (e.g., in Node.js environment)
                 }
             }
 

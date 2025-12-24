@@ -133,6 +133,47 @@ PORT: 3001
 WEBSOCKET_PORT: 3002
 ```
 
+### Runtime konfigurace backend URL
+
+Frontend lze nakonfigurovat, aby volal backend na jiné adrese (např. za reverzní proxy) pomocí environment proměnných v `docker-compose.yml`. To je užitečné při provozu systému za reverzní proxy.
+
+**Konfigurace v docker-compose.yml:**
+
+```yaml
+services:
+  scratch-gui:
+    environment:
+      - NODE_ENV=production
+      - APP_MODE=frontend
+      - PORT=8601
+      # Runtime konfigurace backend URL (volitelné)
+      # Pokud není nastaveno, použije se default localhost:3001
+      - REACT_APP_API_BASE_URL=http://10.0.0.106:8080
+      - REACT_APP_WS_BASE_URL=ws://10.0.0.106:8080
+```
+
+**Příklady:**
+
+1. **Přímé připojení k backendu:**
+   ```yaml
+   - REACT_APP_API_BASE_URL=http://10.0.0.106:8080
+   - REACT_APP_WS_BASE_URL=ws://10.0.0.106:8080
+   ```
+
+2. **Reverzní proxy s /api prefixem:**
+   ```yaml
+   - REACT_APP_API_BASE_URL=http://reverse-proxy.example.com/api
+   - REACT_APP_WS_BASE_URL=wss://reverse-proxy.example.com/api
+   ```
+
+3. **HTTPS/WSS:**
+   ```yaml
+   - REACT_APP_API_BASE_URL=https://example.com
+   - REACT_APP_WS_BASE_URL=wss://example.com
+   ```
+
+**Poznámka:** Frontend automaticky přidává prefix `/api` k endpointům, takže pokud váš backend očekává cesty jako `/api/status`, použijte base URL bez `/api`. Pokud vaše reverzní proxy už obsahuje `/api` v URL, přidejte ho do base URL.
+
 ### Porty
 
 - **8601**: Frontend aplikace (Scratch Editor)

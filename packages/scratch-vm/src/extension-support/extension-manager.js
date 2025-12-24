@@ -157,6 +157,15 @@ class ExtensionManager {
         }
 
         return new Promise((resolve, reject) => {
+            // Check if Worker is available (browser environment)
+            // In Node.js environment, Worker is not available
+            if (typeof Worker === 'undefined') {
+                const error = new Error(`Cannot load external extension "${extensionURL}" in Node.js environment. Worker is not available.`);
+                log.error(error.message);
+                reject(error);
+                return;
+            }
+
             // If we `require` this at the global level it breaks non-webpack targets, including tests
             const worker = new Worker('./extension-worker.js');
 

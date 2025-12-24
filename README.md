@@ -134,6 +134,47 @@ PORT: 3001
 WEBSOCKET_PORT: 3002
 ```
 
+### Runtime Backend URL Configuration
+
+The frontend can be configured to call the backend on a different address (e.g., behind a reverse proxy) using environment variables in `docker-compose.yml`. This is useful when running the system behind a reverse proxy.
+
+**Configuration in docker-compose.yml:**
+
+```yaml
+services:
+  scratch-gui:
+    environment:
+      - NODE_ENV=production
+      - APP_MODE=frontend
+      - PORT=8601
+      # Runtime backend URL configuration (optional)
+      # If not set, defaults to localhost:3001
+      - REACT_APP_API_BASE_URL=http://10.0.0.106:8080
+      - REACT_APP_WS_BASE_URL=ws://10.0.0.106:8080
+```
+
+**Examples:**
+
+1. **Direct backend connection:**
+   ```yaml
+   - REACT_APP_API_BASE_URL=http://10.0.0.106:8080
+   - REACT_APP_WS_BASE_URL=ws://10.0.0.106:8080
+   ```
+
+2. **Reverse proxy with /api prefix:**
+   ```yaml
+   - REACT_APP_API_BASE_URL=http://reverse-proxy.example.com/api
+   - REACT_APP_WS_BASE_URL=wss://reverse-proxy.example.com/api
+   ```
+
+3. **HTTPS/WSS:**
+   ```yaml
+   - REACT_APP_API_BASE_URL=https://example.com
+   - REACT_APP_WS_BASE_URL=wss://example.com
+   ```
+
+**Note:** The frontend automatically adds `/api` prefix to endpoints, so if your backend expects paths like `/api/status`, use the base URL without `/api`. If your reverse proxy already includes `/api` in the URL, add it to the base URL.
+
 ### Ports
 
 - **8601**: Frontend application (Scratch Editor)

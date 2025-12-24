@@ -1,6 +1,51 @@
 const AlbiLABConfig = require('./config');
 
 /**
+ * Normalize IP address or URL to full URL format
+ * - IP address (10.0.0.10) -> http://10.0.0.10
+ * - Domain (albilab.home) -> http://albilab.home
+ * - https://neco -> https://neco:443 (if no port)
+ * - If port already present, keep it
+ * @param {string} address - IP address, domain, or URL
+ * @returns {string} Normalized URL
+ */
+function normalizeAddress(address) {
+    if (!address || typeof address !== 'string') {
+        return null;
+    }
+    
+    const trimmed = address.trim();
+    if (!trimmed) {
+        return null;
+    }
+    
+    // Check if it already has a protocol
+    if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+        // Already has protocol
+        try {
+            const url = new URL(trimmed);
+            // If https:// and no port specified, add :443
+            if (url.protocol === 'https:' && !url.port) {
+                url.port = '443';
+            }
+            return url.toString().replace(/\/$/, ''); // Remove trailing slash
+        } catch (e) {
+            // Invalid URL format
+            return null;
+        }
+    }
+    
+    // No protocol - add http://
+    try {
+        const url = new URL(`http://${trimmed}`);
+        return url.toString().replace(/\/$/, ''); // Remove trailing slash
+    } catch (e) {
+        // Invalid format
+        return null;
+    }
+}
+
+/**
  * AlbiLAB API Client
  * Handles communication with the AlbiLAB device
  */
@@ -16,11 +61,14 @@ class AlbiLABAPIClient {
      * Make HTTP request to AlbiLAB device
      * @param {string} endpoint - API endpoint
      * @param {object} params - Query parameters
-     * @param {?string} ipAddress - Optional IP address to use instead of baseURL
+     * @param {?string} ipAddress - Optional IP address, domain, or URL to use instead of baseURL
      * @returns {Promise<object>} Response data
      */
     async makeRequest(endpoint, params = {}, ipAddress = null) {
-        const baseURL = ipAddress ? `http://${ipAddress}` : this.baseURL;
+        const baseURL = ipAddress ? normalizeAddress(ipAddress) : this.baseURL;
+        if (!baseURL) {
+            throw new Error('Invalid address format');
+        }
         const url = new URL(endpoint, baseURL);
         
         // Add query parameters
@@ -219,84 +267,102 @@ class AlbiLABAPIClient {
     /**
      * Extract temperature from device info
      * @param {object} deviceInfo - Device information
-     * @returns {number} Temperature in Celsius
+     * @returns {number|string} Temperature in Celsius or empty string if sensor not available
      */
     extractTemperature(deviceInfo) {
+        // Check if sensor is active (type is not "none")
+        if (deviceInfo.sensors?.thermoHumid?.type === 'none') {
+            return ''; // Sensor not available
+        }
+        
         // If thermoHumid sensor is available, use it
-        if (deviceInfo.sensors?.thermoHumid?.values?.temperature) {
+        if (deviceInfo.sensors?.thermoHumid?.values?.temperature !== undefined) {
             return deviceInfo.sensors.thermoHumid.values.temperature;
         }
         
-        // Fallback to simulated temperature
-        return 22.5 + (Math.random() - 0.5) * 2;
+        // No data available
+        return '';
     }
 
     /**
      * Extract humidity from device info
      * @param {object} deviceInfo - Device information
-     * @returns {number} Humidity percentage
+     * @returns {number|string} Humidity percentage or empty string if sensor not available
      */
     extractHumidity(deviceInfo) {
+        // Check if sensor is active (type is not "none")
+        if (deviceInfo.sensors?.thermoHumid?.type === 'none') {
+            return ''; // Sensor not available
+        }
+        
         // If thermoHumid sensor is available, use it
-        if (deviceInfo.sensors?.thermoHumid?.values?.humidity) {
+        if (deviceInfo.sensors?.thermoHumid?.values?.humidity !== undefined) {
             return deviceInfo.sensors.thermoHumid.values.humidity;
         }
         
-        // Fallback to simulated humidity
-        return 65.0 + (Math.random() - 0.5) * 10;
+        // No data available
+        return '';
     }
 
     /**
      * Extract soil moisture from device info
      * @param {object} deviceInfo - Device information
-     * @returns {number} Soil moisture percentage
+     * @returns {number|string} Soil moisture percentage or empty string if sensor not available
      */
     extractSoilMoisture(deviceInfo) {
+        // Check if sensor is active (type is not "none")
+        if (deviceInfo.sensors?.soilMoisture?.type === 'none') {
+            return ''; // Sensor not available
+        }
+        
         if (deviceInfo.sensors?.soilMoisture?.values?.moisture !== undefined) {
             return deviceInfo.sensors.soilMoisture.values.moisture;
         }
         
-        // Fallback to simulated moisture
-        return 45.0 + (Math.random() - 0.5) * 20;
+        // No data available
+        return '';
     }
 
     /**
      * Extract water level from device info
      * @param {object} deviceInfo - Device information
-     * @returns {boolean} Water level status
+     * @returns {boolean|string} Water level status or empty string if sensor not available
      */
     extractWaterLevel(deviceInfo) {
+        // Check if sensor is active (type is not "none")
+        if (deviceInfo.sensors?.waterSwitch?.type === 'none') {
+            return ''; // Sensor not available
+        }
+        
+        // Check for waterLowLevel (new API format) or waterPresent (old format)
+        if (deviceInfo.sensors?.waterSwitch?.values?.waterLowLevel !== undefined) {
+            return !deviceInfo.sensors.waterSwitch.values.waterLowLevel; // Invert: lowLevel = false means water present
+        }
+        
         if (deviceInfo.sensors?.waterSwitch?.values?.waterPresent !== undefined) {
             return deviceInfo.sensors.waterSwitch.values.waterPresent;
         }
         
-        // Fallback to simulated water level
-        return Math.random() > 0.1; // 90% chance of water present
+        // No data available
+        return '';
     }
 
     /**
      * Get fallback device info when device is not available
-     * @returns {object} Fallback device info
+     * @returns {object} Fallback device info with all sensors disabled (type: "none")
      */
     getFallbackDeviceInfo() {
         return {
             version: "1.0.182",
             sensors: {
                 soilMoisture: {
-                    values: {
-                        moisture: 45 + (Math.random() - 0.5) * 20
-                    }
+                    type: "none"
                 },
                 thermoHumid: {
-                    values: {
-                        temperature: 22.5 + (Math.random() - 0.5) * 2,
-                        humidity: 65 + (Math.random() - 0.5) * 10
-                    }
+                    type: "none"
                 },
                 waterSwitch: {
-                    values: {
-                        waterPresent: Math.random() > 0.1
-                    }
+                    type: "none"
                 }
             }
         };
@@ -311,12 +377,16 @@ class AlbiLABAPIClient {
 
     /**
      * Update base URL for device IP
-     * @param {string} ipAddress - New IP address
+     * @param {string} ipAddress - New IP address, domain, or URL
      */
     updateBaseURL(ipAddress) {
-        this.baseURL = `http://${ipAddress}`;
-        this.clearCache();
+        const normalized = normalizeAddress(ipAddress);
+        if (normalized) {
+            this.baseURL = normalized;
+            this.clearCache();
+        }
     }
 }
 
 module.exports = AlbiLABAPIClient;
+module.exports.normalizeAddress = normalizeAddress;

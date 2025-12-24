@@ -2,6 +2,7 @@ const ArgumentType = require('../../extension-support/argument-type');
 const BlockType = require('../../extension-support/block-type');
 const formatMessage = require('format-message');
 const AlbiLABAPIClient = require('./api-client');
+const {normalizeAddress} = require('./api-client');
 
 // Czech translations for AlbiLAB blocks
 const csTranslations = {
@@ -638,11 +639,7 @@ class Scratch3AlbiLABBlocks {
         const ipAddress = this.getValidatedIP(args.ALBILAB);
         if (!ipAddress) {
             console.error(`[${new Date().toISOString()}] AlbiLAB: Invalid IP address for getTemperature`);
-            // Fallback to simulated data
-            const baseTemp = 22.5;
-            const variation = (Math.random() - 0.5) * 2; // ±1°C variation
-            this.deviceState.sensors.temperature = Math.round((baseTemp + variation) * 10) / 10;
-            return this.deviceState.sensors.temperature;
+            return '';
         }
         
         try {
@@ -651,11 +648,7 @@ class Scratch3AlbiLABBlocks {
             return this.deviceState.sensors.temperature;
         } catch (error) {
             console.error(`[${new Date().toISOString()}] AlbiLAB: Failed to get temperature:`, error.message);
-            // Fallback to simulated data
-            const baseTemp = 22.5;
-            const variation = (Math.random() - 0.5) * 2; // ±1°C variation
-            this.deviceState.sensors.temperature = Math.round((baseTemp + variation) * 10) / 10;
-            return this.deviceState.sensors.temperature;
+            return '';
         }
     }
 
@@ -663,11 +656,7 @@ class Scratch3AlbiLABBlocks {
         const ipAddress = this.getValidatedIP(args.ALBILAB);
         if (!ipAddress) {
             console.error(`[${new Date().toISOString()}] AlbiLAB: Invalid IP address for getHumidity`);
-            // Fallback to simulated data
-            const baseHumidity = 65.0;
-            const variation = (Math.random() - 0.5) * 10; // ±5% variation
-            this.deviceState.sensors.humidity = Math.round((baseHumidity + variation) * 10) / 10;
-            return this.deviceState.sensors.humidity;
+            return '';
         }
         
         try {
@@ -676,11 +665,7 @@ class Scratch3AlbiLABBlocks {
             return this.deviceState.sensors.humidity;
         } catch (error) {
             console.error(`[${new Date().toISOString()}] AlbiLAB: Failed to get humidity:`, error.message);
-            // Fallback to simulated data
-            const baseHumidity = 65.0;
-            const variation = (Math.random() - 0.5) * 10; // ±5% variation
-            this.deviceState.sensors.humidity = Math.round((baseHumidity + variation) * 10) / 10;
-            return this.deviceState.sensors.humidity;
+            return '';
         }
     }
 
@@ -688,11 +673,7 @@ class Scratch3AlbiLABBlocks {
         const ipAddress = this.getValidatedIP(args.ALBILAB);
         if (!ipAddress) {
             console.error(`[${new Date().toISOString()}] AlbiLAB: Invalid IP address for getSoilMoisture`);
-            // Fallback to simulated data
-            const baseMoisture = 45.0;
-            const variation = (Math.random() - 0.5) * 20; // ±10% variation
-            this.deviceState.sensors.soilMoisture = Math.round((baseMoisture + variation) * 10) / 10;
-            return this.deviceState.sensors.soilMoisture;
+            return '';
         }
         
         try {
@@ -701,11 +682,7 @@ class Scratch3AlbiLABBlocks {
             return this.deviceState.sensors.soilMoisture;
         } catch (error) {
             console.error(`[${new Date().toISOString()}] AlbiLAB: Failed to get soil moisture:`, error.message);
-            // Fallback to simulated data
-            const baseMoisture = 45.0;
-            const variation = (Math.random() - 0.5) * 20; // ±10% variation
-            this.deviceState.sensors.soilMoisture = Math.round((baseMoisture + variation) * 10) / 10;
-            return this.deviceState.sensors.soilMoisture;
+            return '';
         }
     }
 
@@ -713,27 +690,25 @@ class Scratch3AlbiLABBlocks {
         const ipAddress = this.getValidatedIP(args.ALBILAB);
         if (!ipAddress) {
             console.error(`[${new Date().toISOString()}] AlbiLAB: Invalid IP address for getWaterLevel`);
-            // Fallback to simulated data
-            this.deviceState.sensors.waterLevel = Math.random() > 0.1; // 90% chance of water present
-            return this.deviceState.sensors.waterLevel;
+            return false;
         }
         
         try {
             const sensorData = await this.apiClient.getSensorData(ipAddress);
-            this.deviceState.sensors.waterLevel = sensorData.waterLevel;
+            // Convert empty string to false for boolean block
+            const waterLevel = sensorData.waterLevel === '' ? false : sensorData.waterLevel;
+            this.deviceState.sensors.waterLevel = waterLevel;
             return this.deviceState.sensors.waterLevel;
         } catch (error) {
             console.error(`[${new Date().toISOString()}] AlbiLAB: Failed to get water level:`, error.message);
-            // Fallback to simulated data
-            this.deviceState.sensors.waterLevel = Math.random() > 0.1; // 90% chance of water present
-            return this.deviceState.sensors.waterLevel;
+            return false;
         }
     }
 
     /**
-     * Validate and get IP address from arguments
-     * @param {string} ipAddress - IP address string
-     * @returns {?string} Validated IP address or null
+     * Validate and normalize IP address, domain, or URL from arguments
+     * @param {string} ipAddress - IP address, domain, or URL string
+     * @returns {?string} Normalized URL or null if invalid
      */
     getValidatedIP(ipAddress) {
         if (!ipAddress || typeof ipAddress !== 'string') {
@@ -745,14 +720,14 @@ class Scratch3AlbiLABBlocks {
             return null;
         }
         
-        // Basic IP address validation
-        const ipRegex = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+        // Use normalizeAddress from api-client
+        const normalized = normalizeAddress(trimmedIP);
         
-        if (ipRegex.test(trimmedIP)) {
-            return trimmedIP;
+        if (normalized) {
+            return normalized;
         }
         
-        console.error(`[${new Date().toISOString()}] AlbiLAB: Invalid IP address format: ${trimmedIP}`);
+        console.error(`[${new Date().toISOString()}] AlbiLAB: Invalid address format: ${trimmedIP}`);
         return null;
     }
 }

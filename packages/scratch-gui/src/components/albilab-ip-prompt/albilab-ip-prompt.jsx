@@ -30,7 +30,7 @@ const messages = defineMessages({
         id: 'gui.albilabIPPrompt.reloadNotice'
     },
     placeholder: {
-        defaultMessage: 'e.g. 192.168.1.100',
+        defaultMessage: 'e.g. 192.168.1.100 or albilab.local or https://albilab.local:8040',
         description: 'Placeholder text for IP address input',
         id: 'gui.albilabIPPrompt.placeholder'
     },
@@ -61,7 +61,36 @@ const messages = defineMessages({
     }
 });
 
-const IP_REGEX = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+/**
+ * Validate IP address, domain, or URL
+ * @param {string} address - IP address, domain, or URL to validate
+ * @returns {boolean} True if valid
+ */
+const isValidAddress = (address) => {
+    if (!address || typeof address !== 'string') {
+        return false;
+    }
+    
+    const trimmed = address.trim();
+    if (!trimmed) {
+        return false;
+    }
+    
+    // Check if it's a valid URL format
+    try {
+        // If it has protocol, validate as URL
+        if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+            new URL(trimmed);
+            return true;
+        }
+        
+        // If no protocol, try adding http:// to validate
+        new URL(`http://${trimmed}`);
+        return true;
+    } catch (e) {
+        return false;
+    }
+};
 
 class AlbilabIPPromptComponent extends React.Component {
     constructor (props) {
@@ -76,7 +105,7 @@ class AlbilabIPPromptComponent extends React.Component {
         const value = e.target.value;
         this.setState({
             ipValue: value,
-            isValid: !value || IP_REGEX.test(value.trim())
+            isValid: !value || isValidAddress(value)
         });
     }
 
@@ -88,7 +117,7 @@ class AlbilabIPPromptComponent extends React.Component {
 
     handleOk = () => {
         const trimmedIP = this.state.ipValue.trim();
-        if (trimmedIP && IP_REGEX.test(trimmedIP)) {
+        if (trimmedIP && isValidAddress(trimmedIP)) {
             this.props.onOk(trimmedIP);
         } else if (!trimmedIP) {
             // Empty IP is allowed - user can cancel

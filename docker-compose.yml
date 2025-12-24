@@ -17,6 +17,13 @@ services:
       - NODE_ENV=production
       - APP_MODE=frontend
       - PORT=8601
+      # Runtime konfigurace backend URL (volitelné - pokud není nastaveno, použije se default localhost:3001)
+      # Pro reverzní proxy nastavte na URL reverzní proxy, např.:
+      # - REACT_APP_API_BASE_URL=http://reverse-proxy.example.com/api
+      # - REACT_APP_WS_BASE_URL=ws://reverse-proxy.example.com/api
+      # Pro testování můžete použít environment proměnné z .env souboru nebo přímo zde:
+      - REACT_APP_API_BASE_URL=${REACT_APP_API_BASE_URL:-}
+      - REACT_APP_WS_BASE_URL=${REACT_APP_WS_BASE_URL:-}
     restart: always
 
   # Backend server pro trvalý běh projektů (používá universal image s APP_MODE=backend)
