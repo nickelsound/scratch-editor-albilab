@@ -58,6 +58,97 @@ class AlbiLABAPIClient {
     }
 
     /**
+     * Make HTTPS request using https module with insecure agent
+     * This allows connections to servers with self-signed certificates
+     * @param {URL} urlObj - URL object
+     * @param {AbortController} controller - Abort controller for timeout
+     * @param {NodeJS.Timeout} timeoutId - Timeout ID
+     * @param {number} startTime - Request start time
+     * @returns {Promise<object>} Response data
+     * @private
+     */
+    _makeHttpsRequest(urlObj, controller, timeoutId, startTime) {
+        return new Promise((resolve, reject) => {
+            // Use dynamic require to avoid webpack bundling issues
+            // https is a built-in Node.js module that should be external
+            let https;
+            try {
+                // eslint-disable-next-line no-eval
+                https = eval('require')('https');
+            } catch (e) {
+                reject(new Error(`HTTPS module not available: ${e.message}`));
+                return;
+            }
+
+            // Create insecure agent that ignores certificate validation
+            const insecureAgent = new https.Agent({
+                rejectUnauthorized: false
+            });
+
+            const options = {
+                hostname: urlObj.hostname,
+                port: urlObj.port || 443,
+                path: urlObj.pathname + urlObj.search,
+                method: 'GET',
+                agent: insecureAgent,
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                }
+            };
+
+            const req = https.request(options, (res) => {
+                clearTimeout(timeoutId);
+                const duration = Date.now() - startTime;
+
+                // Log response details
+                console.log(`[${new Date().toISOString()}] [AlbiLAB API] Response received in ${duration}ms`);
+                console.log(`[${new Date().toISOString()}] [AlbiLAB API] Status: ${res.statusCode} ${res.statusMessage}`);
+                console.log(`[${new Date().toISOString()}] [AlbiLAB API] Response headers:`, res.headers);
+
+                let data = '';
+                res.on('data', (chunk) => {
+                    data += chunk;
+                });
+
+                res.on('end', () => {
+                    if (res.statusCode < 200 || res.statusCode >= 300) {
+                        console.error(`[${new Date().toISOString()}] [AlbiLAB API] Error response body:`, data);
+                        reject(new Error(`HTTP ${res.statusCode}: ${res.statusMessage}`));
+                        return;
+                    }
+
+                    try {
+                        const jsonData = JSON.parse(data);
+                        console.log(`[${new Date().toISOString()}] [AlbiLAB API] Response data:`, JSON.stringify(jsonData, null, 2));
+                        resolve(jsonData);
+                    } catch (e) {
+                        reject(new Error(`Failed to parse JSON response: ${e.message}`));
+                    }
+                });
+            });
+
+            req.on('error', (error) => {
+                clearTimeout(timeoutId);
+                reject(error);
+            });
+
+            // Handle abort signal
+            if (controller.signal.aborted) {
+                req.destroy();
+                reject(new Error('Request aborted'));
+                return;
+            }
+
+            controller.signal.addEventListener('abort', () => {
+                req.destroy();
+            });
+
+            req.end();
+        });
+    }
+
+    /**
      * Make HTTP request to AlbiLAB device
      * @param {string} endpoint - API endpoint
      * @param {object} params - Query parameters
@@ -94,9 +185,17 @@ class AlbiLABAPIClient {
         }, this.timeout);
 
         try {
-            // Use insecure agent for HTTPS requests to allow self-signed certificates
-            // This is necessary for home environments with custom CAs
             const urlObj = new URL(fullUrl);
+            
+            // For HTTPS URLs, use https module with insecure agent to ignore certificate validation
+            // This is necessary for home environments with self-signed certificates
+            if (urlObj.protocol === 'https:') {
+                const data = await this._makeHttpsRequest(urlObj, controller, timeoutId, startTime);
+                clearTimeout(timeoutId);
+                return data;
+            }
+            
+            // For HTTP URLs, use standard fetch
             const fetchOptions = {
                 method: 'GET',
                 signal: controller.signal,
@@ -105,19 +204,6 @@ class AlbiLABAPIClient {
                     'Content-Type': 'application/json'
                 }
             };
-            
-            // For HTTPS URLs, use insecure agent to ignore certificate validation
-            if (urlObj.protocol === 'https:') {
-                // In Node.js, fetch uses undici internally
-                // We need to use undici's dispatcher with custom TLS options
-                const { Agent: UndiciAgent } = require('undici');
-                const insecureAgent = new UndiciAgent({
-                    connect: {
-                        rejectUnauthorized: false
-                    }
-                });
-                fetchOptions.dispatcher = insecureAgent;
-            }
             
             const response = await fetch(fullUrl, fetchOptions);
 
