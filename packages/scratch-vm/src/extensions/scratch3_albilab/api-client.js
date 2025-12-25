@@ -94,14 +94,32 @@ class AlbiLABAPIClient {
         }, this.timeout);
 
         try {
-            const response = await fetch(fullUrl, {
+            // Use insecure agent for HTTPS requests to allow self-signed certificates
+            // This is necessary for home environments with custom CAs
+            const urlObj = new URL(fullUrl);
+            const fetchOptions = {
                 method: 'GET',
                 signal: controller.signal,
                 headers: {
                     'Accept': 'application/json',
                     'Content-Type': 'application/json'
                 }
-            });
+            };
+            
+            // For HTTPS URLs, use insecure agent to ignore certificate validation
+            if (urlObj.protocol === 'https:') {
+                // In Node.js, fetch uses undici internally
+                // We need to use undici's dispatcher with custom TLS options
+                const { Agent: UndiciAgent } = require('undici');
+                const insecureAgent = new UndiciAgent({
+                    connect: {
+                        rejectUnauthorized: false
+                    }
+                });
+                fetchOptions.dispatcher = insecureAgent;
+            }
+            
+            const response = await fetch(fullUrl, fetchOptions);
 
             clearTimeout(timeoutId);
             const duration = Date.now() - startTime;
