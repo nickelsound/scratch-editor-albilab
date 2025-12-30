@@ -16,6 +16,7 @@ const uid = require('../util/uid');
 const MathUtil = require('../util/math-util');
 const StringUtil = require('../util/string-util');
 const VariableUtil = require('../util/variable-util');
+const Base64Util = require('../util/base64-util');
 
 const {loadCostume} = require('../import/load-costume.js');
 const {loadSound} = require('../import/load-sound.js');
@@ -340,9 +341,10 @@ const serializeBlocks = function (blocks) {
 /**
  * Serialize the given costume.
  * @param {object} costume The costume to be serialized.
+ * @param {Runtime=} runtime Optional runtime to access storage cache
  * @returns {object} A serialized representation of the costume.
  */
-const serializeCostume = function (costume) {
+const serializeCostume = function (costume, runtime) {
     const obj = Object.create(null);
     obj.name = costume.name;
 
@@ -362,6 +364,50 @@ const serializeCostume = function (costume) {
 
     obj.rotationCenterX = costumeToSerialize.rotationCenterX;
     obj.rotationCenterY = costumeToSerialize.rotationCenterY;
+
+    // Try to get asset from storage cache if costume doesn't have asset
+    let assetToSerialize = costumeToSerialize.asset;
+    if (!assetToSerialize && runtime && runtime.storage && costumeToSerialize.assetId && runtime.storage.get) {
+        try {
+            assetToSerialize = runtime.storage.get(costumeToSerialize.assetId);
+        } catch (error) {
+            // Ignore cache lookup errors
+        }
+    }
+
+    // Serialize asset data as base64 for offline storage
+    if (assetToSerialize) {
+        try {
+            let base64Data = null;
+            
+            if (assetToSerialize.data) {
+                base64Data = Base64Util.uint8ArrayToBase64(assetToSerialize.data);
+            } else {
+                // Fallback: use encodeDataURI() and extract base64 part
+                const dataURI = assetToSerialize.encodeDataURI();
+                if (dataURI) {
+                    const base64Match = dataURI.match(/base64,(.+)$/);
+                    if (base64Match && base64Match[1]) {
+                        base64Data = base64Match[1];
+                    } else {
+                        // For SVG without base64, try to extract from utf8 format
+                        const utf8Match = dataURI.match(/data:image\/svg\+xml;utf8,(.+)$/);
+                        if (utf8Match && utf8Match[1]) {
+                            const svgText = decodeURIComponent(utf8Match[1]);
+                            const svgBytes = new TextEncoder().encode(svgText);
+                            base64Data = Base64Util.uint8ArrayToBase64(svgBytes);
+                        }
+                    }
+                }
+            }
+            
+            if (base64Data) {
+                obj.assetData = base64Data;
+            }
+        } catch (error) {
+            // Ignore serialization errors
+        }
+    }
 
     return obj;
 };
@@ -449,9 +495,10 @@ const serializeComments = function (comments) {
  * for saving and loading this target.
  * @param {object} target The target to be serialized.
  * @param {Set} extensions A set of extensions to add extension IDs to
+ * @param {Runtime=} runtime Optional runtime to access storage cache
  * @returns {object} A serialized representation of the given target.
  */
-const serializeTarget = function (target, extensions) {
+const serializeTarget = function (target, extensions, runtime) {
     const obj = Object.create(null);
     let targetExtensions = [];
     obj.isStage = target.isStage;
@@ -470,7 +517,7 @@ const serializeTarget = function (target, extensions) {
     }
 
     obj.currentCostume = target.currentCostume;
-    obj.costumes = target.costumes.map(serializeCostume);
+    obj.costumes = target.costumes.map(costume => serializeCostume(costume, runtime));
     obj.sounds = target.sounds.map(serializeSound);
     if (Object.prototype.hasOwnProperty.call(target, 'volume')) obj.volume = target.volume;
     if (Object.prototype.hasOwnProperty.call(target, 'layerOrder')) obj.layerOrder = target.layerOrder;
@@ -561,7 +608,7 @@ const serialize = function (runtime, targetId) {
         });
     }
 
-    const serializedTargets = flattenedOriginalTargets.map(t => serializeTarget(t, extensions));
+    const serializedTargets = flattenedOriginalTargets.map(t => serializeTarget(t, extensions, runtime));
 
     if (targetId) {
         return serializedTargets[0];
@@ -878,6 +925,8 @@ const parseScratchAssets = function (object, runtime, zip) {
             // a sprite
             asset: costumeSource.asset,
             assetId: costumeSource.assetId,
+            // assetData is base64 encoded asset data for offline storage
+            assetData: costumeSource.assetData,
             skinId: null,
             name: costumeSource.name,
             bitmapResolution: costumeSource.bitmapResolution,

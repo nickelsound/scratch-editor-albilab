@@ -1,6 +1,7 @@
 const JSZip = require('jszip');
 const log = require('../util/log');
 const {sanitizeSvg} = require('@scratch/scratch-svg-renderer');
+const Base64Util = require('../util/base64-util');
 
 /**
  * Deserializes sound from file into storage cache so that it can
@@ -102,8 +103,46 @@ const deserializeCostume = function (costume, runtime, zip, assetFileName, textL
         });
     }
 
+    // If asset data is stored as base64 in JSON (for offline storage), use it
+    if (costume.assetData && typeof costume.assetData === 'string') {
+        try {
+            const assetData = Base64Util.base64ToUint8Array(costume.assetData);
+            
+            let assetType = null;
+            const costumeFormat = costume.dataFormat.toLowerCase();
+            if (costumeFormat === 'svg') {
+                assetType = storage.AssetType.ImageVector;
+            } else if (['png', 'bmp', 'jpeg', 'jpg', 'gif'].indexOf(costumeFormat) >= 0) {
+                assetType = storage.AssetType.ImageBitmap;
+            } else {
+                log.error(`Unexpected file format for costume: ${costumeFormat}`);
+                return Promise.resolve(null);
+            }
+
+            const processedData = costumeFormat === 'svg' ?
+                sanitizeSvg.sanitizeByteStream(assetData) :
+                assetData;
+
+            return Promise.resolve(storage.createAsset(
+                assetType,
+                costumeFormat,
+                processedData,
+                null,
+                true
+            )).then(asset => {
+                if (asset) {
+                    costume.asset = asset;
+                    costume.assetId = asset.assetId;
+                    costume.md5 = `${asset.assetId}.${asset.dataFormat}`;
+                }
+                return null;
+            });
+        } catch (error) {
+            log.warn(`Failed to deserialize asset data from base64 for costume ${costume.name}: ${error.message}`);
+        }
+    }
+
     if (!zip) {
-        // Zip will not be provided if loading project json from server
         return Promise.resolve(null);
     }
 
