@@ -11,16 +11,16 @@ if (!bowser.msie) {
     const initAudioContext = () => {
         if (isInitializing) return;
         isInitializing = true;
-        
+
         document.removeEventListener('mousedown', initAudioContext);
         document.removeEventListener('touchstart', initAudioContext);
         document.removeEventListener('click', initAudioContext);
-        
+        document.removeEventListener('keydown', initAudioContext);
+
         if (AUDIO_CONTEXT) {
-            // If context exists but is suspended, resume it
             if (AUDIO_CONTEXT.state === 'suspended') {
                 AUDIO_CONTEXT.resume().catch(() => {
-                    // Silently handle resume errors
+                    // Resume can be retried on the next user gesture.
                 });
             }
             isInitializing = false;
@@ -43,6 +43,7 @@ if (!bowser.msie) {
     document.addEventListener('mousedown', initAudioContext);
     document.addEventListener('touchstart', initAudioContext);
     document.addEventListener('click', initAudioContext);
+    document.addEventListener('keydown', initAudioContext);
 }
 
 /**
@@ -53,7 +54,7 @@ export default function () {
     // If context exists but is suspended, try to resume it
     if (AUDIO_CONTEXT && AUDIO_CONTEXT.state === 'suspended') {
         AUDIO_CONTEXT.resume().catch(() => {
-            // Silently handle resume errors
+            // Resume can be retried on the next user gesture.
         });
     }
     return AUDIO_CONTEXT;
