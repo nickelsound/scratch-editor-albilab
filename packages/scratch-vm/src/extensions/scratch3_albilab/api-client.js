@@ -61,13 +61,14 @@ class AlbiLABAPIClient {
      * Make HTTPS request using https module with insecure agent
      * This allows connections to servers with self-signed certificates
      * @param {URL} urlObj - URL object
+     * @param {object} requestOptions - HTTP method, headers, and optional body
      * @param {AbortController} controller - Abort controller for timeout
      * @param {NodeJS.Timeout} timeoutId - Timeout ID
      * @param {number} startTime - Request start time
      * @returns {Promise<object>} Response data
      * @private
      */
-    _makeHttpsRequest(urlObj, controller, timeoutId, startTime) {
+    _makeHttpsRequest(urlObj, requestOptions, controller, timeoutId, startTime) {
         return new Promise((resolve, reject) => {
             // Use dynamic require to avoid webpack bundling issues
             // https is a built-in Node.js module that should be external
@@ -89,12 +90,9 @@ class AlbiLABAPIClient {
                 hostname: urlObj.hostname,
                 port: urlObj.port || 443,
                 path: urlObj.pathname + urlObj.search,
-                method: 'GET',
+                method: requestOptions.method || 'GET',
                 agent: insecureAgent,
-                headers: {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json'
-                }
+                headers: requestOptions.headers
             };
 
             const req = https.request(options, (res) => {
@@ -144,6 +142,10 @@ class AlbiLABAPIClient {
                 req.destroy();
             });
 
+            if (requestOptions.body) {
+                req.write(requestOptions.body);
+            }
+
             req.end();
         });
     }
@@ -153,9 +155,10 @@ class AlbiLABAPIClient {
      * @param {string} endpoint - API endpoint
      * @param {object} params - Query parameters
      * @param {?string} ipAddress - Optional IP address, domain, or URL to use instead of baseURL
+     * @param {object} options - Optional request options
      * @returns {Promise<object>} Response data
      */
-    async makeRequest(endpoint, params = {}, ipAddress = null) {
+    async makeRequest(endpoint, params = {}, ipAddress = null, options = {}) {
         const baseURL = ipAddress ? normalizeAddress(ipAddress) : this.baseURL;
         if (!baseURL) {
             throw new Error('Invalid address format');
@@ -174,8 +177,19 @@ class AlbiLABAPIClient {
         
         // Log request details with timestamp
         const timestamp = new Date().toISOString();
+        const method = options.method || 'GET';
+        const body = options.body === undefined ? null : JSON.stringify(options.body);
+        const headers = {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        };
+
         console.log(`[${timestamp}] [AlbiLAB API] Making request to: ${fullUrl}`);
+        console.log(`[${timestamp}] [AlbiLAB API] Method: ${method}`);
         console.log(`[${timestamp}] [AlbiLAB API] Request params:`, JSON.stringify(params, null, 2));
+        if (body) {
+            console.log(`[${timestamp}] [AlbiLAB API] Request body:`, body);
+        }
         console.log(`[${timestamp}] [AlbiLAB API] Timeout: ${this.timeout}ms`);
 
         const controller = new AbortController();
@@ -190,20 +204,20 @@ class AlbiLABAPIClient {
             // For HTTPS URLs, use https module with insecure agent to ignore certificate validation
             // This is necessary for home environments with self-signed certificates
             if (urlObj.protocol === 'https:') {
-                const data = await this._makeHttpsRequest(urlObj, controller, timeoutId, startTime);
+                const data = await this._makeHttpsRequest(urlObj, {method, headers, body}, controller, timeoutId, startTime);
                 clearTimeout(timeoutId);
                 return data;
             }
             
             // For HTTP URLs, use standard fetch
             const fetchOptions = {
-                method: 'GET',
+                method,
                 signal: controller.signal,
-                headers: {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json'
-                }
+                headers
             };
+            if (body) {
+                fetchOptions.body = body;
+            }
             
             const response = await fetch(fullUrl, fetchOptions);
 
@@ -241,6 +255,74 @@ class AlbiLABAPIClient {
             
             throw new Error(`AlbiLAB API error: ${error.message}`);
         }
+    }
+
+    /**
+     * Make a JSON POST request to AlbiLAB.
+     * @param {string} endpoint - API endpoint
+     * @param {object} body - JSON request body
+     * @param {?string} ipAddress - Optional IP address, domain, or URL
+     * @param {object} params - Optional query parameters
+     * @returns {Promise<object>} Response data
+     */
+    async postJson(endpoint, body = {}, ipAddress = null, params = {}) {
+        return this.makeRequest(endpoint, params, ipAddress, {
+            method: 'POST',
+            body
+        });
+    }
+
+    async getActuatorsConfig(ipAddress = null) {
+        return this.makeRequest(AlbiLABConfig.endpoints.actuatorsConfig, {}, ipAddress);
+    }
+
+    async getActuatorsState(ipAddress = null) {
+        return this.makeRequest(AlbiLABConfig.endpoints.actuatorsState, {}, ipAddress);
+    }
+
+    async controlActuator(index, action, durationMs = null, power = null, ipAddress = null) {
+        const payload = {
+            index,
+            action
+        };
+        if (action === 'start' && durationMs !== null && durationMs > 0) {
+            payload.duration_ms = Math.round(durationMs);
+        }
+        if (action === 'set_power' && power !== null) {
+            payload.power = Math.max(0, Math.min(100, Math.round(power)));
+        }
+        const response = await this.postJson(AlbiLABConfig.endpoints.actuatorsControl, payload, ipAddress);
+        this.clearCache();
+        return response;
+    }
+
+    async getSensorsState(ipAddress = null) {
+        return this.makeRequest(AlbiLABConfig.endpoints.sensorsState, {}, ipAddress);
+    }
+
+    async getSensorsValues(ipAddress = null) {
+        return this.makeRequest(AlbiLABConfig.endpoints.sensorsValues, {}, ipAddress);
+    }
+
+    async getAutomationState(ipAddress = null) {
+        return this.makeRequest(AlbiLABConfig.endpoints.automationState, {}, ipAddress);
+    }
+
+    async applyAutomationState(state, ipAddress = null, persist = false) {
+        const payload = Object.assign({}, state, {_persist: persist});
+        const response = await this.postJson(AlbiLABConfig.endpoints.automationApply, payload, ipAddress);
+        this.clearCache();
+        return response;
+    }
+
+    async getLedRingsState(ipAddress = null) {
+        return this.makeRequest(AlbiLABConfig.endpoints.ledRingsState, {}, ipAddress);
+    }
+
+    async applyLedRingsState(state, ipAddress = null) {
+        const response = await this.postJson(AlbiLABConfig.endpoints.ledRingsApply, state, ipAddress);
+        this.clearCache();
+        return response;
     }
 
     /**

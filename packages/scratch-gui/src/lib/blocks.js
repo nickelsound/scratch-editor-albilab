@@ -1,3 +1,35 @@
+const DEFAULT_FLYOUT_WIDTH = 250;
+const CATEGORY_MENU_WIDTH = 60;
+
+const installResizableFlyoutWidth = ScratchBlocks => {
+    if (ScratchBlocks.__albilabResizableFlyoutWidthInstalled) return;
+    ScratchBlocks.__albilabResizableFlyoutWidthInstalled = true;
+
+    const baseFlyoutGetWidth = ScratchBlocks.Flyout.prototype.getWidth;
+    ScratchBlocks.Flyout.prototype.getWidth = function () {
+        if (!this.horizontalLayout_ && Number.isFinite(this.resizableWidth_)) {
+            return this.resizableWidth_;
+        }
+        return baseFlyoutGetWidth.call(this);
+    };
+
+    const baseToolboxGetWidth = ScratchBlocks.Toolbox.prototype.getWidth;
+    ScratchBlocks.Toolbox.prototype.getWidth = function () {
+        if (
+            !this.horizontalLayout_ &&
+            this.flyout_ &&
+            Number.isFinite(this.flyout_.resizableWidth_)
+        ) {
+            return CATEGORY_MENU_WIDTH + this.flyout_.resizableWidth_;
+        }
+        return baseToolboxGetWidth.call(this);
+    };
+
+    if (ScratchBlocks.VerticalFlyout) {
+        ScratchBlocks.VerticalFlyout.prototype.DEFAULT_WIDTH = DEFAULT_FLYOUT_WIDTH;
+    }
+};
+
 /**
  * Connect scratch blocks with the vm
  * @param {VirtualMachine} vm - The scratch vm
@@ -6,6 +38,7 @@
  */
 export default function (vm, useCatBlocks) {
     const ScratchBlocks = require('scratch-blocks');
+    installResizableFlyoutWidth(ScratchBlocks);
 
     // TODO: Set theme from editor settings
     if (useCatBlocks) {

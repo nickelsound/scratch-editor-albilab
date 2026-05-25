@@ -4,6 +4,46 @@
 
 .blocks {
     height: 100%;
+    position: relative;
+    --scratch-flyout-width: 250px;
+}
+
+.flyout-resize-handle {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: calc(60px + var(--scratch-flyout-width) - 4px);
+    width: 8px;
+    cursor: ew-resize;
+    z-index: $z-index-drag-layer;
+    background: transparent;
+    touch-action: none;
+}
+
+.flyout-resize-handle:before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 3px;
+    width: 2px;
+    background: transparent;
+    transition: background-color 0.12s ease;
+}
+
+.flyout-resize-handle:hover:before,
+.flyout-resize-handle:focus:before,
+.flyout-resize-handle-active:before {
+    background: $looks-secondary;
+}
+
+.flyout-resize-handle:focus {
+    outline: none;
+}
+
+[dir="rtl"] .flyout-resize-handle {
+    right: calc(60px + var(--scratch-flyout-width) - 4px);
+    left: auto;
 }
 
 .drag-over:after {

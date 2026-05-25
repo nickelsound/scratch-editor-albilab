@@ -50,17 +50,43 @@ const DroppableBlocks = DropAreaHOC([
     DragConstants.BACKPACK_CODE
 ])(BlocksComponent);
 
+const FLYOUT_WIDTH_STORAGE_KEY = 'scratch-block-flyout-width';
+const DEFAULT_FLYOUT_WIDTH = 250;
+const MIN_FLYOUT_WIDTH = 220;
+const MAX_FLYOUT_WIDTH = 560;
+const CATEGORY_MENU_WIDTH = 60;
+
+const clampFlyoutWidth = width => {
+    const number = Number(width);
+    if (!Number.isFinite(number)) return DEFAULT_FLYOUT_WIDTH;
+    return Math.max(MIN_FLYOUT_WIDTH, Math.min(MAX_FLYOUT_WIDTH, Math.round(number)));
+};
+
+const readStoredFlyoutWidth = () => {
+    try {
+        if (typeof window === 'undefined' || !window.localStorage) return DEFAULT_FLYOUT_WIDTH;
+        return clampFlyoutWidth(window.localStorage.getItem(FLYOUT_WIDTH_STORAGE_KEY));
+    } catch (error) {
+        return DEFAULT_FLYOUT_WIDTH;
+    }
+};
+
 class Blocks extends React.Component {
     constructor (props) {
         super(props);
         this.ScratchBlocks = VMScratchBlocks(props.vm, false);
         bindAll(this, [
+            'applyFlyoutWidth',
             'attachVM',
             'detachVM',
             'getToolboxXML',
             'handleCategorySelected',
             'handleConnectionModalStart',
             'handleDrop',
+            'handleFlyoutResizeEnd',
+            'handleFlyoutResizeKeyDown',
+            'handleFlyoutResizeMove',
+            'handleFlyoutResizeStart',
             'handleStatusButtonUpdate',
             'handleOpenSoundRecorder',
             'handlePromptStart',
@@ -86,10 +112,16 @@ class Blocks extends React.Component {
         this.ScratchBlocks.recordSoundCallback = this.handleOpenSoundRecorder;
 
         this.state = {
-            prompt: null
+            prompt: null,
+            flyoutWidth: readStoredFlyoutWidth(),
+            isFlyoutResizing: false
         };
         this.onTargetsUpdate = debounce(this.onTargetsUpdate, 100);
         this.toolboxUpdateQueue = [];
+        this.flyoutResizeStart = null;
+        this.currentFlyoutWidth = this.state.flyoutWidth;
+        this.previousBodyCursor = null;
+        this.previousBodyUserSelect = null;
     }
     componentDidMount () {
         this.ScratchBlocks = VMScratchBlocks(this.props.vm, this.props.useCatBlocks);
@@ -123,6 +155,7 @@ class Blocks extends React.Component {
             {rtl: this.props.isRtl, toolbox: this.props.toolboxXML, colours: getColorsForMode(this.props.colorMode)}
         );
         this.workspace = this.ScratchBlocks.inject(this.blocks, workspaceConfig);
+        this.applyFlyoutWidth(this.state.flyoutWidth);
 
         // Register buttons under new callback keys for creating variables,
         // lists, and procedures from extensions.
@@ -172,6 +205,8 @@ class Blocks extends React.Component {
     shouldComponentUpdate (nextProps, nextState) {
         return (
             this.state.prompt !== nextState.prompt ||
+            this.state.flyoutWidth !== nextState.flyoutWidth ||
+            this.state.isFlyoutResizing !== nextState.isFlyoutResizing ||
             this.props.isVisible !== nextProps.isVisible ||
             this._renderedToolboxXML !== nextProps.toolboxXML ||
             this.props.extensionLibraryVisible !== nextProps.extensionLibraryVisible ||
@@ -220,6 +255,7 @@ class Blocks extends React.Component {
         }
     }
     componentWillUnmount () {
+        this.handleFlyoutResizeEnd();
         this.detachVM();
         this.workspace.dispose();
         clearTimeout(this.toolboxUpdateTimeout);
@@ -231,6 +267,116 @@ class Blocks extends React.Component {
         if (this.handleAlbilabIPChanged) {
             window.removeEventListener('albilabIPChanged', this.handleAlbilabIPChanged);
         }
+    }
+    applyFlyoutWidth (width) {
+        const nextWidth = clampFlyoutWidth(width);
+        if (!this.workspace || !this.workspace.getFlyout) return;
+
+        const flyout = this.workspace.getFlyout();
+        if (!flyout) return;
+
+        flyout.resizableWidth_ = nextWidth;
+        if (this.workspace.toolbox_) {
+            this.workspace.toolbox_.width = CATEGORY_MENU_WIDTH + nextWidth;
+        }
+        this.workspace.resize();
+        this.onWorkspaceMetricsChange();
+    }
+    setFlyoutWidth (width, persist) {
+        const nextWidth = clampFlyoutWidth(width);
+        this.currentFlyoutWidth = nextWidth;
+        if (nextWidth !== this.state.flyoutWidth) {
+            this.setState({flyoutWidth: nextWidth});
+        }
+        this.applyFlyoutWidth(nextWidth);
+
+        if (persist) {
+            try {
+                if (typeof window !== 'undefined' && window.localStorage) {
+                    window.localStorage.setItem(FLYOUT_WIDTH_STORAGE_KEY, String(nextWidth));
+                }
+            } catch (error) {
+                // Ignore localStorage errors in embedded contexts.
+            }
+        }
+    }
+    handleFlyoutResizeStart (event) {
+        const point = event.touches ? event.touches[0] : event;
+        if (!point) return;
+
+        this.ScratchBlocks.hideChaff();
+        this.flyoutResizeStart = {
+            x: point.clientX,
+            width: this.state.flyoutWidth
+        };
+        this.setState({isFlyoutResizing: true});
+
+        document.addEventListener('mousemove', this.handleFlyoutResizeMove);
+        document.addEventListener('mouseup', this.handleFlyoutResizeEnd);
+        document.addEventListener('touchmove', this.handleFlyoutResizeMove, {passive: false});
+        document.addEventListener('touchend', this.handleFlyoutResizeEnd);
+        document.addEventListener('touchcancel', this.handleFlyoutResizeEnd);
+
+        if (document.body) {
+            this.previousBodyCursor = document.body.style.cursor;
+            this.previousBodyUserSelect = document.body.style.userSelect;
+            document.body.style.cursor = 'ew-resize';
+            document.body.style.userSelect = 'none';
+        }
+
+        event.preventDefault();
+        event.stopPropagation();
+    }
+    handleFlyoutResizeMove (event) {
+        if (!this.flyoutResizeStart) return;
+        const point = event.touches ? event.touches[0] : event;
+        if (!point) return;
+
+        const direction = this.props.isRtl ? -1 : 1;
+        const delta = (point.clientX - this.flyoutResizeStart.x) * direction;
+        this.setFlyoutWidth(this.flyoutResizeStart.width + delta, false);
+
+        event.preventDefault();
+    }
+    handleFlyoutResizeEnd () {
+        if (!this.flyoutResizeStart) return;
+
+        this.flyoutResizeStart = null;
+        this.setState({isFlyoutResizing: false});
+        this.setFlyoutWidth(this.currentFlyoutWidth, true);
+
+        document.removeEventListener('mousemove', this.handleFlyoutResizeMove);
+        document.removeEventListener('mouseup', this.handleFlyoutResizeEnd);
+        document.removeEventListener('touchmove', this.handleFlyoutResizeMove);
+        document.removeEventListener('touchend', this.handleFlyoutResizeEnd);
+        document.removeEventListener('touchcancel', this.handleFlyoutResizeEnd);
+
+        if (document.body) {
+            document.body.style.cursor = this.previousBodyCursor || '';
+            document.body.style.userSelect = this.previousBodyUserSelect || '';
+        }
+        this.previousBodyCursor = null;
+        this.previousBodyUserSelect = null;
+    }
+    handleFlyoutResizeKeyDown (event) {
+        const largeStep = event.shiftKey ? 40 : 10;
+        const direction = this.props.isRtl ? -1 : 1;
+        let nextWidth = this.state.flyoutWidth;
+
+        if (event.key === 'ArrowRight') {
+            nextWidth += largeStep * direction;
+        } else if (event.key === 'ArrowLeft') {
+            nextWidth -= largeStep * direction;
+        } else if (event.key === 'Home') {
+            nextWidth = DEFAULT_FLYOUT_WIDTH;
+        } else if (event.key === 'End') {
+            nextWidth = MAX_FLYOUT_WIDTH;
+        } else {
+            return;
+        }
+
+        this.setFlyoutWidth(nextWidth, true);
+        event.preventDefault();
     }
     requestToolboxUpdate () {
         clearTimeout(this.toolboxUpdateTimeout);
@@ -258,6 +404,7 @@ class Blocks extends React.Component {
         const offset = this.workspace.toolbox_.getCategoryScrollOffset();
         this.workspace.updateToolbox(this.props.toolboxXML);
         this._renderedToolboxXML = this.props.toolboxXML;
+        this.applyFlyoutWidth(this.currentFlyoutWidth);
 
         // In order to catch any changes that mutate the toolbox during "normal runtime"
         // (variable changes/etc), re-enable toolbox refresh.
@@ -609,6 +756,10 @@ class Blocks extends React.Component {
             <React.Fragment>
                 <DroppableBlocks
                     componentRef={this.setBlocks}
+                    flyoutWidth={this.state.flyoutWidth}
+                    isFlyoutResizing={this.state.isFlyoutResizing}
+                    onFlyoutResizeKeyDown={this.handleFlyoutResizeKeyDown}
+                    onFlyoutResizeStart={this.handleFlyoutResizeStart}
                     onDrop={this.handleDrop}
                     {...props}
                 />
