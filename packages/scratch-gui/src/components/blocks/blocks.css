@@ -8,6 +8,14 @@
     --scratch-flyout-width: 250px;
 }
 
+.blocks-injection {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+}
+
 .flyout-resize-handle {
     position: absolute;
     top: 0;

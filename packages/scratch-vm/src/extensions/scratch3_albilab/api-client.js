@@ -45,6 +45,33 @@ function normalizeAddress(address) {
     }
 }
 
+const isBrowserRuntime = () => typeof window !== 'undefined' && window.location;
+
+const getBackendApiBaseUrl = () => {
+    if (!isBrowserRuntime()) {
+        return null;
+    }
+
+    if (window.__RUNTIME_CONFIG__ && window.__RUNTIME_CONFIG__.REACT_APP_API_BASE_URL) {
+        return window.__RUNTIME_CONFIG__.REACT_APP_API_BASE_URL.replace(/\/$/, '');
+    }
+
+    if (typeof process !== 'undefined' && process.env && process.env.REACT_APP_API_BASE_URL) {
+        return process.env.REACT_APP_API_BASE_URL.replace(/\/$/, '');
+    }
+
+    const protocol = window.location.protocol === 'https:' ? 'https:' : 'http:';
+    return `${protocol}//${window.location.hostname}:3001`;
+};
+
+const getBackendProxyUrl = () => {
+    const baseUrl = getBackendApiBaseUrl();
+    if (!baseUrl) {
+        return null;
+    }
+    return `${baseUrl}${baseUrl.endsWith('/api') ? '' : '/api'}/albilab/request`;
+};
+
 /**
  * AlbiLAB API Client
  * Handles communication with the AlbiLAB device
@@ -180,9 +207,11 @@ class AlbiLABAPIClient {
         const method = options.method || 'GET';
         const body = options.body === undefined ? null : JSON.stringify(options.body);
         const headers = {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
+            'Accept': 'application/json'
         };
+        if (body) {
+            headers['Content-Type'] = 'application/json';
+        }
 
         console.log(`[${timestamp}] [AlbiLAB API] Making request to: ${fullUrl}`);
         console.log(`[${timestamp}] [AlbiLAB API] Method: ${method}`);
@@ -199,6 +228,42 @@ class AlbiLABAPIClient {
         }, this.timeout);
 
         try {
+            const proxyUrl = getBackendProxyUrl();
+            if (proxyUrl) {
+                const response = await fetch(proxyUrl, {
+                    method: 'POST',
+                    signal: controller.signal,
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        address: baseURL,
+                        endpoint,
+                        method,
+                        params,
+                        body
+                    })
+                });
+
+                clearTimeout(timeoutId);
+                const duration = Date.now() - startTime;
+
+                console.log(`[${new Date().toISOString()}] [AlbiLAB API] Proxy response received in ${duration}ms`);
+                console.log(`[${new Date().toISOString()}] [AlbiLAB API] Proxy status: ${response.status} ${response.statusText}`);
+                console.log(`[${new Date().toISOString()}] [AlbiLAB API] Proxy response headers:`, Object.fromEntries(response.headers.entries()));
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error(`[${new Date().toISOString()}] [AlbiLAB API] Proxy error response body:`, errorText);
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                console.log(`[${new Date().toISOString()}] [AlbiLAB API] Proxy response data:`, JSON.stringify(data, null, 2));
+                return data;
+            }
+
             const urlObj = new URL(fullUrl);
             
             // For HTTPS URLs, use https module with insecure agent to ignore certificate validation

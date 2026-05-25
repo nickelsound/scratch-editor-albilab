@@ -44,6 +44,81 @@ test('AlbiLAB API client builds firmware 2.0 POST bodies', async t => {
     });
 });
 
+test('AlbiLAB API client keeps GET requests CORS-simple', async t => {
+    const originalFetch = global.fetch;
+    const calls = [];
+    global.fetch = async (url, options) => {
+        calls.push({url, options});
+        return {
+            ok: true,
+            status: 200,
+            statusText: 'OK',
+            headers: new Map(),
+            json: async () => ({ok: true})
+        };
+    };
+    t.teardown(() => {
+        global.fetch = originalFetch;
+    });
+
+    const client = new AlbiLABAPIClient();
+    await client.makeRequest('/api/sensors/values', {}, '10.0.0.20');
+    await client.postJson('/api/actuators/control', {index: 0, action: 'start'}, '10.0.0.20');
+
+    t.equal(calls[0].options.method, 'GET');
+    t.same(calls[0].options.headers, {'Accept': 'application/json'});
+    t.notOk(calls[0].options.body);
+    t.equal(calls[1].options.method, 'POST');
+    t.equal(calls[1].options.headers['Content-Type'], 'application/json');
+});
+
+test('AlbiLAB API client proxies browser requests through scratch backend', async t => {
+    const originalFetch = global.fetch;
+    const originalWindow = global.window;
+    global.window = {
+        __RUNTIME_CONFIG__: {
+            REACT_APP_API_BASE_URL: 'http://localhost:3001'
+        },
+        location: {
+            protocol: 'http:',
+            hostname: 'localhost'
+        }
+    };
+    const calls = [];
+    global.fetch = async (url, options) => {
+        calls.push({url, options});
+        return {
+            ok: true,
+            status: 200,
+            statusText: 'OK',
+            headers: new Map(),
+            json: async () => ({ok: true})
+        };
+    };
+    t.teardown(() => {
+        global.fetch = originalFetch;
+        global.window = originalWindow;
+    });
+
+    const client = new AlbiLABAPIClient();
+    await client.makeRequest('/api/sensors/values', {kind: 'all'}, '10.0.0.20');
+    await client.postJson('/api/actuators/control', {index: 1, action: 'start'}, '10.0.0.20');
+
+    t.equal(calls[0].url, 'http://localhost:3001/api/albilab/request');
+    t.equal(calls[0].options.method, 'POST');
+    const getPayload = JSON.parse(calls[0].options.body);
+    t.same(getPayload, {
+        address: 'http://10.0.0.20',
+        endpoint: '/api/sensors/values',
+        method: 'GET',
+        params: {kind: 'all'},
+        body: null
+    });
+    const postPayload = JSON.parse(calls[1].options.body);
+    t.equal(postPayload.endpoint, '/api/actuators/control');
+    t.equal(postPayload.body, '{"index":1,"action":"start"}');
+});
+
 test('AlbiLAB menus use discovered names and ignore disabled actuators', t => {
     const blocks = makeBlocks();
     blocks.discovery.actuators = [
@@ -92,6 +167,27 @@ test('AlbiLAB menus use discovered names and ignore disabled actuators', t => {
     const disabledSelection = 'actuator|waterPump|pump-b|1|Disabled%20Pump';
     t.equal(blocks._resolveActuator('waterPump', disabledSelection).id, 'pump-a');
     t.end();
+});
+
+test('AlbiLAB does not call legacy pump endpoint when firmware 2.0 actuator API is present', async t => {
+    const blocks = makeBlocks();
+    blocks.refreshDiscovery = async address => {
+        blocks.discovery = Object.assign(blocks._emptyDiscovery(), {
+            address,
+            supportsActuatorsApi: true
+        });
+        return blocks.discovery;
+    };
+    blocks.apiClient.controlPump = async () => {
+        t.fail('legacy pump endpoint should not be called');
+    };
+
+    await blocks.pumpOn({
+        PUMP: '',
+        ALBILAB: '10.0.0.42'
+    });
+
+    t.pass('missing firmware 2.0 pump does not fall back to /pump');
 });
 
 test('AlbiLAB keeps old opcodes while adding firmware 2.0 arguments', t => {

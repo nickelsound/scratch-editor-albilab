@@ -8,7 +8,7 @@ const AlbiLABConfig = {
     
     // API endpoints
     endpoints: {
-        info: '/info',
+        info: '/api/info',
         pump: '/pump',
         fan: '/fan',
         lights: '/lights',

@@ -194,7 +194,9 @@ class Scratch3AlbiLABBlocks {
             sensors: [],
             sensorValues: {},
             lightings: [],
-            ledRings: []
+            ledRings: [],
+            supportsActuatorsApi: false,
+            supportsLightingApi: false
         };
     }
 
@@ -633,7 +635,11 @@ class Scratch3AlbiLABBlocks {
             sensors: this._buildSensorList(sensorState, sensorValues),
             sensorValues,
             lightings: this._buildLightingList(automation),
-            ledRings: Array.isArray(ledRings.rings) ? ledRings.rings : []
+            ledRings: Array.isArray(ledRings.rings) ? ledRings.rings : [],
+            supportsActuatorsApi: actuatorConfigResult.status === 'fulfilled' ||
+                actuatorStateResult.status === 'fulfilled',
+            supportsLightingApi: automationResult.status === 'fulfilled' ||
+                ledRingsResult.status === 'fulfilled'
         };
     }
 
@@ -835,6 +841,9 @@ class Scratch3AlbiLABBlocks {
             this.deviceState.lights.on = action !== 'off';
         } catch (error) {
             console.warn(`[${new Date().toISOString()}] AlbiLAB: firmware 2.0 light control failed:`, error.message);
+            if (this.discovery.supportsLightingApi) {
+                return;
+            }
             await this._controlLegacyLights(action, args, ipAddress);
         }
     }
@@ -880,6 +889,9 @@ class Scratch3AlbiLABBlocks {
             }, seconds * 1000);
             return;
         }
+        if (this.discovery.supportsActuatorsApi) {
+            return;
+        }
         setTimeout(() => {
             this.apiClient.controlPump('start', null, ipAddress)
                 .catch(error => console.warn(`[${new Date().toISOString()}] AlbiLAB: failed to restart legacy pump:`, error.message));
@@ -911,6 +923,9 @@ class Scratch3AlbiLABBlocks {
             return returnActuator ? actuator : null;
         } catch (error) {
             console.warn(`[${new Date().toISOString()}] AlbiLAB: firmware 2.0 actuator control failed:`, error.message);
+            if (this.discovery.supportsActuatorsApi) {
+                return null;
+            }
             await this._controlLegacyActuator(type, action, durationMs, ipAddress);
             return null;
         }

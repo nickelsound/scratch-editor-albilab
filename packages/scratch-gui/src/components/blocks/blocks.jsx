@@ -25,8 +25,11 @@ const BlocksComponent = props => {
             })}
             style={nextStyle}
             {...componentProps}
-            componentRef={containerRef}
         >
+            <div
+                className={styles.blocksInjection}
+                ref={containerRef}
+            />
             <div
                 aria-label="Resize blocks palette"
                 aria-orientation="vertical"
