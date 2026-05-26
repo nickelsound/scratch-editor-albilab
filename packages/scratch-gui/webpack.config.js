@@ -60,7 +60,8 @@ const baseConfig = new ScratchWebpackConfigBuilder(
                 'node_modules',
                 path.resolve(__dirname, '../../node_modules')
             ],
-            extensions: ['.ts', '.tsx', '.js', '.jsx', '.json']
+            extensions: ['.ts', '.tsx', '.js', '.jsx', '.json'],
+            symlinks: false
         }
     })
     .addModuleRule({

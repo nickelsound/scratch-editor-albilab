@@ -505,3 +505,9 @@ This project is licensed under the [MIT License](LICENSE).
 ---
 
 **Note**: This project is a modification of the official Scratch editor specifically designed to enable programming of AlbiLAB scientific stations. It bridges the gap between visual programming education and hands-on scientific experimentation, making it perfect for children, families, and educators who want to combine coding with real-world science.
+
+## Thank you
+
+We provide [Scratch](https://scratch.mit.edu) free of charge, and want to keep it that way! Please consider making a
+[donation](https://www.scratchfoundation.org/donate) to support our continued engineering, design, community, and
+resource development efforts. Donations of any size are appreciated. Thank you!
