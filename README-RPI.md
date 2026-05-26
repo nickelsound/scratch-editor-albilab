@@ -150,6 +150,30 @@ podman logs scratch-backend
 podman logs scratch-gui
 ```
 
+### Showroom režim
+
+Pro showroom nebo kiosk, kde se projekty nemají nasazovat a běžet na pozadí, spusťte compose s:
+
+```bash
+DISABLE_BACKGROUND_PROJECTS=true podman-compose up -d --force-recreate
+```
+
+Tím se schová raketka/deploy ovládání v GUI, backend odmítne nové background spuštění a při startu vyčistí uložené běžící projekty. Zelená vlajka ve Scratch editoru zůstává dostupná pro běh projektu přímo v GUI.
+
+Zpět na běžný režim přepnete:
+
+```bash
+DISABLE_BACKGROUND_PROJECTS=false podman-compose up -d --force-recreate
+```
+
+Aktuální stav ověříte:
+
+```bash
+curl http://localhost:3001/api/status
+```
+
+Ve výstupu hledejte položku `backgroundProjectsDisabled`.
+
 ## 🔧 Údržba
 
 ### Užitečné příkazy

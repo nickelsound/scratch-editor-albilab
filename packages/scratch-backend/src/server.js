@@ -11,6 +11,25 @@ const { runStartupScript } = require('./startup');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+const truthyConfigValues = new Set(['1', 'true', 'yes', 'on']);
+const isTruthyConfigValue = value => truthyConfigValues.has(String(value || '').trim().toLowerCase());
+const BACKGROUND_PROJECTS_DISABLED = isTruthyConfigValue(process.env.DISABLE_BACKGROUND_PROJECTS);
+const BACKGROUND_PROJECTS_DISABLED_ERROR = 'Background project execution is disabled by configuration';
+
+function rejectBackgroundProjectsDisabled(res, action) {
+    if (!BACKGROUND_PROJECTS_DISABLED) {
+        return false;
+    }
+
+    log(`Blocked ${action}: background project execution is disabled`, 'warn', { action });
+    res.status(403).json({
+        success: false,
+        error: BACKGROUND_PROJECTS_DISABLED_ERROR,
+        code: 'BACKGROUND_PROJECTS_DISABLED',
+        action
+    });
+    return true;
+}
 
 // Middleware
 app.use(cors());
@@ -431,6 +450,12 @@ async function loadDeployedProject(projectName) {
 // Automatic startup of saved project on server start
 async function autoStartSavedProject() {
     try {
+        if (BACKGROUND_PROJECTS_DISABLED) {
+            log('Automatic saved project startup skipped: background project execution is disabled', 'info');
+            await clearRunningProjects();
+            return false;
+        }
+
         log('Checking saved project for automatic startup...', 'info');
         
         const savedProject = await loadSavedProject();
@@ -485,6 +510,26 @@ async function saveRunningProjects() {
         });
         // We don't want the server to crash due to error saving the list
         // throw error;
+    }
+}
+
+async function clearRunningProjects(reason = 'background project execution disabled') {
+    try {
+        await fs.ensureDir(UPLOADS_BASE);
+        await fs.writeJson(RUNNING_PROJECTS_PATH, {
+            projects: [],
+            lastUpdated: new Date().toISOString(),
+            reason
+        }, { spaces: 2 });
+        log(`Running projects list cleared: ${reason}`, 'success', {
+            path: RUNNING_PROJECTS_PATH
+        });
+    } catch (error) {
+        log(`Error clearing running projects list: ${error.message}`, 'error', {
+            errorName: error.name,
+            errorStack: error.stack,
+            path: RUNNING_PROJECTS_PATH
+        });
     }
 }
 
@@ -545,6 +590,13 @@ async function removeProjectFromRunningProjects(projectName) {
 // Uses the same method as GUI start-project endpoint for consistency
 async function checkAndStartMissingProjects() {
     try {
+        if (BACKGROUND_PROJECTS_DISABLED) {
+            log('Skipping background project startup check: background project execution is disabled', 'info');
+            await stopAllServices(true);
+            await clearRunningProjects();
+            return 0;
+        }
+
         log('Checking for projects that should be running...', 'info');
         
         // Load list of projects that should be running
@@ -699,6 +751,13 @@ async function stopAllServices(saveRunningProjectsList = true) {
 // Start new service
 async function startService(projectData, projectName) {
     try {
+        if (BACKGROUND_PROJECTS_DISABLED) {
+            log(`Refusing to start service ${projectName}: background project execution is disabled`, 'warn', {
+                projectName
+            });
+            throw new Error(BACKGROUND_PROJECTS_DISABLED_ERROR);
+        }
+
         // If service is already running, stop it
         if (runningServices.has(projectName)) {
             await stopService(projectName);
@@ -841,7 +900,8 @@ app.get('/api/status', (req, res) => {
     const statusData = {
         runningServices: runningServicesList,
         totalRunningServices: runningServices.size,
-        logsCount: serviceLogs.length
+        logsCount: serviceLogs.length,
+        backgroundProjectsDisabled: BACKGROUND_PROJECTS_DISABLED
     };
     
     log('API: Status requested', 'info', {
@@ -854,7 +914,10 @@ app.get('/api/status', (req, res) => {
 });
 
 // Start service from file
-app.post('/api/start-service', upload.single('project'), async (req, res) => {
+app.post('/api/start-service', (req, res, next) => {
+    if (rejectBackgroundProjectsDisabled(res, 'start-service')) return;
+    next();
+}, upload.single('project'), async (req, res) => {
     try {
         log('API: Start service from file called', 'info', {
             hasFile: !!req.file,
@@ -914,6 +977,8 @@ app.post('/api/start-service', upload.single('project'), async (req, res) => {
 // Start service from JSON data
 app.post('/api/start-service-json', async (req, res) => {
     try {
+        if (rejectBackgroundProjectsDisabled(res, 'start-service-json')) return;
+
         log('API: Start service from JSON called', 'info', {
             hasProjectData: !!req.body.projectData,
             projectName: req.body.projectName,
@@ -1602,7 +1667,8 @@ app.get('/api/saved-project/auto-save/list', async (req, res) => {
         
         res.json({
             success: true,
-            projects: projects
+            projects: projects,
+            backgroundProjectsDisabled: BACKGROUND_PROJECTS_DISABLED
         });
         
     } catch (error) {
@@ -1618,6 +1684,8 @@ app.get('/api/saved-project/auto-save/list', async (req, res) => {
 // Deploy project (save to AlbiLAB)
 app.post('/api/deploy-project', async (req, res) => {
     try {
+        if (rejectBackgroundProjectsDisabled(res, 'deploy-project')) return;
+
         const { projectName } = req.body;
         
         if (!projectName) {
@@ -1687,6 +1755,8 @@ app.post('/api/deploy-project', async (req, res) => {
 // Start deployed project
 app.post('/api/start-project', async (req, res) => {
     try {
+        if (rejectBackgroundProjectsDisabled(res, 'start-project')) return;
+
         const { projectName } = req.body;
         
         if (!projectName) {
@@ -1977,7 +2047,8 @@ app.get('/api/projects-status', async (req, res) => {
         
         res.json({
             success: true,
-            projects: projects
+            projects: projects,
+            backgroundProjectsDisabled: BACKGROUND_PROJECTS_DISABLED
         });
         
     } catch (error) {
@@ -2079,6 +2150,14 @@ async function runServerStartupScript() {
         
         // Wait a bit for server to stabilize
         await new Promise(resolve => setTimeout(resolve, 2000));
+
+        if (BACKGROUND_PROJECTS_DISABLED) {
+            log('Background project execution disabled; stopping and clearing persisted running projects', 'info');
+            await stopAllServices(true);
+            await clearRunningProjects();
+            log('Startup script completed in showroom/background-disabled mode', 'success');
+            return;
+        }
         
         // Automatic startup of all deployed projects
         await checkAndStartMissingProjects();
@@ -2099,17 +2178,22 @@ async function runServerStartupScript() {
 app.listen(PORT, async () => {
     log(`Backend server running on port ${PORT}`, 'info');
     log(`WebSocket server running on port 3002`, 'info');
+    log(`Background project execution disabled: ${BACKGROUND_PROJECTS_DISABLED}`, 'info');
     
     // Run startup script after server starts
     await runServerStartupScript();
     
-    // Start periodic check for missing projects (every 5 minutes)
-    setInterval(async () => {
-        log('Periodic check: Running scheduled check...', 'info');
-        await checkAndStartMissingProjects();
-    }, 5 * 60 * 1000); // 5 minutes = 300000 ms
-    
-    log('Periodic project check started (every 5 minutes)', 'info');
+    if (!BACKGROUND_PROJECTS_DISABLED) {
+        // Start periodic check for missing projects (every 5 minutes)
+        setInterval(async () => {
+            log('Periodic check: Running scheduled check...', 'info');
+            await checkAndStartMissingProjects();
+        }, 5 * 60 * 1000); // 5 minutes = 300000 ms
+
+        log('Periodic project check started (every 5 minutes)', 'info');
+    } else {
+        log('Periodic project check disabled by configuration', 'info');
+    }
 });
 
 module.exports = app;

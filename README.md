@@ -34,6 +34,40 @@ Perfect for children, parents, and educators who want to combine hands-on scienc
 
 **This solution must run continuously** because the created Scratch programs run on this backend service and control the AlbiLAB station through its API. Once you upload a project, it runs on this backend and communicates with the AlbiLAB station to execute the programmed logic.
 
+## Showroom Mode
+
+For public showroom or kiosk installations where children should only run projects from the Scratch GUI, disable background project execution with:
+
+```bash
+DISABLE_BACKGROUND_PROJECTS=true
+```
+
+When enabled, the backend clears and refuses background/deployed project execution, and the frontend hides the rocket/deploy controls and deployed-project management UI. The normal Scratch green flag still works for running projects interactively in the editor.
+
+**Enable showroom mode:**
+
+```bash
+DISABLE_BACKGROUND_PROJECTS=true docker-compose up -d --force-recreate
+# or
+DISABLE_BACKGROUND_PROJECTS=true podman-compose up -d --force-recreate
+```
+
+**Disable showroom mode:**
+
+```bash
+DISABLE_BACKGROUND_PROJECTS=false docker-compose up -d --force-recreate
+# or
+DISABLE_BACKGROUND_PROJECTS=false podman-compose up -d --force-recreate
+```
+
+You can verify the current mode with:
+
+```bash
+curl http://localhost:3001/api/status
+```
+
+The response includes `backgroundProjectsDisabled`.
+
 ## 🚀 Quick Start
 
 ### Prerequisites
@@ -125,11 +159,13 @@ Perfect for children, parents, and educators who want to combine hands-on scienc
 **scratch-gui:**
 ```yaml
 REACT_APP_BACKEND_URL: http://localhost:3001
+REACT_APP_DISABLE_BACKGROUND_PROJECTS: false
 PORT: 8601
 ```
 
 **scratch-backend-app:**
 ```yaml
+DISABLE_BACKGROUND_PROJECTS: false
 PORT: 3001
 WEBSOCKET_PORT: 3002
 ```

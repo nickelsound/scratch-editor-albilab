@@ -26,6 +26,12 @@ const getRuntimeConfig = () => {
     if (process.env.REACT_APP_WS_BASE_URL) {
         config.REACT_APP_WS_BASE_URL = process.env.REACT_APP_WS_BASE_URL;
     }
+
+    const disableBackgroundProjects = process.env.REACT_APP_DISABLE_BACKGROUND_PROJECTS ||
+        process.env.DISABLE_BACKGROUND_PROJECTS;
+    if (disableBackgroundProjects) {
+        config.REACT_APP_DISABLE_BACKGROUND_PROJECTS = disableBackgroundProjects;
+    }
     
     return config;
 };
@@ -119,4 +125,3 @@ app.listen(PORT, () => {
         console.log('📋 Používá se default konfigurace (localhost:3001)');
     }
 });
-

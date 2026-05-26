@@ -24,6 +24,8 @@ services:
       # Pro testování můžete použít environment proměnné z .env souboru nebo přímo zde:
       - REACT_APP_API_BASE_URL=${REACT_APP_API_BASE_URL:-}
       - REACT_APP_WS_BASE_URL=${REACT_APP_WS_BASE_URL:-}
+      # Showroom mode: set DISABLE_BACKGROUND_PROJECTS=true to hide/deactivate persistent project execution.
+      - REACT_APP_DISABLE_BACKGROUND_PROJECTS=${DISABLE_BACKGROUND_PROJECTS:-false}
     restart: always
 
   # Backend server pro trvalý běh projektů (používá universal image s APP_MODE=backend)
@@ -43,6 +45,8 @@ services:
       - NODE_ENV=production
       - APP_MODE=backend
       - PORT=3001
+      # Showroom mode: set DISABLE_BACKGROUND_PROJECTS=true to block deploy/start APIs and clear running projects.
+      - DISABLE_BACKGROUND_PROJECTS=${DISABLE_BACKGROUND_PROJECTS:-false}
     volumes:
       - ./uploads:/app/uploads
     restart: always
