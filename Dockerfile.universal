@@ -19,6 +19,8 @@ COPY packages/scratch-backend/package*.json ./packages/scratch-backend/
 COPY packages/scratch-vm/package*.json ./packages/scratch-vm/
 COPY packages/scratch-render/package*.json ./packages/scratch-render/
 COPY packages/scratch-svg-renderer/package*.json ./packages/scratch-svg-renderer/
+COPY packages/scratch-media-lib-scripts/package*.json ./packages/scratch-media-lib-scripts/
+COPY packages/task-herder/package*.json ./packages/task-herder/
 
 # Zkopírujeme scripts pro prepare
 COPY packages/scratch-gui/scripts ./packages/scratch-gui/scripts/
@@ -60,15 +62,16 @@ RUN echo "* soft nofile 65536" >> /etc/security/limits.conf 2>/dev/null || true 
 
 WORKDIR /app
 
-# Backend je zabundlovaný pomocí esbuild, ale potřebuje jsdom jako external (native modul)
-# Instalujeme pouze jsdom (jediná runtime závislost)
-COPY package*.json ./
+# Backend je zabundlovaný pomocí esbuild, ale potřebuje runtime moduly bez monorepo workspaces.
+RUN echo '{"private":true,"dependencies":{}}' > package.json
 
-# Nainstalujeme pouze jsdom (jediná runtime závislost pro backend)
+# Nainstalujeme pouze runtime zavislosti pro backend a frontend server.
 RUN npm config set fetch-timeout 300000 && \
     npm config set fetch-retry-mintimeout 20000 && \
     npm config set fetch-retry-maxtimeout 120000 && \
-    npm install jsdom --save --ignore-scripts --no-audit --no-fund && \
+    npm install express jsdom isomorphic-dompurify@2.36.0 --omit=dev --ignore-scripts --no-audit --no-fund && \
+    mkdir -p packages/browser && \
+    cp node_modules/jsdom/lib/jsdom/browser/default-stylesheet.css packages/browser/default-stylesheet.css && \
     npm cache clean --force
 
 # Zkopírujeme build soubory z builder stage
@@ -82,8 +85,6 @@ COPY --from=builder /app/packages/scratch-backend/dist ./packages/scratch-backen
 COPY --from=builder /app/packages/scratch-gui/server-runtime.js ./packages/scratch-gui/server-runtime.js
 
 # Nainstalujeme express pro runtime server (pouze produkční závislosti)
-RUN npm install express --save --production --no-audit --no-fund
-
 # Vytvoříme entrypoint script pomocí echo (aby se vyhnulo problémům s heredoc)
 RUN echo '#!/bin/sh' > /app/entrypoint.sh && \
     echo 'case "${APP_MODE:-backend}" in' >> /app/entrypoint.sh && \

@@ -350,6 +350,7 @@ const AutoSaveManager = function (props) {
         intl,
         isOpen,
         projects,
+        backgroundProjectsDisabled,
         isLoading,
         currentProjectTitle,
         onClose,
@@ -391,6 +392,10 @@ const AutoSaveManager = function (props) {
     };
 
     const getProjectStatus = (project, isDeployedSection) => {
+        if (backgroundProjectsDisabled && !isDeployedSection) {
+            return null;
+        }
+
         if (isDeployedSection) {
             // In deployed section: show Running or Stopped
             if (project.isRunning) {
@@ -462,7 +467,7 @@ const AutoSaveManager = function (props) {
                 )}
             >
                 {/* Drag handle in top right corner */}
-                {dragRecognizer && (
+                {!backgroundProjectsDisabled && dragRecognizer && (
                     <div 
                         className={styles.autoSaveManagerDragHandle}
                         onMouseDown={(e) => {
@@ -526,7 +531,7 @@ const AutoSaveManager = function (props) {
                                 >
                                     {intl.formatMessage(messages.loadProject)}
                                 </button>
-                                {!project.isDeployed && (
+                                {!backgroundProjectsDisabled && !project.isDeployed && (
                                     <button
                                         className={styles.autoSaveManagerButton}
                                         onClick={() => onDeployProject(project.projectName)}
@@ -535,7 +540,7 @@ const AutoSaveManager = function (props) {
                                         {intl.formatMessage(messages.runPermanently)}
                                     </button>
                                 )}
-                                {project.isDeployed && (
+                                {!backgroundProjectsDisabled && project.isDeployed && (
                                     <button
                                         className={styles.autoSaveManagerButton}
                                         onClick={() => onDeployProject(project.projectName)}
@@ -682,13 +687,15 @@ const AutoSaveManager = function (props) {
                 <div className={styles.autoSaveManagerHeader}>
                     <h3>{intl.formatMessage(messages.title)}</h3>
                     <div className={styles.autoSaveManagerHeaderActions}>
-                        <button
-                            className={styles.autoSaveManagerButton}
-                            onClick={onDeployCurrentProject}
-                            title={intl.formatMessage(messages.tooltipDeployCurrentProject)}
-                        >
-                            {intl.formatMessage(messages.deployCurrentProject)}
-                        </button>
+                        {!backgroundProjectsDisabled && (
+                            <button
+                                className={styles.autoSaveManagerButton}
+                                onClick={onDeployCurrentProject}
+                                title={intl.formatMessage(messages.tooltipDeployCurrentProject)}
+                            >
+                                {intl.formatMessage(messages.deployCurrentProject)}
+                            </button>
+                        )}
                         <button 
                             className={styles.autoSaveManagerClose}
                             onClick={onClose}
@@ -713,16 +720,20 @@ const AutoSaveManager = function (props) {
                                 renderProjectItem={renderProjectItem}
                             />
 
-                            {/* Divider */}
-                            <div className={styles.autoSaveManagerDivider}></div>
+                            {!backgroundProjectsDisabled && (
+                                <>
+                                    {/* Divider */}
+                                    <div className={styles.autoSaveManagerDivider}></div>
 
-                            {/* Deployed Projects Section */}
-                            <DeployedDropArea
-                                onDrop={onDropDeployed}
-                                intl={intl}
-                                deployedProjects={deployedProjects}
-                                renderProjectItem={renderProjectItem}
-                            />
+                                    {/* Deployed Projects Section */}
+                                    <DeployedDropArea
+                                        onDrop={onDropDeployed}
+                                        intl={intl}
+                                        deployedProjects={deployedProjects}
+                                        renderProjectItem={renderProjectItem}
+                                    />
+                                </>
+                            )}
                         </>
                     )}
                 </div>
@@ -756,6 +767,7 @@ AutoSaveManager.propTypes = {
         isDeployed: PropTypes.bool,
         isRunning: PropTypes.bool
     })),
+    backgroundProjectsDisabled: PropTypes.bool,
     isLoading: PropTypes.bool,
     currentProjectTitle: PropTypes.string,
     dragInfo: PropTypes.shape({
@@ -794,6 +806,7 @@ AutoSaveManager.propTypes = {
 AutoSaveManager.defaultProps = {
     isOpen: false,
     projects: [],
+    backgroundProjectsDisabled: false,
     isLoading: false,
     dragInfo: {
         dragging: false,

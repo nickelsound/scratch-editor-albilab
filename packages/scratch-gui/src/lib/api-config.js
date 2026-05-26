@@ -24,6 +24,27 @@ const isDevelopment = () => {
     return false;
 };
 
+const isTruthyConfigValue = (value) => {
+    if (value === true) return true;
+    if (value === false || value === null || typeof value === 'undefined') return false;
+    return ['1', 'true', 'yes', 'on'].includes(String(value).trim().toLowerCase());
+};
+
+const getRuntimeConfigValue = (key) => {
+    if (typeof window !== 'undefined' && window.__RUNTIME_CONFIG__ &&
+            Object.prototype.hasOwnProperty.call(window.__RUNTIME_CONFIG__, key)) {
+        return window.__RUNTIME_CONFIG__[key];
+    }
+    if (typeof process !== 'undefined' && process.env &&
+            Object.prototype.hasOwnProperty.call(process.env, key)) {
+        return process.env[key];
+    }
+    return undefined;
+};
+
+export const isBackgroundProjectsDisabled = () =>
+    isTruthyConfigValue(getRuntimeConfigValue('REACT_APP_DISABLE_BACKGROUND_PROJECTS'));
+
 /**
  * Gets base API URL
  */

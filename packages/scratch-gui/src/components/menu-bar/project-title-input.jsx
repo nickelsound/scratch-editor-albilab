@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 import React from 'react';
 import {defineMessages, useIntl} from 'react-intl';
 import {setProjectTitle} from '../../reducers/project-title';
-import {getApiUrl} from '../../lib/api-config.js';
+import {getApiUrl, isBackgroundProjectsDisabled} from '../../lib/api-config.js';
 import notificationService from '../../lib/notification-service.js';
 
 import BufferedInputHOC from '../forms/buffered-input-hoc.jsx';
@@ -33,6 +33,7 @@ const ProjectTitleInput = ({
     vm
 }) => {
     const intl = useIntl();
+    const backgroundProjectsDisabled = isBackgroundProjectsDisabled();
     const handleManageClick = () => {
         // Trigger event to open manager
         window.dispatchEvent(new CustomEvent('openAutoSaveManager'));
@@ -40,6 +41,10 @@ const ProjectTitleInput = ({
 
     const handleDeployClick = async () => {
         try {
+            if (backgroundProjectsDisabled) {
+                return;
+            }
+
             if (!vm) {
                 notificationService.showWarning(intl.formatMessage({id: 'gui.errors.noProjectLoaded'}));
                 return;
@@ -130,13 +135,15 @@ const ProjectTitleInput = ({
                 value={projectTitle}
                 onSubmit={onSubmit}
             />
-            <button
-                className={styles.deployButton}
-                onClick={handleDeployClick}
-                title={intl.formatMessage(messages.deployCurrentProject)}
-            >
-                🚀
-            </button>
+            {!backgroundProjectsDisabled && (
+                <button
+                    className={styles.deployButton}
+                    onClick={handleDeployClick}
+                    title={intl.formatMessage(messages.deployCurrentProject)}
+                >
+                    🚀
+                </button>
+            )}
             <button
                 className={styles.manageButton}
                 onClick={handleManageClick}

@@ -15,7 +15,8 @@ if (!bowser.msie) {
         document.removeEventListener('mousedown', initAudioContext);
         document.removeEventListener('touchstart', initAudioContext);
         document.removeEventListener('click', initAudioContext);
-        
+        document.removeEventListener('keydown', initAudioContext);
+
         if (AUDIO_CONTEXT) {
             // If context exists but is suspended, resume it
             if (AUDIO_CONTEXT.state === 'suspended') {
@@ -43,6 +44,7 @@ if (!bowser.msie) {
     document.addEventListener('mousedown', initAudioContext);
     document.addEventListener('touchstart', initAudioContext);
     document.addEventListener('click', initAudioContext);
+    document.addEventListener('keydown', initAudioContext);
 }
 
 /**

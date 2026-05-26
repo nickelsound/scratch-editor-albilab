@@ -5,7 +5,7 @@ import {injectIntl} from 'react-intl';
 import bindAll from 'lodash.bindall';
 import AutoSaveManagerComponent from '../components/menu-bar/auto-save-manager.jsx';
 import {setProjectTitle} from '../reducers/project-title.js';
-import {getApiUrl} from '../lib/api-config.js';
+import {getApiUrl, isBackgroundProjectsDisabled} from '../lib/api-config.js';
 import notificationService from '../lib/notification-service.js';
 import DragRecognizer from '../lib/drag-recognizer';
 import DragConstants from '../lib/drag-constants';
@@ -432,6 +432,10 @@ class AutoSaveManager extends React.Component {
 
     handleDeployProject = async (projectName) => {
         try {
+            if (isBackgroundProjectsDisabled()) {
+                return;
+            }
+
             const apiUrl = getApiUrl('deploy-project');
             const response = await fetch(apiUrl, {
                 method: 'POST',
@@ -492,6 +496,10 @@ class AutoSaveManager extends React.Component {
 
     handleDeployCurrentProject = async () => {
         try {
+            if (isBackgroundProjectsDisabled()) {
+                return;
+            }
+
             if (!this.props.vm) {
                 notificationService.showWarning(this.props.intl.formatMessage({id: 'gui.errors.noProjectLoaded'}));
                 return;
@@ -580,6 +588,10 @@ class AutoSaveManager extends React.Component {
 
     handleStartProject = async (projectName) => {
         try {
+            if (isBackgroundProjectsDisabled()) {
+                return;
+            }
+
             const apiUrl = getApiUrl('start-project');
             const response = await fetch(apiUrl, {
                 method: 'POST',
@@ -905,6 +917,10 @@ class AutoSaveManager extends React.Component {
     }
 
     handleDropDeployed = (dragInfo) => {
+        if (isBackgroundProjectsDisabled()) {
+            return;
+        }
+
         if (dragInfo.dragType === DragConstants.PROJECT && dragInfo.payload) {
             const {projectName, isDeployed} = dragInfo.payload;
             // If dragging from draft section, deploy and start it
@@ -917,6 +933,7 @@ class AutoSaveManager extends React.Component {
 
     render() {
         const {projects, isLoading, isOpen} = this.state;
+        const backgroundProjectsDisabled = isBackgroundProjectsDisabled();
         
         // Create drag recognizers for each project
         // Need to track both draft and deployed versions separately
@@ -926,13 +943,13 @@ class AutoSaveManager extends React.Component {
             const deployedKey = `${project.projectName}-deployed-${index}`;
             
             // Create recognizers for both versions if they don't exist
-            if (!this.dragRecognizers.has(draftKey)) {
+            if (!backgroundProjectsDisabled && !this.dragRecognizers.has(draftKey)) {
                 this.dragRecognizers.set(draftKey, new DragRecognizer({
                     onDrag: this.getProjectDragHandler(project, index, false),
                     onDragEnd: this.handleDragEnd
                 }));
             }
-            if (project.isDeployed && !this.dragRecognizers.has(deployedKey)) {
+            if (!backgroundProjectsDisabled && project.isDeployed && !this.dragRecognizers.has(deployedKey)) {
                 this.dragRecognizers.set(deployedKey, new DragRecognizer({
                     onDrag: this.getProjectDragHandler(project, index, true),
                     onDragEnd: this.handleDragEnd
@@ -941,8 +958,10 @@ class AutoSaveManager extends React.Component {
             
             return {
                 ...project,
-                dragRecognizerDraft: this.dragRecognizers.get(draftKey),
-                dragRecognizerDeployed: project.isDeployed ? this.dragRecognizers.get(deployedKey) : null
+                dragRecognizerDraft: backgroundProjectsDisabled ? null : this.dragRecognizers.get(draftKey),
+                dragRecognizerDeployed: backgroundProjectsDisabled || !project.isDeployed ?
+                    null :
+                    this.dragRecognizers.get(deployedKey)
             };
         });
 
@@ -951,6 +970,7 @@ class AutoSaveManager extends React.Component {
                 <AutoSaveManagerComponent
                     isOpen={isOpen}
                     projects={projectsWithDrag}
+                    backgroundProjectsDisabled={backgroundProjectsDisabled}
                     isLoading={isLoading}
                     currentProjectTitle={this.props.projectTitle}
                     onClose={this.handleClose}

@@ -19,6 +19,7 @@ import subprocess
 import time
 import json
 import os
+import re
 
 # BLE Service and Characteristic UUIDs
 # Using custom UUIDs to avoid conflicts with standard Bluetooth services
@@ -31,6 +32,13 @@ WIFI_SCAN_CHAR_UUID = "12345678-1234-1234-1234-123456789ac1"
 CONTAINER_STATUS_CHAR_UUID = "12345678-1234-1234-1234-123456789ac2"
 START_CONTAINERS_CHAR_UUID = "12345678-1234-1234-1234-123456789ac3"
 CONTAINER_LOGS_CHAR_UUID = "12345678-1234-1234-1234-123456789ac4"
+ENV_CONFIG_CHAR_UUID = "12345678-1234-1234-1234-123456789ac5"
+
+INSTALL_DIR = os.environ.get("SCRATCH_INSTALL_DIR", "/opt/scratch-albilab")
+COMPOSE_FILE = os.path.join(INSTALL_DIR, "docker-compose.yml")
+ENV_FILE = os.path.join(INSTALL_DIR, ".env")
+ENV_NAME_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+SERVICE_NAME_RE = re.compile(r"^[A-Za-z0-9_.-]+$")
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -68,15 +76,15 @@ class FailedException(dbus.exceptions.DBusException):
 
 class Advertisement(dbus.service.Object):
     """LE Advertisement"""
-    
+
     PATH_BASE = '/org/bluez/example/advertisement'
-    
+
     def __init__(self, bus, index, service_uuid):
         self.path = self.PATH_BASE + str(index)
         self.bus = bus
         self.service_uuid = service_uuid
         dbus.service.Object.__init__(self, bus, self.path)
-    
+
     def get_properties(self):
         return {
             LE_ADVERTISEMENT_IFACE: {
@@ -90,10 +98,10 @@ class Advertisement(dbus.service.Object):
                 'Includes': dbus.Array(['tx-power'], signature='s'),
             }
         }
-    
+
     def get_path(self):
         return dbus.ObjectPath(self.path)
-    
+
     @dbus.service.method(DBUS_PROP_IFACE,
                          in_signature='s',
                          out_signature='a{sv}')
@@ -101,7 +109,7 @@ class Advertisement(dbus.service.Object):
         if interface != LE_ADVERTISEMENT_IFACE:
             raise InvalidArgsException()
         return self.get_properties()[LE_ADVERTISEMENT_IFACE]
-    
+
     @dbus.service.method(LE_ADVERTISEMENT_IFACE,
                          in_signature='',
                          out_signature='')
@@ -111,18 +119,18 @@ class Advertisement(dbus.service.Object):
 
 class Application(dbus.service.Object):
     """Main application object"""
-    
+
     def __init__(self, bus):
         self.path = '/org/bluez/example'
         self.services = []
         dbus.service.Object.__init__(self, bus, self.path)
-    
+
     def get_path(self):
         return dbus.ObjectPath(self.path)
-    
+
     def add_service(self, service):
         self.services.append(service)
-    
+
     @dbus.service.method(DBUS_OM_IFACE, out_signature='a{oa{sa{sv}}}')
     def GetManagedObjects(self):
         """Return all managed objects (services and characteristics)"""
@@ -130,13 +138,13 @@ class Application(dbus.service.Object):
         logger.info("=== GetManagedObjects CALLED ===")
         logger.info(f"Call stack: {''.join(traceback.format_stack()[-3:-1])}")
         response = {}
-        
+
         # Add all services
         for service in self.services:
             service_props = service.get_properties()
             response[service.get_path()] = service_props
             logger.info(f"Added service {service.uuid} to GetManagedObjects at path {service.get_path()}")
-            
+
             # Add all characteristics for each service
             for chrc in service.characteristics:
                 chrc_props = chrc.get_properties()
@@ -147,7 +155,7 @@ class Application(dbus.service.Object):
                 if chrc.uuid == IP_ADDRESS_CHAR_UUID:
                     logger.info(f"*** IP ADDRESS CHARACTERISTIC IN GetManagedObjects ***")
                     logger.info(f"IP Address characteristic properties: {chrc_props}")
-        
+
         logger.info(f"GetManagedObjects returning {len(response)} objects")
         logger.info("=== END GetManagedObjects ===")
         return response
@@ -155,7 +163,7 @@ class Application(dbus.service.Object):
 
 class Service(dbus.service.Object):
     """GATT Service"""
-    
+
     PATH_BASE = '/org/bluez/example/service'
 
     def __init__(self, bus, index, uuid, primary):
@@ -201,7 +209,7 @@ class Service(dbus.service.Object):
 
 class Characteristic(dbus.service.Object):
     """GATT Characteristic"""
-    
+
     def __init__(self, bus, index, uuid, flags, service):
         self.path = service.path + '/char' + str(index)
         self.bus = bus
@@ -306,7 +314,7 @@ class Characteristic(dbus.service.Object):
 
 class WiFiSSIDCharacteristic(Characteristic):
     """Characteristic for WiFi SSID"""
-    
+
     def __init__(self, bus, index, service, wifi_server):
         Characteristic.__init__(
             self, bus, index,
@@ -326,7 +334,7 @@ class WiFiSSIDCharacteristic(Characteristic):
 
 class WiFiPasswordCharacteristic(Characteristic):
     """Characteristic for WiFi Password"""
-    
+
     def __init__(self, bus, index, service, wifi_server):
         Characteristic.__init__(
             self, bus, index,
@@ -346,7 +354,7 @@ class WiFiPasswordCharacteristic(Characteristic):
 
 class StatusCharacteristic(Characteristic):
     """Characteristic for status notifications"""
-    
+
     def __init__(self, bus, index, service, wifi_server):
         Characteristic.__init__(
             self, bus, index,
@@ -369,7 +377,7 @@ class StatusCharacteristic(Characteristic):
 
 class IPAddressCharacteristic(Characteristic):
     """Characteristic for IP address notifications"""
-    
+
     def __init__(self, bus, index, service, wifi_server):
         Characteristic.__init__(
             self, bus, index,
@@ -402,7 +410,7 @@ class IPAddressCharacteristic(Characteristic):
 
 class WiFiScanCharacteristic(Characteristic):
     """Characteristic for WiFi network scanning"""
-    
+
     def __init__(self, bus, index, service, wifi_server):
         Characteristic.__init__(
             self, bus, index,
@@ -411,24 +419,24 @@ class WiFiScanCharacteristic(Characteristic):
             service)
         self.wifi_server = wifi_server
         self.value = dbus.Array([], signature=dbus.Signature('y'))
-    
+
     @dbus.service.method(GATT_CHRC_IFACE,
                          in_signature='a{sv}',
                          out_signature='ay')
     def ReadValue(self, options):
         """Read WiFi scan results - performs scan and returns JSON list of networks"""
         logger.info('=== WiFiScanCharacteristic.ReadValue CALLED ===')
-        
+
         try:
             # Perform WiFi scan
             logger.info('Starting WiFi scan...')
             networks = scan_wifi_networks()
             logger.info(f'WiFi scan completed, found {len(networks)} networks')
-            
+
             # Limit to top 30 networks to avoid BLE size limits (512 bytes)
             # BLE characteristic read has a limit, so we limit the number of networks
             networks = networks[:30]
-            
+
             # Simplify format - only include essential info to reduce size
             simplified_networks = []
             for net in networks:
@@ -437,12 +445,12 @@ class WiFiScanCharacteristic(Characteristic):
                     'g': net.get('signal', 0),  # 'g' for signal
                     'c': net.get('security', '')[:10]  # 'c' for security (truncated)
                 })
-            
+
             # Convert to JSON
             json_data = json.dumps(simplified_networks, ensure_ascii=False)
             json_size = len(json_data)
             logger.info(f'WiFi scan JSON size: {json_size} bytes, networks: {len(simplified_networks)}')
-            
+
             # Check if JSON is too large (BLE limit is typically 512 bytes)
             if json_size > 500:
                 logger.warning(f'JSON too large ({json_size} bytes), truncating networks')
@@ -452,12 +460,12 @@ class WiFiScanCharacteristic(Characteristic):
                     json_data = json.dumps(simplified_networks, ensure_ascii=False)
                     json_size = len(json_data)
                 logger.info(f'Truncated to {len(simplified_networks)} networks, size: {json_size} bytes')
-            
+
             # Convert to byte array using UTF-8 encoding
             json_bytes = json_data.encode('utf-8')
             self.value = dbus.Array([dbus.Byte(b) for b in json_bytes], signature=dbus.Signature('y'))
             logger.info(f'WiFiScanCharacteristic returning {len(self.value)} bytes')
-            
+
             return self.value
         except Exception as e:
             logger.error(f'Error in WiFiScanCharacteristic.ReadValue: {e}', exc_info=True)
@@ -470,7 +478,7 @@ class WiFiScanCharacteristic(Characteristic):
 
 class ContainerStatusCharacteristic(Characteristic):
     """Characteristic for checking container status"""
-    
+
     def __init__(self, bus, index, service, wifi_server):
         Characteristic.__init__(
             self, bus, index,
@@ -479,19 +487,19 @@ class ContainerStatusCharacteristic(Characteristic):
             service)
         self.wifi_server = wifi_server
         self.value = dbus.Array([], signature=dbus.Signature('y'))
-    
+
     @dbus.service.method(GATT_CHRC_IFACE,
                          in_signature='a{sv}',
                          out_signature='ay')
     def ReadValue(self, options):
         """Read container status - checks if both containers are running"""
         logger.info('=== ContainerStatusCharacteristic.ReadValue CALLED ===')
-        
+
         try:
             status = check_containers_status()
             status_json = json.dumps(status, ensure_ascii=False)
             logger.info(f'Container status: {status_json}')
-            
+
             # Convert JSON string to bytes using UTF-8 encoding
             status_bytes = status_json.encode('utf-8')
             self.value = dbus.Array([dbus.Byte(b) for b in status_bytes], signature=dbus.Signature('y'))
@@ -507,7 +515,7 @@ class ContainerStatusCharacteristic(Characteristic):
 
 class StartContainersCharacteristic(Characteristic):
     """Characteristic for starting containers"""
-    
+
     def __init__(self, bus, index, service, wifi_server):
         Characteristic.__init__(
             self, bus, index,
@@ -515,13 +523,13 @@ class StartContainersCharacteristic(Characteristic):
             ['write', 'write-without-response'],
             service)
         self.wifi_server = wifi_server
-    
+
     def handle_write(self, value):
         """Handle write to start containers"""
         try:
             command = bytes(value).decode('utf-8').strip()
             logger.info(f"Received start containers command: {command}")
-            
+
             if command == "start":
                 result = start_containers()
                 logger.info(f"Start containers result: {result}")
@@ -531,9 +539,36 @@ class StartContainersCharacteristic(Characteristic):
             logger.error(f"Error handling start containers write: {e}")
 
 
+class EnvConfigCharacteristic(Characteristic):
+    """Characteristic for setting Scratch container environment variables"""
+
+    def __init__(self, bus, index, service, wifi_server):
+        Characteristic.__init__(
+            self, bus, index,
+            ENV_CONFIG_CHAR_UUID,
+            ['write', 'write-without-response'],
+            service)
+        self.wifi_server = wifi_server
+
+    def handle_write(self, value):
+        """Handle environment variable updates from BLE clients"""
+        payload = bytes(value).decode('utf-8').strip()
+        logger.info(f"Received environment configuration payload ({len(payload)} bytes)")
+
+        name, env_value, services = parse_env_config_payload(payload)
+        apply_environment_config(name, env_value, services)
+        logger.info(f"Environment variable {name} saved for services: {', '.join(services) if services else 'all'}")
+
+        restart_thread = threading.Thread(
+            target=restart_scratch_service,
+            args=(f"environment variable {name} updated",),
+            daemon=True)
+        restart_thread.start()
+
+
 class ContainerLogsCharacteristic(Characteristic):
     """Characteristic for reading container logs"""
-    
+
     def __init__(self, bus, index, service, wifi_server):
         Characteristic.__init__(
             self, bus, index,
@@ -542,14 +577,14 @@ class ContainerLogsCharacteristic(Characteristic):
             service)
         self.wifi_server = wifi_server
         self.value = dbus.Array([], signature=dbus.Signature('y'))
-    
+
     @dbus.service.method(GATT_CHRC_IFACE,
                          in_signature='a{sv}',
                          out_signature='ay')
     def ReadValue(self, options):
         """Read container logs from RPi"""
         logger.info('=== ContainerLogsCharacteristic.ReadValue CALLED ===')
-        
+
         try:
             logs = get_container_logs()
             # Limit log size to avoid BLE size limits (512 bytes)
@@ -558,7 +593,7 @@ class ContainerLogsCharacteristic(Characteristic):
             if len(logs_bytes) > 500:
                 logs_bytes = logs_bytes[-500:]  # Take last 500 bytes
                 logger.warning(f'Logs truncated to 500 bytes')
-            
+
             logger.info(f'Returning {len(logs_bytes)} bytes of logs')
             self.value = dbus.Array([dbus.Byte(b) for b in logs_bytes], signature=dbus.Signature('y'))
             return self.value
@@ -571,10 +606,257 @@ class ContainerLogsCharacteristic(Characteristic):
             return self.value
 
 
+def parse_env_config_payload(payload):
+    """Parse environment configuration from JSON or KEY=VALUE text."""
+    try:
+        data = json.loads(payload)
+    except json.JSONDecodeError:
+        if '=' not in payload:
+            raise ValueError("Expected JSON payload or KEY=VALUE text")
+        name, env_value = payload.split('=', 1)
+        data = {'name': name, 'value': env_value}
+
+    if not isinstance(data, dict):
+        raise ValueError("Environment payload must be a JSON object")
+
+    name = str(data.get('name') or data.get('key') or '').strip()
+    if not ENV_NAME_RE.match(name):
+        raise ValueError(f"Invalid environment variable name: {name}")
+
+    env_value = data.get('value', '')
+    if env_value is None:
+        env_value = ''
+    env_value = str(env_value)
+    if '\n' in env_value or '\r' in env_value:
+        raise ValueError("Environment variable values must not contain newlines")
+
+    services = data.get('services')
+    if services is None:
+        services = []
+    elif isinstance(services, str):
+        services = [services]
+    elif not isinstance(services, list):
+        raise ValueError("services must be a list of service names")
+
+    services = [str(service).strip() for service in services if str(service).strip()]
+    invalid_services = [service for service in services if not SERVICE_NAME_RE.match(service)]
+    if invalid_services:
+        raise ValueError(f"Invalid service names: {', '.join(invalid_services)}")
+
+    return name, env_value, services
+
+
+def format_env_file_value(value):
+    """Format a value for Docker Compose .env syntax."""
+    if value == '':
+        return '""'
+    if re.match(r"^[A-Za-z0-9_./:@%+=,-]+$", value):
+        return value
+    escaped = value.replace('\\', '\\\\').replace("'", "\\'")
+    return f"'{escaped}'"
+
+
+def update_dotenv_file(env_path, name, value):
+    """Create or update one variable in the Compose .env file."""
+    lines = []
+    found = False
+
+    if os.path.exists(env_path):
+        with open(env_path, 'r', encoding='utf-8') as env_file:
+            lines = env_file.readlines()
+
+    output_lines = []
+    for line in lines:
+        stripped = line.lstrip()
+        if stripped.startswith('#') or '=' not in line:
+            output_lines.append(line)
+            continue
+        key = line.split('=', 1)[0].strip()
+        if key == name:
+            output_lines.append(f"{name}={format_env_file_value(value)}\n")
+            found = True
+        else:
+            output_lines.append(line)
+
+    if not found:
+        output_lines.append(f"{name}={format_env_file_value(value)}\n")
+
+    with open(env_path, 'w', encoding='utf-8') as env_file:
+        env_file.writelines(output_lines)
+    try:
+        os.chmod(env_path, 0o600)
+    except OSError as e:
+        logger.warning(f"Could not set permissions on {env_path}: {e}")
+
+
+def line_indent(line):
+    return len(line) - len(line.lstrip(' '))
+
+
+def find_compose_service_blocks(lines):
+    """Return service block ranges from a docker-compose.yml file."""
+    services = {}
+    in_services = False
+    current_service = None
+    current_start = None
+
+    for index, line in enumerate(lines):
+        stripped = line.strip()
+        indent = line_indent(line)
+
+        if not stripped or stripped.startswith('#'):
+            continue
+
+        if indent == 0:
+            if in_services and current_service is not None:
+                services[current_service] = (current_start, index)
+                current_service = None
+            in_services = stripped == 'services:'
+            continue
+
+        if not in_services or indent != 2 or not stripped.endswith(':'):
+            continue
+
+        if current_service is not None:
+            services[current_service] = (current_start, index)
+
+        service_name = stripped[:-1].strip()
+        if SERVICE_NAME_RE.match(service_name):
+            current_service = service_name
+            current_start = index
+        else:
+            current_service = None
+            current_start = None
+
+    if in_services and current_service is not None:
+        services[current_service] = (current_start, len(lines))
+
+    return services
+
+
+def ensure_service_environment_variable(lines, start, end, name):
+    """Ensure one service has an environment entry sourced from .env."""
+    environment_index = None
+
+    for index in range(start + 1, end):
+        stripped = lines[index].strip()
+        if line_indent(lines[index]) == 4 and stripped == 'environment:':
+            environment_index = index
+            break
+
+    env_line = f"      - {name}=${{{name}}}\n"
+
+    if environment_index is None:
+        insert_index = end
+        for index in range(start + 1, end):
+            stripped = lines[index].strip()
+            if line_indent(lines[index]) == 4 and stripped.startswith('restart:'):
+                insert_index = index
+                break
+        lines[insert_index:insert_index] = ["    environment:\n", env_line]
+        return
+
+    env_end = end
+    for index in range(environment_index + 1, end):
+        stripped = lines[index].strip()
+        if stripped and line_indent(lines[index]) <= 4:
+            env_end = index
+            break
+
+    list_pattern = re.compile(rf"^\s*-\s*{re.escape(name)}(?:\s*=|\s*$)")
+    map_pattern = re.compile(rf"^\s*{re.escape(name)}\s*:")
+
+    for index in range(environment_index + 1, env_end):
+        stripped = lines[index].strip()
+        if list_pattern.match(stripped) or map_pattern.match(stripped):
+            lines[index] = env_line
+            return
+
+    lines.insert(env_end, env_line)
+
+
+def update_compose_environment(compose_path, name, services):
+    """Add a Compose environment entry for the selected services."""
+    if not os.path.exists(compose_path):
+        raise FileNotFoundError(f"docker-compose.yml not found: {compose_path}")
+
+    with open(compose_path, 'r', encoding='utf-8') as compose_file:
+        lines = compose_file.readlines()
+
+    service_blocks = find_compose_service_blocks(lines)
+    if not service_blocks:
+        raise ValueError("No services found in docker-compose.yml")
+
+    target_services = services or list(service_blocks.keys())
+    missing_services = [service for service in target_services if service not in service_blocks]
+    if missing_services:
+        raise ValueError(f"Services not found in docker-compose.yml: {', '.join(missing_services)}")
+
+    for service in sorted(target_services, key=lambda item: service_blocks[item][0], reverse=True):
+        start, end = service_blocks[service]
+        ensure_service_environment_variable(lines, start, end, name)
+
+    with open(compose_path, 'w', encoding='utf-8') as compose_file:
+        compose_file.writelines(lines)
+
+
+def apply_environment_config(name, value, services=None):
+    """Persist one environment variable and wire it into docker-compose.yml."""
+    services = services or []
+    logger.info(f"Applying environment variable {name} to {COMPOSE_FILE}")
+
+    if not os.path.exists(COMPOSE_FILE):
+        raise FileNotFoundError(f"docker-compose.yml not found: {COMPOSE_FILE}")
+
+    os.makedirs(INSTALL_DIR, exist_ok=True)
+    update_dotenv_file(ENV_FILE, name, value)
+    update_compose_environment(COMPOSE_FILE, name, services)
+
+
+def restart_scratch_service(reason):
+    """Restart Scratch containers after configuration changes."""
+    logger.info(f"Restarting Scratch service because {reason}")
+
+    try:
+        restart_result = subprocess.run(
+            ['systemctl', 'restart', 'scratch-albilab.service'],
+            capture_output=True,
+            text=True,
+            timeout=30
+        )
+        if restart_result.returncode == 0:
+            logger.info("scratch-albilab.service restarted successfully")
+            return True
+        logger.warning(f"systemctl restart failed: {restart_result.stderr}")
+    except Exception as e:
+        logger.warning(f"systemctl restart failed: {e}")
+
+    wrapper_script = os.path.join(INSTALL_DIR, "podman-compose-wrapper.sh")
+    if not os.path.exists(wrapper_script):
+        logger.error(f"Wrapper script not found: {wrapper_script}")
+        return False
+
+    try:
+        fallback_result = subprocess.run(
+            ['su', '-', 'pi', '-c', f'{wrapper_script} restart'],
+            capture_output=True,
+            text=True,
+            timeout=90
+        )
+        if fallback_result.returncode == 0:
+            logger.info("Scratch containers restarted via wrapper script")
+            return True
+        logger.error(f"Wrapper restart failed: {fallback_result.stderr}")
+    except Exception as e:
+        logger.error(f"Wrapper restart failed: {e}", exc_info=True)
+
+    return False
+
+
 def check_containers_status():
     """
     Check if both scratch containers are running
-    
+
     Returns:
         Dictionary with status information
     """
@@ -585,13 +867,13 @@ def check_containers_status():
         "backend_running": False,
         "message": ""
     }
-    
+
     try:
         # Try to find the user who owns the installation directory
         # Containers are typically run by the user who owns the install directory
         import pwd
         import stat
-        
+
         try:
             install_stat = os.stat(INSTALL_DIR)
             install_uid = install_stat.st_uid
@@ -600,7 +882,7 @@ def check_containers_status():
         except Exception as e:
             logger.warning(f"Could not determine install directory owner: {e}")
             install_user = None
-        
+
         # Check if containers are running using podman
         # If we're running as root but containers run under another user,
         # try to run podman as that user
@@ -622,17 +904,17 @@ def check_containers_status():
                 text=True,
                 timeout=5
             )
-        
+
         if check_result.returncode == 0:
             # Parse output - filter out empty lines and strip whitespace
             running_containers = [line.strip() for line in check_result.stdout.strip().split('\n') if line.strip()]
             logger.info(f"Found running containers: {running_containers}")
-            
+
             # Check for both containers
             result["gui_running"] = any("scratch-gui-app" in name for name in running_containers)
             result["backend_running"] = any("scratch-backend-app" in name for name in running_containers)
             result["running"] = result["gui_running"] and result["backend_running"]
-            
+
             if result["running"]:
                 result["message"] = "Scratch služba funguje"
             elif result["gui_running"] or result["backend_running"]:
@@ -645,7 +927,7 @@ def check_containers_status():
     except Exception as e:
         result["message"] = f"Chyba při kontrole kontejnerů: {str(e)}"
         logger.error(result["message"], exc_info=True)
-    
+
     return result
 
 
@@ -653,7 +935,7 @@ def start_containers():
     """
     Start scratch containers using podman-compose-wrapper.sh
     Note: Must run as user 'pi' (not root!), because podman runs rootless
-    
+
     Returns:
         Dictionary with result information
     """
@@ -665,14 +947,14 @@ def start_containers():
         "message": "",
         "logs": ""
     }
-    
+
     try:
         # Check if wrapper script exists
         if not os.path.exists(WRAPPER_SCRIPT):
             result["message"] = "Wrapper script not found"
             logger.error(result["message"])
             return result
-        
+
         # Start containers using wrapper script as user 'pi' (not root!)
         # Wrapper script internally calls podman-compose, which must run as non-root
         logger.info(f"Starting containers as user: {service_user}")
@@ -682,9 +964,9 @@ def start_containers():
             text=True,
             timeout=60
         )
-        
+
         result["logs"] = start_result.stdout + start_result.stderr
-        
+
         if start_result.returncode == 0:
             result["success"] = True
             result["message"] = "Kontejnery byly spuštěny"
@@ -698,14 +980,14 @@ def start_containers():
     except Exception as e:
         result["message"] = f"Chyba při spouštění kontejnerů: {str(e)}"
         logger.error(result["message"], exc_info=True)
-    
+
     return result
 
 
 def get_container_logs():
     """
     Get logs from container monitoring and wrapper script
-    
+
     Returns:
         String with logs
     """
@@ -714,11 +996,11 @@ def get_container_logs():
         f"{INSTALL_DIR}/container-monitor.log",
         f"{INSTALL_DIR}/update-check.log"
     ]
-    
+
     logs = []
     logs.append(f"=== Container Logs from RPi ===\n")
     logs.append(f"Timestamp: {time.strftime('%Y-%m-%d %H:%M:%S')}\n\n")
-    
+
     # Get container status
     try:
         status_result = subprocess.run(
@@ -733,7 +1015,7 @@ def get_container_logs():
             logs.append("\n")
     except Exception as e:
         logs.append(f"Error getting container status: {str(e)}\n")
-    
+
     # Read log files
     for log_file in LOG_FILES:
         if os.path.exists(log_file):
@@ -748,7 +1030,7 @@ def get_container_logs():
                     logs.append("\n")
             except Exception as e:
                 logs.append(f"Error reading {log_file}: {str(e)}\n")
-    
+
     # Get recent journalctl logs for scratch services
     try:
         journal_result = subprocess.run(
@@ -763,13 +1045,13 @@ def get_container_logs():
             logs.append("\n")
     except Exception as e:
         logs.append(f"Error getting journalctl logs: {str(e)}\n")
-    
+
     return ''.join(logs)
 
 
 class WiFiConfigServer:
     """BLE Server for WiFi configuration"""
-    
+
     def __init__(self):
         self.ssid = ""
         self.password = ""
@@ -778,7 +1060,7 @@ class WiFiConfigServer:
         self.status_char = None
         self.ip_char = None
         self.config_thread = None
-        
+
     def initialize_ip_address(self):
         """Initialize IP address from current network connection"""
         current_ip = get_current_ip_address()
@@ -812,7 +1094,7 @@ class WiFiConfigServer:
         """Configure WiFi in a separate thread"""
         if self.config_thread and self.config_thread.is_alive():
             return
-        
+
         self.config_thread = threading.Thread(target=self._do_configure_wifi)
         self.config_thread.start()
 
@@ -820,9 +1102,9 @@ class WiFiConfigServer:
         """Actually configure WiFi (runs in thread)"""
         if self.status_char:
             self.status_char.update_status("configuring")
-        
+
         success, ip_address = configure_wifi(self.ssid, self.password)
-        
+
         if success:
             self.ip_address = ip_address
             if self.status_char:
@@ -830,7 +1112,7 @@ class WiFiConfigServer:
             if self.ip_char:
                 self.ip_char.update_ip(ip_address)
             logger.info(f"WiFi configured successfully. IP: {ip_address}")
-            
+
             # After successful WiFi configuration, restart containers
             # This is important because on first boot, containers may not have started
             # due to missing network connection
@@ -838,11 +1120,11 @@ class WiFiConfigServer:
             try:
                 # Wait a moment for network to stabilize
                 time.sleep(3)
-                
+
                 # Service runs under user 'pi' (not root!)
                 # Podman must run as non-root user
                 service_user = 'pi'
-                
+
                 # First, clean up broken pods and containers (like install.sh does)
                 # This is important because podman-compose can leave broken pods
                 # But we must run podman commands as the service user, not root!
@@ -865,7 +1147,7 @@ class WiFiConfigServer:
                                     capture_output=True,
                                     timeout=10
                                 )
-                    
+
                     # Remove any existing containers (as service user 'pi')
                     subprocess.run(
                         ['su', '-', service_user, '-c', 'podman rm -f scratch-gui-app scratch-backend-app'],
@@ -875,7 +1157,7 @@ class WiFiConfigServer:
                     logger.info("Cleanup completed")
                 except Exception as cleanup_error:
                     logger.warning(f"Cleanup warning (non-fatal): {cleanup_error}")
-                
+
                 # Stop any existing compose setup (as service user 'pi')
                 logger.info("Stopping existing compose setup...")
                 subprocess.run(
@@ -883,7 +1165,7 @@ class WiFiConfigServer:
                     capture_output=True,
                     timeout=30
                 )
-                
+
                 # Restart systemd service (which will restart containers with clean state)
                 # This is the safest way - systemd service runs under user 'pi'
                 logger.info("Restarting systemd service...")
@@ -893,7 +1175,7 @@ class WiFiConfigServer:
                     text=True,
                     timeout=30
                 )
-                
+
                 if restart_result.returncode == 0:
                     logger.info("Containers restarted successfully after WiFi configuration")
                     # Wait a bit and verify containers are running
@@ -905,7 +1187,7 @@ class WiFiConfigServer:
                         text=True,
                         timeout=10
                     )
-                    
+
                     if verify_result.returncode == 0:
                         running_containers = [line.strip() for line in verify_result.stdout.strip().split('\n') if line.strip()]
                         if any('scratch-gui-app' in name or 'scratch-backend-app' in name for name in running_containers):
@@ -950,12 +1232,12 @@ def ensure_bluetooth_powered(bus, adapter_path):
         adapter_props = dbus.Interface(
             bus.get_object(BLUEZ_SERVICE_NAME, adapter_path),
             DBUS_PROP_IFACE)
-        
+
         powered = adapter_props.Get(ADAPTER_IFACE, 'Powered')
-        
+
         if not powered:
             logger.info("Bluetooth adapter is powered off. Attempting to power on...")
-            
+
             # First, try to unblock with rfkill (in case it's soft-blocked)
             try:
                 logger.info("Unblocking Bluetooth with rfkill...")
@@ -974,7 +1256,7 @@ def ensure_bluetooth_powered(bus, adapter_path):
                 logger.warning("rfkill not found, skipping unblock step")
             except Exception as rfkill_error:
                 logger.warning(f"rfkill unblock error: {rfkill_error}")
-            
+
             # Try D-Bus method
             try:
                 adapter_props.Set(ADAPTER_IFACE, 'Powered', dbus.Boolean(True))
@@ -983,7 +1265,7 @@ def ensure_bluetooth_powered(bus, adapter_path):
             except Exception as dbus_error:
                 logger.warning(f"D-Bus method failed: {dbus_error}")
                 logger.info("Trying alternative method using hciconfig...")
-                
+
                 # Try hciconfig as fallback
                 try:
                     result = subprocess.run(
@@ -1028,7 +1310,7 @@ def ensure_bluetooth_powered(bus, adapter_path):
                     return False
         else:
             logger.info("Bluetooth adapter is already powered on")
-            
+
         # Verify it's actually powered on
         try:
             powered = adapter_props.Get(ADAPTER_IFACE, 'Powered')
@@ -1037,7 +1319,7 @@ def ensure_bluetooth_powered(bus, adapter_path):
                 return False
         except Exception as e:
             logger.warning(f"Could not verify Bluetooth power state: {e}")
-            
+
         # Also ensure it's discoverable
         try:
             discoverable = adapter_props.Get(ADAPTER_IFACE, 'Discoverable')
@@ -1047,7 +1329,7 @@ def ensure_bluetooth_powered(bus, adapter_path):
                 logger.info("Bluetooth adapter is now discoverable")
         except Exception as e:
             logger.warning(f"Could not set discoverable: {e}")
-            
+
         return True
     except Exception as e:
         logger.error(f"Could not ensure Bluetooth is powered: {e}")
@@ -1060,40 +1342,40 @@ def ensure_bluetooth_powered(bus, adapter_path):
 def main():
     """Main function"""
     global mainloop
-    
+
     dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
-    
+
     bus = dbus.SystemBus()
-    
+
     # Get adapter
     adapter = None
     try:
         om = dbus.Interface(bus.get_object(BLUEZ_SERVICE_NAME, '/'),
                             DBUS_OM_IFACE)
         objects = om.GetManagedObjects()
-        
+
         for path, interfaces in objects.items():
             if GATT_MANAGER_IFACE in interfaces:
                 adapter = path
                 break
-        
+
         if not adapter:
             logger.error("No GATT Manager found")
             return
-            
+
         # Ensure Bluetooth is powered on
         ensure_bluetooth_powered(bus, adapter)
-        
+
     except Exception as e:
         logger.error(f"Error finding adapter: {e}")
         return
-    
+
     # Create WiFi config server
     wifi_server = WiFiConfigServer()
-    
+
     # Create service
     service = Service(bus, 0, WIFI_CONFIG_SERVICE_UUID, True)
-    
+
     # Add characteristics
     ssid_char = WiFiSSIDCharacteristic(bus, 0, service, wifi_server)
     password_char = WiFiPasswordCharacteristic(bus, 1, service, wifi_server)
@@ -1103,7 +1385,8 @@ def main():
     container_status_char = ContainerStatusCharacteristic(bus, 5, service, wifi_server)
     start_containers_char = StartContainersCharacteristic(bus, 6, service, wifi_server)
     container_logs_char = ContainerLogsCharacteristic(bus, 7, service, wifi_server)
-    
+    env_config_char = EnvConfigCharacteristic(bus, 8, service, wifi_server)
+
     logger.info(f"Created characteristics:")
     logger.info(f"  SSID: {WIFI_SSID_CHAR_UUID}")
     logger.info(f"  Password: {WIFI_PASSWORD_CHAR_UUID}")
@@ -1113,10 +1396,11 @@ def main():
     logger.info(f"  Container Status: {CONTAINER_STATUS_CHAR_UUID}")
     logger.info(f"  Start Containers: {START_CONTAINERS_CHAR_UUID}")
     logger.info(f"  Container Logs: {CONTAINER_LOGS_CHAR_UUID}")
-    
+    logger.info(f"  Environment Config: {ENV_CONFIG_CHAR_UUID}")
+
     wifi_server.status_char = status_char
     wifi_server.ip_char = ip_char
-    
+
     service.add_characteristic(ssid_char)
     service.add_characteristic(password_char)
     service.add_characteristic(status_char)
@@ -1125,31 +1409,32 @@ def main():
     service.add_characteristic(container_status_char)
     service.add_characteristic(start_containers_char)
     service.add_characteristic(container_logs_char)
-    
+    service.add_characteristic(env_config_char)
+
     logger.info(f"Added {len(service.characteristics)} characteristics to service")
-    
+
     # Initialize IP address if already connected
     wifi_server.initialize_ip_address()
-    
+
     # Create application
     app = Application(bus)
     app.add_service(service)
-    
+
     # Register application
     service_manager = dbus.Interface(
         bus.get_object(BLUEZ_SERVICE_NAME, adapter),
         GATT_MANAGER_IFACE)
-    
+
     service_manager.RegisterApplication(app.get_path(), {},
                                        reply_handler=register_app_cb,
                                        error_handler=register_app_error_cb)
-    
+
     # Register advertisement
     try:
         ad_manager = dbus.Interface(
             bus.get_object(BLUEZ_SERVICE_NAME, adapter),
             LE_ADVERTISING_MANAGER_IFACE)
-        
+
         advertisement = Advertisement(bus, 0, WIFI_CONFIG_SERVICE_UUID)
         ad_manager.RegisterAdvertisement(advertisement.get_path(), {},
                                         reply_handler=register_ad_cb,
@@ -1157,10 +1442,10 @@ def main():
         logger.info('Advertisement registered')
     except Exception as e:
         logger.warning(f'Failed to register advertisement (may not be critical): {e}')
-    
+
     logger.info("BLE WiFi Config Server started")
     logger.info(f"Service UUID: {WIFI_CONFIG_SERVICE_UUID}")
-    
+
     # Run main loop
     mainloop = GLib.MainLoop()
     try:

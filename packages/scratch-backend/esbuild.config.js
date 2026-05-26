@@ -4,6 +4,15 @@ const path = require('path');
 const isProduction = process.env.NODE_ENV === 'production';
 const watch = process.argv.includes('--watch');
 
+const entitiesSubpathPlugin = {
+    name: 'entities-subpath-compat',
+    setup (build) {
+        build.onResolve({filter: /^entities\/(decode|escape)$/}, args => ({
+            path: require.resolve(`entities/lib/${args.path.split('/')[1]}.js`)
+        }));
+    }
+};
+
 const buildOptions = {
     entryPoints: [path.join(__dirname, 'src/server.js')],
     bundle: true,
@@ -43,7 +52,8 @@ const buildOptions = {
         'canvas',
         'canvas-toBlob',
         // jsdom has issues with require.resolve for relative paths - mark as external
-        'jsdom'
+        'jsdom',
+        'isomorphic-dompurify'
         // @scratch/scratch-vm will be bundled (it's a local workspace package)
     ],
     minify: isProduction,
@@ -52,6 +62,7 @@ const buildOptions = {
     banner: {
         js: '#!/usr/bin/env node'
     },
+    plugins: [entitiesSubpathPlugin],
     define: {
         'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'production')
     },

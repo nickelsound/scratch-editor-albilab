@@ -32,6 +32,40 @@ Perfektní pro děti, rodiče a pedagogy, kteří chtějí spojit praktickou vě
 
 **Toto řešení musí běžet trvale**, protože vytvořené Scratch programy běží na této backend službě a ovládají AlbiLAB stanici přes její API. Jakmile nahrajete projekt, běží na tomto backendu a komunikuje s AlbiLAB stanicí pro vykonávání naprogramované logiky.
 
+## Showroom režim
+
+Pro veřejný showroom nebo kiosk, kde mají děti pouštět projekty jen přímo ze Scratch GUI, vypněte běh projektů na pozadí pomocí:
+
+```bash
+DISABLE_BACKGROUND_PROJECTS=true
+```
+
+Když je režim zapnutý, backend vyčistí a odmítá background/nasazené projekty a frontend schová raketku, deploy tlačítka a správu nasazených projektů. Běžná zelená vlajka ve Scratch editoru zůstává funkční.
+
+**Zapnutí showroom režimu:**
+
+```bash
+DISABLE_BACKGROUND_PROJECTS=true docker-compose up -d --force-recreate
+# nebo
+DISABLE_BACKGROUND_PROJECTS=true podman-compose up -d --force-recreate
+```
+
+**Vypnutí showroom režimu:**
+
+```bash
+DISABLE_BACKGROUND_PROJECTS=false docker-compose up -d --force-recreate
+# nebo
+DISABLE_BACKGROUND_PROJECTS=false podman-compose up -d --force-recreate
+```
+
+Aktuální stav lze ověřit přes:
+
+```bash
+curl http://localhost:3001/api/status
+```
+
+Odpověď obsahuje položku `backgroundProjectsDisabled`.
+
 
 ## 🚀 Rychlý start
 
@@ -124,11 +158,13 @@ Perfektní pro děti, rodiče a pedagogy, kteří chtějí spojit praktickou vě
 **scratch-gui:**
 ```yaml
 REACT_APP_BACKEND_URL: http://localhost:3001
+REACT_APP_DISABLE_BACKGROUND_PROJECTS: false
 PORT: 8601
 ```
 
 **scratch-backend-app:**
 ```yaml
+DISABLE_BACKGROUND_PROJECTS: false
 PORT: 3001
 WEBSOCKET_PORT: 3002
 ```

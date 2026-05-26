@@ -17,6 +17,8 @@ COPY packages/scratch-gui/package*.json ./packages/scratch-gui/
 COPY packages/scratch-vm/package*.json ./packages/scratch-vm/
 COPY packages/scratch-render/package*.json ./packages/scratch-render/
 COPY packages/scratch-svg-renderer/package*.json ./packages/scratch-svg-renderer/
+COPY packages/scratch-media-lib-scripts/package*.json ./packages/scratch-media-lib-scripts/
+COPY packages/task-herder/package*.json ./packages/task-herder/
 
 # Zkopírujeme scripts adresář pro prepare script
 COPY packages/scratch-gui/scripts ./packages/scratch-gui/scripts/

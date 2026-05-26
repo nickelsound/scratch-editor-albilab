@@ -6,7 +6,7 @@ import {injectIntl, intlShape} from 'react-intl';
 import VM from '@scratch/scratch-vm';
 
 import ServiceButtonComponent from '../components/menu-bar/service-button.jsx';
-import {getApiUrl, getWebSocketUrl} from '../lib/api-config.js';
+import {getApiUrl, getWebSocketUrl, isBackgroundProjectsDisabled} from '../lib/api-config.js';
 
 class ServiceButton extends React.Component {
     constructor (props) {
@@ -22,6 +22,8 @@ class ServiceButton extends React.Component {
     }
 
     async handleClick () {
+        if (isBackgroundProjectsDisabled()) return;
+
         if (this.state.isLoading) return;
         
         try {
@@ -47,6 +49,10 @@ class ServiceButton extends React.Component {
 
     async startService () {
         try {
+            if (isBackgroundProjectsDisabled()) {
+                return;
+            }
+
             // Check if VM exists
             if (!this.props.vm) {
                 throw new Error('VM is not available');
@@ -174,6 +180,8 @@ class ServiceButton extends React.Component {
     }
 
     componentDidMount () {
+        if (isBackgroundProjectsDisabled()) return;
+
         // Check service status on load
         this.checkServiceStatus();
     }
@@ -183,6 +191,8 @@ class ServiceButton extends React.Component {
     }
 
     async checkServiceStatus () {
+        if (isBackgroundProjectsDisabled()) return;
+
         try {
             const apiUrl = getApiUrl('/status');
             const response = await fetch(apiUrl);
@@ -200,6 +210,10 @@ class ServiceButton extends React.Component {
     }
 
     render () {
+        if (isBackgroundProjectsDisabled()) {
+            return null;
+        }
+
         return (
             <ServiceButtonComponent
                 isRunning={this.state.isRunning}
