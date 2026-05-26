@@ -1,5 +1,4 @@
 const DEFAULT_FLYOUT_WIDTH = 250;
-const CATEGORY_MENU_WIDTH = 60;
 
 const ALBILAB_TOKEN_LABELS = {
     waterPump: 'Pump',
@@ -33,29 +32,34 @@ const labelFromAlbiLABToken = value => {
     return `${ALBILAB_TOKEN_LABELS[parts[1]] || parts[1] || 'Device'} ${number}`;
 };
 
+const refreshAlbiLABTokenLabel = field => {
+    const value = field.getValue ? field.getValue() : field.value_;
+    const label = labelFromAlbiLABToken(value);
+    if (!label || field.text_ === label) return false;
+
+    field.text_ = label;
+    field.imageJson_ = null;
+    return true;
+};
+
 const installResizableFlyoutWidth = ScratchBlocks => {
     if (ScratchBlocks.__albilabResizableFlyoutWidthInstalled) return;
     ScratchBlocks.__albilabResizableFlyoutWidthInstalled = true;
 
-    const baseFlyoutGetWidth = ScratchBlocks.Flyout.prototype.getWidth;
-    ScratchBlocks.Flyout.prototype.getWidth = function () {
-        if (!this.horizontalLayout_ && Number.isFinite(this.resizableWidth_)) {
-            return this.resizableWidth_;
-        }
-        return baseFlyoutGetWidth.call(this);
-    };
+    const flyoutPrototypes = new Set([
+        ScratchBlocks.Flyout && ScratchBlocks.Flyout.prototype,
+        ScratchBlocks.VerticalFlyout && ScratchBlocks.VerticalFlyout.prototype
+    ].filter(Boolean));
 
-    const baseToolboxGetWidth = ScratchBlocks.Toolbox.prototype.getWidth;
-    ScratchBlocks.Toolbox.prototype.getWidth = function () {
-        if (
-            !this.horizontalLayout_ &&
-            this.flyout_ &&
-            Number.isFinite(this.flyout_.resizableWidth_)
-        ) {
-            return CATEGORY_MENU_WIDTH + this.flyout_.resizableWidth_;
-        }
-        return baseToolboxGetWidth.call(this);
-    };
+    flyoutPrototypes.forEach(prototype => {
+        const baseGetWidth = prototype.getWidth;
+        prototype.getWidth = function () {
+            if (!this.horizontalLayout_ && Number.isFinite(this.resizableWidth_)) {
+                return this.resizableWidth_;
+            }
+            return baseGetWidth.call(this);
+        };
+    });
 
     if (ScratchBlocks.VerticalFlyout) {
         ScratchBlocks.VerticalFlyout.prototype.DEFAULT_WIDTH = DEFAULT_FLYOUT_WIDTH;
@@ -70,15 +74,25 @@ const installAlbiLABTokenLabels = ScratchBlocks => {
     ScratchBlocks.FieldDropdown.prototype.setValue = function (newValue) {
         baseSetValue.call(this, newValue);
 
-        if (this.getText && this.getText() !== newValue) return;
-
-        const label = labelFromAlbiLABToken(newValue);
-        if (!label) return;
-
-        this.text_ = label;
-        this.imageJson_ = null;
-        this.forceRerender();
+        if (refreshAlbiLABTokenLabel(this)) {
+            this.forceRerender();
+        }
     };
+
+    const baseGetText = ScratchBlocks.FieldDropdown.prototype.getText;
+    ScratchBlocks.FieldDropdown.prototype.getText = function () {
+        const label = labelFromAlbiLABToken(this.getValue ? this.getValue() : this.value_);
+        return label || baseGetText.call(this);
+    };
+
+    const baseRender = ScratchBlocks.FieldDropdown.prototype.render_ ||
+        (ScratchBlocks.Field && ScratchBlocks.Field.prototype.render_);
+    if (baseRender) {
+        ScratchBlocks.FieldDropdown.prototype.render_ = function (...args) {
+            refreshAlbiLABTokenLabel(this);
+            return baseRender.apply(this, args);
+        };
+    }
 };
 
 /**

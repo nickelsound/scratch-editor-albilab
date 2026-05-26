@@ -212,6 +212,7 @@ class Scratch3AlbiLABBlocks {
             }),
             color1: '#03BFD7',
             color2: '#02A8B8',
+            color3: '#028FA1',
             blockIconURI: blockIconURI,
             blocks: [
                 {
