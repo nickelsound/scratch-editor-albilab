@@ -1,3 +1,86 @@
+const DEFAULT_FLYOUT_WIDTH = 250;
+const CATEGORY_MENU_WIDTH = 60;
+
+const ALBILAB_TOKEN_LABELS = {
+    waterPump: 'Pump',
+    fan: 'Fan',
+    temperature: 'Temperature sensor',
+    humidity: 'Humidity sensor',
+    soil: 'Soil moisture',
+    water: 'Water level',
+    co2: 'CO2 sensor',
+    flow: 'Flow meter',
+    airQuality: 'Air quality'
+};
+
+const labelFromAlbiLABToken = value => {
+    if (typeof value !== 'string') return null;
+    const parts = value.split('|');
+    if (parts.length < 4 || !['actuator', 'sensor', 'light'].includes(parts[0])) return null;
+
+    const decodedName = (() => {
+        try {
+            return decodeURIComponent(parts[4] || '').trim();
+        } catch (e) {
+            return String(parts[4] || '').trim();
+        }
+    })();
+    if (decodedName) return decodedName;
+
+    const index = Number(parts[3]);
+    const number = Number.isFinite(index) ? index + 1 : 1;
+    if (parts[0] === 'light') return `Light ${number}`;
+    return `${ALBILAB_TOKEN_LABELS[parts[1]] || parts[1] || 'Device'} ${number}`;
+};
+
+const installResizableFlyoutWidth = ScratchBlocks => {
+    if (ScratchBlocks.__albilabResizableFlyoutWidthInstalled) return;
+    ScratchBlocks.__albilabResizableFlyoutWidthInstalled = true;
+
+    const baseFlyoutGetWidth = ScratchBlocks.Flyout.prototype.getWidth;
+    ScratchBlocks.Flyout.prototype.getWidth = function () {
+        if (!this.horizontalLayout_ && Number.isFinite(this.resizableWidth_)) {
+            return this.resizableWidth_;
+        }
+        return baseFlyoutGetWidth.call(this);
+    };
+
+    const baseToolboxGetWidth = ScratchBlocks.Toolbox.prototype.getWidth;
+    ScratchBlocks.Toolbox.prototype.getWidth = function () {
+        if (
+            !this.horizontalLayout_ &&
+            this.flyout_ &&
+            Number.isFinite(this.flyout_.resizableWidth_)
+        ) {
+            return CATEGORY_MENU_WIDTH + this.flyout_.resizableWidth_;
+        }
+        return baseToolboxGetWidth.call(this);
+    };
+
+    if (ScratchBlocks.VerticalFlyout) {
+        ScratchBlocks.VerticalFlyout.prototype.DEFAULT_WIDTH = DEFAULT_FLYOUT_WIDTH;
+    }
+};
+
+const installAlbiLABTokenLabels = ScratchBlocks => {
+    if (ScratchBlocks.__albilabTokenLabelsInstalled || !ScratchBlocks.FieldDropdown) return;
+    ScratchBlocks.__albilabTokenLabelsInstalled = true;
+
+    const baseSetValue = ScratchBlocks.FieldDropdown.prototype.setValue;
+    ScratchBlocks.FieldDropdown.prototype.setValue = function (newValue) {
+        baseSetValue.call(this, newValue);
+
+        if (this.getText && this.getText() !== newValue) return;
+
+        const label = labelFromAlbiLABToken(newValue);
+        if (!label) return;
+
+        this.text_ = label;
+        this.imageJson_ = null;
+        this.forceRerender();
+    };
+};
+
 /**
  * Connect scratch blocks with the vm
  * @param {VirtualMachine} vm - The scratch vm
@@ -6,6 +89,8 @@
  */
 export default function (vm, useCatBlocks) {
     const ScratchBlocks = require('scratch-blocks');
+    installResizableFlyoutWidth(ScratchBlocks);
+    installAlbiLABTokenLabels(ScratchBlocks);
 
     // TODO: Set theme from editor settings
     if (useCatBlocks) {

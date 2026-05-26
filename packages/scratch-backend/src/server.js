@@ -3,6 +3,8 @@ const cors = require('cors');
 const multer = require('multer');
 const fs = require('fs-extra');
 const path = require('path');
+const http = require('http');
+const https = require('https');
 const WebSocket = require('ws');
 const VirtualMachine = require('@scratch/scratch-vm');
 const { runStartupScript } = require('./startup');
@@ -41,6 +43,115 @@ const upload = multer({
     dest: UPLOADS_BASE + '/',
     limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
 });
+
+function normalizeAlbiLABAddress(address) {
+    if (!address || typeof address !== 'string') {
+        return null;
+    }
+
+    const trimmed = address.trim();
+    if (!trimmed) {
+        return null;
+    }
+
+    try {
+        const url = new URL(trimmed.startsWith('http://') || trimmed.startsWith('https://') ?
+            trimmed :
+            `http://${trimmed}`);
+        if (url.username || url.password || !['http:', 'https:'].includes(url.protocol)) {
+            return null;
+        }
+        if (url.protocol === 'https:' && !url.port) {
+            url.port = '443';
+        }
+        return url.toString().replace(/\/$/, '');
+    } catch (error) {
+        return null;
+    }
+}
+
+function buildAlbiLABUrl(address, endpoint, params) {
+    const baseURL = normalizeAlbiLABAddress(address);
+    if (!baseURL) {
+        throw new Error('Invalid AlbiLAB address');
+    }
+    if (!endpoint || typeof endpoint !== 'string' || !endpoint.startsWith('/') || endpoint.startsWith('//')) {
+        throw new Error('Invalid AlbiLAB endpoint');
+    }
+
+    const url = new URL(endpoint, baseURL);
+    if (params && typeof params === 'object' && !Array.isArray(params)) {
+        Object.keys(params).forEach(key => {
+            const value = params[key];
+            if (value !== undefined && value !== null) {
+                url.searchParams.append(key, value);
+            }
+        });
+    }
+    return url;
+}
+
+function requestAlbiLABDevice({address, endpoint, method = 'GET', params = {}, body = null}) {
+    const normalizedMethod = String(method || 'GET').toUpperCase();
+    if (!['GET', 'POST'].includes(normalizedMethod)) {
+        throw new Error('Unsupported AlbiLAB request method');
+    }
+
+    const url = buildAlbiLABUrl(address, endpoint, params);
+    const bodyText = body === null || body === undefined ? null :
+        (typeof body === 'string' ? body : JSON.stringify(body));
+
+    return new Promise((resolve, reject) => {
+        const isHttps = url.protocol === 'https:';
+        const transport = isHttps ? https : http;
+        const headers = {
+            'Accept': 'application/json'
+        };
+        if (bodyText !== null) {
+            headers['Content-Type'] = 'application/json';
+            headers['Content-Length'] = Buffer.byteLength(bodyText);
+        }
+
+        const upstreamReq = transport.request({
+            hostname: url.hostname,
+            port: url.port || (isHttps ? 443 : 80),
+            path: url.pathname + url.search,
+            method: normalizedMethod,
+            headers,
+            rejectUnauthorized: false
+        }, upstreamRes => {
+            const chunks = [];
+            let totalLength = 0;
+
+            upstreamRes.on('data', chunk => {
+                totalLength += chunk.length;
+                if (totalLength > 1024 * 1024) {
+                    upstreamReq.destroy(new Error('AlbiLAB response too large'));
+                    return;
+                }
+                chunks.push(chunk);
+            });
+
+            upstreamRes.on('end', () => {
+                resolve({
+                    statusCode: upstreamRes.statusCode || 502,
+                    contentType: upstreamRes.headers['content-type'] || 'application/json',
+                    body: Buffer.concat(chunks).toString('utf8')
+                });
+            });
+        });
+
+        upstreamReq.setTimeout(6000, () => {
+            upstreamReq.destroy(new Error('AlbiLAB request timeout'));
+        });
+        upstreamReq.on('error', reject);
+
+        if (bodyText !== null) {
+            upstreamReq.write(bodyText);
+        }
+        upstreamReq.end();
+    });
+}
 
 // WebSocket server
 const wss = new WebSocket.Server({ port: 3002 });
@@ -695,6 +806,34 @@ async function startService(projectData, projectName) {
 }
 
 // API Routes
+
+// Proxy direct AlbiLAB device requests so browser-based Scratch blocks do not hit device CORS limits.
+app.post('/api/albilab/request', async (req, res) => {
+    const requestStartedAt = Date.now();
+    try {
+        const result = await requestAlbiLABDevice(req.body || {});
+        const duration = Date.now() - requestStartedAt;
+        log(`API: AlbiLAB proxy ${req.body.method || 'GET'} ${req.body.endpoint} completed in ${duration}ms`, 'info', {
+            address: req.body.address,
+            statusCode: result.statusCode
+        });
+        res.status(result.statusCode);
+        res.type(result.contentType);
+        res.send(result.body);
+    } catch (error) {
+        log(`API: AlbiLAB proxy error: ${error.message}`, 'error', {
+            errorName: error.name,
+            errorStack: error.stack,
+            address: req.body && req.body.address,
+            endpoint: req.body && req.body.endpoint
+        });
+        res.status(502).json({
+            success: false,
+            error: 'AlbiLAB request failed',
+            details: error.message
+        });
+    }
+});
 
 // Service status
 app.get('/api/status', (req, res) => {

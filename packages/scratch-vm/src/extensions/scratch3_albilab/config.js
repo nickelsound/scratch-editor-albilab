@@ -8,10 +8,19 @@ const AlbiLABConfig = {
     
     // API endpoints
     endpoints: {
-        info: '/info',
+        info: '/api/info',
         pump: '/pump',
         fan: '/fan',
-        lights: '/lights'
+        lights: '/lights',
+        actuatorsConfig: '/api/actuators/config',
+        actuatorsState: '/api/actuators/state',
+        actuatorsControl: '/api/actuators/control',
+        sensorsState: '/api/sensors/state',
+        sensorsValues: '/api/sensors/values',
+        automationState: '/api/automation/state',
+        automationApply: '/api/automation/apply',
+        ledRingsState: '/api/ledrings/state',
+        ledRingsApply: '/api/ledrings/apply'
     },
     
     // Request timeout in milliseconds
