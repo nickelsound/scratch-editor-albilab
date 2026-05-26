@@ -105,6 +105,17 @@ export const cs = {
     'gui.albilabIPPrompt.currentIPLabel': 'Aktuální IP adresa: {ip}',
     'gui.albilabIPPrompt.noCurrentIP': 'Aktuálně není nastavena žádná IP adresa',
     'gui.albilabIPMenu.title': 'IP adresa AlbiLAB',
+    'gui.sharedMessages.backdrop': 'pozadí{index}',
+    'gui.sharedMessages.costume': 'kostým{index}',
+    'gui.sharedMessages.sprite': 'Postava{index}',
+    'gui.sharedMessages.pop': 'pop',
+    'gui.sharedMessages.replaceProjectWarning': 'Nahradit obsah aktuálního projektu?',
+    'gui.sharedMessages.loadFromComputerTitle': 'Načíst z počítače',
+    'gui.gui.maximizeCodingArea': 'Zvětšit oblast kódu',
+    'gui.gui.restoreStage': 'Obnovit scénu',
+    'gui.stageHeader.thumbnailTooltipTitle': 'Ahoj!',
+    'gui.stageHeader.thumbnailTooltipBody': '<b>„Nastavit náhled“</b> je teď na novém místě. Funguje tak, že pořídí snímek scény a nastaví ho jako náhled projektu.',
+    'gui.stageHeader.saveThumbnailMessage': 'Opravdu chcete nastavit náhled projektu?',
     'gui.menuBar.toggleFullscreen': 'Přepnout celou obrazovku'
 };
 
@@ -192,6 +203,16 @@ export const en = {
     'gui.albilabIPPrompt.currentIPLabel': 'Current IP address: {ip}',
     'gui.albilabIPPrompt.noCurrentIP': 'No IP address is currently set',
     'gui.albilabIPMenu.title': 'AlbiLAB IP Address',
+    'gui.sharedMessages.backdrop': 'backdrop{index}',
+    'gui.sharedMessages.costume': 'costume{index}',
+    'gui.sharedMessages.sprite': 'Sprite{index}',
+    'gui.sharedMessages.pop': 'pop',
+    'gui.sharedMessages.replaceProjectWarning': 'Replace contents of the current project?',
+    'gui.sharedMessages.loadFromComputerTitle': 'Load from your computer',
+    'gui.gui.maximizeCodingArea': 'Maximize coding area',
+    'gui.gui.restoreStage': 'Restore stage',
+    'gui.stageHeader.thumbnailTooltipTitle': 'Hey there!',
+    'gui.stageHeader.thumbnailTooltipBody': '<b>"Set Thumbnail"</b> has a new spot. It works by taking a snapshot of your stage and setting it as your project thumbnail.',
+    'gui.stageHeader.saveThumbnailMessage': 'Are you sure you want to set your thumbnail?',
     'gui.menuBar.toggleFullscreen': 'Toggle fullscreen'
 };
-

@@ -108,6 +108,7 @@ class Blocks extends React.Component {
             'onVisualReport',
             'onWorkspaceUpdate',
             'onWorkspaceMetricsChange',
+            'scheduleFlyoutWidthApply',
             'setBlocks',
             'setLocale'
         ]);
@@ -224,6 +225,7 @@ class Blocks extends React.Component {
         addFunctionListener(this.workspace, 'translate', this.onWorkspaceMetricsChange);
         addFunctionListener(this.workspace, 'zoom', this.onWorkspaceMetricsChange);
         this.workspace.getToolbox().selectItemByPosition(0);
+        this.scheduleFlyoutWidthApply();
 
         this.attachVM();
         // Only update blocks/vm locale when visible to avoid sizing issues
@@ -324,9 +326,71 @@ class Blocks extends React.Component {
         const flyout = this.workspace.getFlyout();
         if (!flyout) return;
 
+        const getCategoryMenuWidth = () => {
+            const toolbox = this.workspace && this.workspace.getToolbox && this.workspace.getToolbox();
+            if (toolbox && typeof toolbox.getWidth === 'function') {
+                const toolboxWidth = Number(toolbox.getWidth());
+                if (Number.isFinite(toolboxWidth) && toolboxWidth > 0 && toolboxWidth < MIN_FLYOUT_WIDTH) {
+                    return toolboxWidth;
+                }
+            }
+            const parentSvg = this.workspace.getParentSvg && this.workspace.getParentSvg();
+            const toolboxElement = parentSvg && parentSvg.parentElement &&
+                parentSvg.parentElement.querySelector('.blocklyToolbox, .blocklyToolboxDiv');
+            if (toolboxElement) {
+                const {width: toolboxWidth} = toolboxElement.getBoundingClientRect();
+                if (Number.isFinite(toolboxWidth) && toolboxWidth > 0) {
+                    return toolboxWidth;
+                }
+            }
+            return CATEGORY_MENU_WIDTH;
+        };
+
+        if (!flyout.albilabResizableXInstalled_ && typeof flyout.getX === 'function') {
+            const baseFlyoutGetX = flyout.getX;
+            flyout.getX = function () {
+                if (!this.horizontalLayout_) {
+                    return getCategoryMenuWidth();
+                }
+                return baseFlyoutGetX.call(this);
+            };
+            flyout.albilabResizableXInstalled_ = true;
+        }
+        if (!flyout.albilabResizableWidthInstalled_ && typeof flyout.getWidth === 'function') {
+            const baseFlyoutGetWidth = flyout.getWidth;
+            flyout.getWidth = function () {
+                if (!this.horizontalLayout_ && Number.isFinite(this.resizableWidth_)) {
+                    return this.resizableWidth_;
+                }
+                return baseFlyoutGetWidth.call(this);
+            };
+            flyout.albilabResizableWidthInstalled_ = true;
+        }
+        if (!flyout.albilabResizableReflowInstalled_ && typeof flyout.reflow === 'function') {
+            const baseFlyoutReflow = flyout.reflow;
+            flyout.reflow = function (...args) {
+                const result = baseFlyoutReflow.apply(this, args);
+                if (!this.horizontalLayout_ && Number.isFinite(this.resizableWidth_)) {
+                    this.width_ = this.resizableWidth_;
+                    if (typeof this.position === 'function') {
+                        this.position();
+                    }
+                    if (this.targetWorkspace) {
+                        this.targetWorkspace.resizeContents();
+                        this.targetWorkspace.recordDragTargets();
+                    }
+                }
+                return result;
+            };
+            flyout.albilabResizableReflowInstalled_ = true;
+        }
         flyout.resizableWidth_ = nextWidth;
-        if (this.workspace.toolbox_) {
-            this.workspace.toolbox_.width = CATEGORY_MENU_WIDTH + nextWidth;
+        if (typeof flyout.reflow === 'function') {
+            flyout.reflow();
+        }
+        flyout.width_ = nextWidth;
+        if (typeof flyout.position === 'function') {
+            flyout.position();
         }
         this.workspace.resize();
         this.onWorkspaceMetricsChange();
@@ -348,6 +412,19 @@ class Blocks extends React.Component {
                 // Ignore localStorage errors in embedded contexts.
             }
         }
+    }
+    scheduleFlyoutWidthApply () {
+        this.applyFlyoutWidth(this.currentFlyoutWidth);
+        if (typeof window === 'undefined') return;
+        window.requestAnimationFrame(() => {
+            if (this.workspace) this.applyFlyoutWidth(this.currentFlyoutWidth);
+        });
+        window.setTimeout(() => {
+            if (this.workspace) this.applyFlyoutWidth(this.currentFlyoutWidth);
+        }, 0);
+        window.setTimeout(() => {
+            if (this.workspace) this.applyFlyoutWidth(this.currentFlyoutWidth);
+        }, 100);
     }
     handleFlyoutResizeStart (event) {
         const point = event.touches ? event.touches[0] : event;
@@ -476,10 +553,11 @@ class Blocks extends React.Component {
                         (newCategoryScrollPosition * scale) + offsetWithinCategory
                     );
             }
+            this.scheduleFlyoutWidthApply();
         });
         this.workspace.getToolbox().forceRerender();
         this._renderedToolboxXML = this.props.toolboxXML;
-        this.applyFlyoutWidth(this.currentFlyoutWidth);
+        this.scheduleFlyoutWidthApply();
 
         const queue = this.toolboxUpdateQueue;
         this.toolboxUpdateQueue = [];
@@ -654,6 +732,15 @@ class Blocks extends React.Component {
             this.workspace.resize();
         }
 
+        if (this.workspace.getAllBlocks) {
+            this.workspace.getAllBlocks(false).forEach(block => {
+                if (block.rendered && typeof block.render === 'function') {
+                    block.render(false);
+                }
+            });
+            this.workspace.resize();
+        }
+
         // Clear the undo state of the workspace since this is a
         // fresh workspace and we don't want any changes made to another sprites
         // workspace to be 'undone' here.
@@ -729,10 +816,13 @@ class Blocks extends React.Component {
         // Note that Blockly uses the UK spelling of "colour", so fields that
         // interact directly with Blockly follow that convention, while Scratch
         // code uses the US spelling of "color".
-        let colourPrimary = categoryInfo.color1;
-        let colourSecondary = categoryInfo.color2;
-        let colourTertiary = categoryInfo.color3;
-        let colourQuaternary = categoryInfo.color3;
+        const extensionColor1 = categoryInfo.color1 || categoryInfo.color2 || categoryInfo.color3 || '#4C97FF';
+        const extensionColor2 = categoryInfo.color2 || extensionColor1;
+        const extensionColor3 = categoryInfo.color3 || extensionColor2;
+        let colourPrimary = extensionColor1;
+        let colourSecondary = extensionColor2;
+        let colourTertiary = extensionColor3;
+        let colourQuaternary = extensionColor3;
         if (this.props.colorMode !== DEFAULT_MODE) {
             const colors = getExtensionColors(this.props.colorMode);
             colourPrimary = colors.colourPrimary;
@@ -778,6 +868,10 @@ class Blocks extends React.Component {
         this.withToolboxUpdates(() => {
             const toolbox = this.workspace.getToolbox();
             toolbox.setSelectedItem(toolbox.getToolboxItemById(categoryId));
+            this.scheduleFlyoutWidthApply();
+            toolbox.runAfterRerender(() => {
+                this.scheduleFlyoutWidthApply();
+            });
         });
     }
     setBlocks (blocks) {
