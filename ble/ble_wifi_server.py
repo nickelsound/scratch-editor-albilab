@@ -656,6 +656,41 @@ def format_env_file_value(value):
     return f"'{escaped}'"
 
 
+def set_dotenv_file_permissions(env_path):
+    """Make the Compose .env file readable by the installation owner."""
+    env_dir = os.path.dirname(env_path) or '.'
+
+    try:
+        env_dir_stat = os.stat(env_dir)
+    except OSError as e:
+        logger.warning(f"set_dotenv_file_permissions: could not stat env dir path={env_dir}: {e}")
+        env_dir_stat = None
+
+    try:
+        env_stat = os.stat(env_path)
+    except OSError as e:
+        logger.warning(f"set_dotenv_file_permissions: could not stat env file path={env_path}: {e}")
+        env_stat = None
+
+    if (
+        env_dir_stat and
+        env_stat and
+        hasattr(os, 'chown') and
+        (env_stat.st_uid, env_stat.st_gid) != (env_dir_stat.st_uid, env_dir_stat.st_gid)
+    ):
+        try:
+            os.chown(env_path, env_dir_stat.st_uid, env_dir_stat.st_gid)
+        except OSError as e:
+            logger.warning(
+                "set_dotenv_file_permissions: could not set owner on "
+                f"path={env_path} uid={env_dir_stat.st_uid} gid={env_dir_stat.st_gid}: {e}")
+
+    try:
+        os.chmod(env_path, 0o600)
+    except OSError as e:
+        logger.warning(f"set_dotenv_file_permissions: could not set permissions on path={env_path}: {e}")
+
+
 def update_dotenv_file(env_path, name, value):
     """Create or update one variable in the Compose .env file."""
     lines = []
@@ -683,10 +718,7 @@ def update_dotenv_file(env_path, name, value):
 
     with open(env_path, 'w', encoding='utf-8') as env_file:
         env_file.writelines(output_lines)
-    try:
-        os.chmod(env_path, 0o600)
-    except OSError as e:
-        logger.warning(f"Could not set permissions on {env_path}: {e}")
+    set_dotenv_file_permissions(env_path)
 
 
 def line_indent(line):
