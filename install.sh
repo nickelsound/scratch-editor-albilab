@@ -533,7 +533,7 @@ EOF
 create_docker_compose() {
     print_step "9" "Creating docker-compose.yml for production..."
     
-    cat > docker-compose.yml << 'EOF'
+    cat > "$INSTALL_DIR/docker-compose.yml" << 'EOF'
 version: '3.8'
 
 services:
