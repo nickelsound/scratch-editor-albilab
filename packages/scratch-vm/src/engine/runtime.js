@@ -1245,6 +1245,12 @@ class Runtime extends EventEmitter {
      * @private
      */
     _convertButtonForScratchBlocks (buttonInfo) {
+        // for now we only support these pre-defined callbacks handled in scratch-blocks
+        const supportedCallbackKeys = ['MAKE_A_LIST', 'MAKE_A_PROCEDURE', 'MAKE_A_VARIABLE'];
+        if (supportedCallbackKeys.indexOf(buttonInfo.func) < 0) {
+            log.error(`Custom button callbacks not supported yet: ${buttonInfo.func}`);
+        }
+
         const extensionMessageContext = this.makeMessageContextForTarget();
         const buttonText = maybeFormatMessage(buttonInfo.text, extensionMessageContext);
         return {

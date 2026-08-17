@@ -64,13 +64,25 @@ class Scratch3AlbiLABCameraBlocks {
         this._lastMatch = null;
         this._lastMatchAt = 0;
         this._lastMatchPromise = null;
+        this._panelButtonCallbackKey = 'OPEN_PI_CAMERA_PANEL';
+        this._panelRootId = 'albilabPiCameraPanel';
+        this._panelFrameId = 'albilabPiCameraPanelFrame';
+        this._panelStyleId = 'albilabPiCameraPanelStyle';
+        this._buttonCallbackInstalled = false;
+        this._buttonCallbackRetryTimer = null;
+        this._buttonCallbackAttempts = 0;
+        this._domButtonHookInstalled = false;
         this._refreshLastResult();
         this._refreshHealth();
         this._refreshLastMatch();
+        this._ensureButtonCallbackInstalled();
+        this._ensurePanelButtonDomHook();
     }
 
     getInfo () {
         installTranslations();
+        this._ensureButtonCallbackInstalled();
+        this._ensurePanelButtonDomHook();
         return {
             id: 'albilabcamera',
             name: formatMessage({
@@ -197,7 +209,7 @@ class Scratch3AlbiLABCameraBlocks {
                 },
                 '---',
                 {
-                    func: 'OPEN_PI_CAMERA_PANEL',
+                    func: this._panelButtonCallbackKey,
                     blockType: BlockType.BUTTON,
                     text: formatMessage({
                         id: 'albilabcamera.openPanel',
@@ -207,6 +219,173 @@ class Scratch3AlbiLABCameraBlocks {
                 }
             ]
         };
+    }
+
+    _ensureButtonCallbackInstalled () {
+        if (typeof window === 'undefined') return;
+        if (this._buttonCallbackInstalled) return;
+        const install = () => {
+            const scratchBlocks = window.ScratchBlocks || window.Blockly;
+            const workspace = scratchBlocks && typeof scratchBlocks.getMainWorkspace === 'function' ?
+                scratchBlocks.getMainWorkspace() : null;
+            const flyoutWorkspace = workspace && workspace.getFlyout && workspace.getFlyout() && workspace.getFlyout().getWorkspace ?
+                workspace.getFlyout().getWorkspace() : null;
+            const callback = () => this.openPanel();
+            let installed = false;
+            [workspace, flyoutWorkspace].forEach(candidate => {
+                if (candidate && typeof candidate.registerButtonCallback === 'function') {
+                    candidate.registerButtonCallback(this._panelButtonCallbackKey, callback);
+                    installed = true;
+                }
+            });
+            if (installed) {
+                this._buttonCallbackInstalled = true;
+                this._buttonCallbackRetryTimer = null;
+                return;
+            }
+            this._buttonCallbackAttempts += 1;
+            if (this._buttonCallbackAttempts < 40) {
+                this._buttonCallbackRetryTimer = window.setTimeout(install, 500);
+            }
+        };
+        install();
+    }
+
+    _ensurePanelButtonDomHook () {
+        if (typeof document === 'undefined' || this._domButtonHookInstalled) return;
+        const matchesButton = target => {
+            let node = target;
+            while (node) {
+                const className = typeof node.className === 'string' ? node.className :
+                    (node.className && node.className.baseVal) || '';
+                if (className && className.indexOf('blocklyFlyoutButton') >= 0) {
+                    const text = (node.textContent || '').trim();
+                    return /Pi Camera panel/i.test(text);
+                }
+                node = node.parentNode;
+            }
+            return false;
+        };
+        const handler = event => {
+            if (!matchesButton(event.target)) return;
+            if (typeof event.preventDefault === 'function') event.preventDefault();
+            if (typeof event.stopPropagation === 'function') event.stopPropagation();
+            if (typeof event.stopImmediatePropagation === 'function') event.stopImmediatePropagation();
+            window.setTimeout(() => this.openPanel(), 0);
+        };
+        document.addEventListener('click', handler, true);
+        document.addEventListener('touchend', handler, true);
+        this._domButtonHookInstalled = true;
+    }
+
+    _ensurePanelDom () {
+        if (typeof document === 'undefined') return null;
+        let styleEl = document.getElementById(this._panelStyleId);
+        if (!styleEl) {
+            styleEl = document.createElement('style');
+            styleEl.id = this._panelStyleId;
+            styleEl.textContent = `
+                #${this._panelRootId} {
+                    position: fixed;
+                    inset: 0;
+                    z-index: 10000;
+                    display: none;
+                    align-items: stretch;
+                    justify-content: flex-end;
+                    background: rgba(22, 28, 45, 0.28);
+                    backdrop-filter: blur(1px);
+                }
+                #${this._panelRootId}.open {
+                    display: flex;
+                }
+                #${this._panelRootId} .pi-camera-sheet {
+                    width: min(680px, calc(100vw - 24px));
+                    height: min(820px, calc(100vh - 24px));
+                    margin: 12px;
+                    border-radius: 18px;
+                    overflow: hidden;
+                    border: 1px solid #d7dbe7;
+                    background: #eef1f8;
+                    box-shadow: 0 24px 48px rgba(63, 72, 96, 0.28);
+                    display: flex;
+                    flex-direction: column;
+                }
+                #${this._panelRootId} .pi-camera-head {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    gap: 12px;
+                    padding: 12px 14px;
+                    background: linear-gradient(135deg, #7D5FFF, #6B50E6);
+                    color: white;
+                    font: 600 16px/1.2 sans-serif;
+                }
+                #${this._panelRootId} .pi-camera-close {
+                    border: 0;
+                    border-radius: 999px;
+                    background: rgba(255,255,255,0.18);
+                    color: white;
+                    padding: 8px 12px;
+                    cursor: pointer;
+                    font: 600 13px/1 sans-serif;
+                }
+                #${this._panelRootId} .pi-camera-close:hover {
+                    background: rgba(255,255,255,0.28);
+                }
+                #${this._panelFrameId} {
+                    flex: 1;
+                    width: 100%;
+                    border: 0;
+                    background: #eef1f8;
+                }
+            `;
+            document.head.appendChild(styleEl);
+        }
+
+        let root = document.getElementById(this._panelRootId);
+        if (!root) {
+            root = document.createElement('div');
+            root.id = this._panelRootId;
+            root.innerHTML = `
+                <div class="pi-camera-sheet" role="dialog" aria-modal="true" aria-label="Pi Kamera panel">
+                    <div class="pi-camera-head">
+                        <span>Pi Kamera</span>
+                        <button type="button" class="pi-camera-close">Zavřít</button>
+                    </div>
+                    <iframe id="${this._panelFrameId}" title="Pi Kamera panel"></iframe>
+                </div>
+            `;
+            root.addEventListener('click', event => {
+                if (event.target === root) this.closePanel();
+            });
+            const closeBtn = root.querySelector('.pi-camera-close');
+            if (closeBtn) {
+                closeBtn.addEventListener('click', () => this.closePanel());
+            }
+            document.addEventListener('keydown', event => {
+                if (event.key === 'Escape') this.closePanel();
+            });
+            document.body.appendChild(root);
+        }
+        return root;
+    }
+
+    openPanel () {
+        this._ensureButtonCallbackInstalled();
+        const root = this._ensurePanelDom();
+        if (!root) return false;
+        const frame = document.getElementById(this._panelFrameId);
+        if (frame && !frame.getAttribute('src')) {
+            frame.setAttribute('src', `${this._baseUrl()}/gallery-embed?ui=v6`);
+        }
+        root.classList.add('open');
+        return true;
+    }
+
+    closePanel () {
+        if (typeof document === 'undefined') return;
+        const root = document.getElementById(this._panelRootId);
+        if (root) root.classList.remove('open');
     }
 
     _baseUrl () {
