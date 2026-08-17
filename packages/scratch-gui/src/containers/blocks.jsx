@@ -14,6 +14,7 @@ import BlocksComponent from '../components/blocks/blocks.jsx';
 import ExtensionLibrary from './extension-library.jsx';
 import extensionData from '../lib/libraries/extensions/index.jsx';
 import CustomProcedures from './custom-procedures.jsx';
+import PiCameraModal from '../components/pi-camera-modal/pi-camera-modal.jsx';
 import errorBoundaryHOC from '../lib/error-boundary-hoc.jsx';
 import {BLOCKS_DEFAULT_SCALE, STAGE_DISPLAY_SIZES} from '../lib/layout-constants';
 import DropAreaHOC from '../lib/drop-area-hoc.jsx';
@@ -97,6 +98,9 @@ class Blocks extends React.Component {
             'handlePromptCallback',
             'handlePromptClose',
             'handleCustomProceduresClose',
+            'handleOpenPiCameraModal',
+            'handleClosePiCameraModal',
+            'handlePiCameraModalRequest',
             'onScriptGlowOn',
             'onScriptGlowOff',
             'onBlockGlowOn',
@@ -122,7 +126,8 @@ class Blocks extends React.Component {
         this.state = {
             prompt: null,
             flyoutWidth: readStoredFlyoutWidth(),
-            isFlyoutResizing: false
+            isFlyoutResizing: false,
+            piCameraModalVisible: false
         };
         this.onTargetsUpdate = debounce(this.onTargetsUpdate, 100);
         this.toolboxUpdateQueue = [];
@@ -156,6 +161,7 @@ class Blocks extends React.Component {
             }
         };
         window.addEventListener('albilabIPChanged', this.handleAlbilabIPChanged);
+        window.addEventListener('open-pi-camera-modal-request', this.handlePiCameraModalRequest);
 
         const workspaceConfig = defaultsDeep({},
             Blocks.defaultOptions,
@@ -205,16 +211,30 @@ class Blocks extends React.Component {
         // lists, and procedures from extensions.
 
         const toolboxWorkspace = this.workspace.getFlyout().getWorkspace();
+        const registerButtonCallback = (workspace, key, callback) => {
+            if (workspace && typeof workspace.registerButtonCallback === 'function') {
+                workspace.registerButtonCallback(key, callback);
+            }
+        };
 
         const varListButtonCallback = type =>
             (() => this.ScratchBlocks.ScratchVariables.createVariable(this.workspace, null, type));
         const procButtonCallback = () => {
             this.ScratchBlocks.ScratchProcedures.createProcedureDefCallback(this.workspace);
         };
+        const piCameraButtonCallback = () => {
+            requestAnimationFrame(() => {
+                setTimeout(() => {
+                    this.handleOpenPiCameraModal();
+                });
+            });
+        };
 
-        toolboxWorkspace.registerButtonCallback('MAKE_A_VARIABLE', varListButtonCallback(''));
-        toolboxWorkspace.registerButtonCallback('MAKE_A_LIST', varListButtonCallback('list'));
-        toolboxWorkspace.registerButtonCallback('MAKE_A_PROCEDURE', procButtonCallback);
+        registerButtonCallback(toolboxWorkspace, 'MAKE_A_VARIABLE', varListButtonCallback(''));
+        registerButtonCallback(toolboxWorkspace, 'MAKE_A_LIST', varListButtonCallback('list'));
+        registerButtonCallback(toolboxWorkspace, 'MAKE_A_PROCEDURE', procButtonCallback);
+        registerButtonCallback(this.workspace, 'OPEN_PI_CAMERA_PANEL', piCameraButtonCallback);
+        registerButtonCallback(toolboxWorkspace, 'OPEN_PI_CAMERA_PANEL', piCameraButtonCallback);
 
         // Store the xml of the toolbox that is actually rendered.
         // This is used in componentDidUpdate instead of prevProps, because
@@ -245,6 +265,7 @@ class Blocks extends React.Component {
             this.state.prompt !== nextState.prompt ||
             this.state.flyoutWidth !== nextState.flyoutWidth ||
             this.state.isFlyoutResizing !== nextState.isFlyoutResizing ||
+            this.state.piCameraModalVisible !== nextState.piCameraModalVisible ||
             this.props.isVisible !== nextProps.isVisible ||
             this._renderedToolboxXML !== nextProps.toolboxXML ||
             this.props.extensionLibraryVisible !== nextProps.extensionLibraryVisible ||
@@ -318,6 +339,7 @@ class Blocks extends React.Component {
         if (this.handleAlbilabIPChanged) {
             window.removeEventListener('albilabIPChanged', this.handleAlbilabIPChanged);
         }
+        window.removeEventListener('open-pi-camera-modal-request', this.handlePiCameraModalRequest);
     }
     applyFlyoutWidth (width) {
         const nextWidth = clampFlyoutWidth(width);
@@ -921,6 +943,15 @@ class Blocks extends React.Component {
         this.updateToolbox();
         ws.getToolbox().selectCategoryByName('myBlocks');
     }
+    handleOpenPiCameraModal () {
+        this.setState({piCameraModalVisible: true});
+    }
+    handleClosePiCameraModal () {
+        this.setState({piCameraModalVisible: false});
+    }
+    handlePiCameraModalRequest () {
+        this.handleOpenPiCameraModal();
+    }
     handleDrop (dragInfo) {
         fetch(dragInfo.payload.bodyUrl)
             .then(response => response.json())
@@ -995,6 +1026,11 @@ class Blocks extends React.Component {
                         }}
                         onRequestClose={this.handleCustomProceduresClose}
                         colorMode={colorMode}
+                    />
+                ) : null}
+                {this.state.piCameraModalVisible ? (
+                    <PiCameraModal
+                        onRequestClose={this.handleClosePiCameraModal}
                     />
                 ) : null}
             </React.Fragment>

@@ -72,6 +72,7 @@ class Scratch3AlbiLABCameraBlocks {
         this._buttonCallbackRetryTimer = null;
         this._buttonCallbackAttempts = 0;
         this._domButtonHookInstalled = false;
+        this._boundFlyoutTargets = [];
         this._refreshLastResult();
         this._refreshHealth();
         this._refreshLastMatch();
@@ -260,132 +261,84 @@ class Scratch3AlbiLABCameraBlocks {
                     (node.className && node.className.baseVal) || '';
                 if (className && className.indexOf('blocklyFlyoutButton') >= 0) {
                     const text = (node.textContent || '').trim();
-                    return /Pi Camera panel/i.test(text);
+                    if (/Pi Camera panel/i.test(text)) {
+                        return true;
+                    }
                 }
                 node = node.parentNode;
             }
             return false;
         };
-        const handler = event => {
-            if (!matchesButton(event.target)) return;
+        const isPointInsidePanelButton = event => {
+            const getPoint = () => {
+                if (typeof event.clientX === 'number' && typeof event.clientY === 'number') {
+                    return {x: event.clientX, y: event.clientY};
+                }
+                const touch = event.changedTouches && event.changedTouches[0];
+                if (touch && typeof touch.clientX === 'number' && typeof touch.clientY === 'number') {
+                    return {x: touch.clientX, y: touch.clientY};
+                }
+                return null;
+            };
+            const point = getPoint();
+            if (!point) return false;
+            const buttons = Array.prototype.slice.call(document.querySelectorAll('g.blocklyFlyoutButton'));
+            return buttons.some(node => {
+                const text = (node.textContent || '').trim();
+                if (!/Pi Camera panel/i.test(text)) return false;
+                if (typeof node.getBoundingClientRect !== 'function') return false;
+                const rect = node.getBoundingClientRect();
+                return point.x >= rect.left && point.x <= rect.right &&
+                    point.y >= rect.top && point.y <= rect.bottom;
+            });
+        };
+        const openFromEvent = event => {
+            if (!matchesButton(event.target) && !isPointInsidePanelButton(event)) return;
             if (typeof event.preventDefault === 'function') event.preventDefault();
             if (typeof event.stopPropagation === 'function') event.stopPropagation();
             if (typeof event.stopImmediatePropagation === 'function') event.stopImmediatePropagation();
             window.setTimeout(() => this.openPanel(), 0);
         };
-        document.addEventListener('click', handler, true);
-        document.addEventListener('touchend', handler, true);
+        const bindDirectTargets = () => {
+            const directTargets = Array.prototype.slice.call(document.querySelectorAll('g.blocklyFlyoutButton, g.blocklyFlyoutButton *'));
+            directTargets.forEach(node => {
+                if (!node || node.__piCameraPanelBound) return;
+                if (!matchesButton(node)) return;
+                ['pointerdown', 'mousedown', 'mouseup', 'touchstart', 'touchend', 'click'].forEach(type => {
+                    node.addEventListener(type, openFromEvent, true);
+                });
+                node.__piCameraPanelBound = true;
+                this._boundFlyoutTargets.push(node);
+            });
+        };
+        ['pointerdown', 'mousedown', 'mouseup', 'touchstart', 'touchend', 'click'].forEach(type => {
+            document.addEventListener(type, openFromEvent, true);
+        });
+        bindDirectTargets();
+        if (typeof MutationObserver !== 'undefined' && document.body) {
+            const observer = new MutationObserver(() => bindDirectTargets());
+            observer.observe(document.body, {childList: true, subtree: true});
+        }
         this._domButtonHookInstalled = true;
     }
 
     _ensurePanelDom () {
-        if (typeof document === 'undefined') return null;
-        let styleEl = document.getElementById(this._panelStyleId);
-        if (!styleEl) {
-            styleEl = document.createElement('style');
-            styleEl.id = this._panelStyleId;
-            styleEl.textContent = `
-                #${this._panelRootId} {
-                    position: fixed;
-                    inset: 0;
-                    z-index: 10000;
-                    display: none;
-                    align-items: stretch;
-                    justify-content: flex-end;
-                    background: rgba(22, 28, 45, 0.28);
-                    backdrop-filter: blur(1px);
-                }
-                #${this._panelRootId}.open {
-                    display: flex;
-                }
-                #${this._panelRootId} .pi-camera-sheet {
-                    width: min(680px, calc(100vw - 24px));
-                    height: min(820px, calc(100vh - 24px));
-                    margin: 12px;
-                    border-radius: 18px;
-                    overflow: hidden;
-                    border: 1px solid #d7dbe7;
-                    background: #eef1f8;
-                    box-shadow: 0 24px 48px rgba(63, 72, 96, 0.28);
-                    display: flex;
-                    flex-direction: column;
-                }
-                #${this._panelRootId} .pi-camera-head {
-                    display: flex;
-                    align-items: center;
-                    justify-content: space-between;
-                    gap: 12px;
-                    padding: 12px 14px;
-                    background: linear-gradient(135deg, #7D5FFF, #6B50E6);
-                    color: white;
-                    font: 600 16px/1.2 sans-serif;
-                }
-                #${this._panelRootId} .pi-camera-close {
-                    border: 0;
-                    border-radius: 999px;
-                    background: rgba(255,255,255,0.18);
-                    color: white;
-                    padding: 8px 12px;
-                    cursor: pointer;
-                    font: 600 13px/1 sans-serif;
-                }
-                #${this._panelRootId} .pi-camera-close:hover {
-                    background: rgba(255,255,255,0.28);
-                }
-                #${this._panelFrameId} {
-                    flex: 1;
-                    width: 100%;
-                    border: 0;
-                    background: #eef1f8;
-                }
-            `;
-            document.head.appendChild(styleEl);
-        }
-
-        let root = document.getElementById(this._panelRootId);
-        if (!root) {
-            root = document.createElement('div');
-            root.id = this._panelRootId;
-            root.innerHTML = `
-                <div class="pi-camera-sheet" role="dialog" aria-modal="true" aria-label="Pi Kamera panel">
-                    <div class="pi-camera-head">
-                        <span>Pi Kamera</span>
-                        <button type="button" class="pi-camera-close">Zavřít</button>
-                    </div>
-                    <iframe id="${this._panelFrameId}" title="Pi Kamera panel"></iframe>
-                </div>
-            `;
-            root.addEventListener('click', event => {
-                if (event.target === root) this.closePanel();
-            });
-            const closeBtn = root.querySelector('.pi-camera-close');
-            if (closeBtn) {
-                closeBtn.addEventListener('click', () => this.closePanel());
-            }
-            document.addEventListener('keydown', event => {
-                if (event.key === 'Escape') this.closePanel();
-            });
-            document.body.appendChild(root);
-        }
-        return root;
+        return true;
     }
 
     openPanel () {
+        if (typeof window === 'undefined') return false;
         this._ensureButtonCallbackInstalled();
-        const root = this._ensurePanelDom();
-        if (!root) return false;
-        const frame = document.getElementById(this._panelFrameId);
-        if (frame && !frame.getAttribute('src')) {
-            frame.setAttribute('src', `${this._baseUrl()}/gallery-embed?ui=v6`);
+        try {
+            window.dispatchEvent(new CustomEvent('open-pi-camera-modal-request'));
+        } catch (error) {
+            return false;
         }
-        root.classList.add('open');
         return true;
     }
 
     closePanel () {
-        if (typeof document === 'undefined') return;
-        const root = document.getElementById(this._panelRootId);
-        if (root) root.classList.remove('open');
+        return;
     }
 
     _baseUrl () {
