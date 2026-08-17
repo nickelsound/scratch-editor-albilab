@@ -85,32 +85,17 @@
             }
           }
 
-          function tryRegister() {
-            if (!window.ScratchBlocks || !window.ScratchBlocks.getMainWorkspace) return false;
-            var workspace = window.ScratchBlocks.getMainWorkspace();
-            if (!workspace || workspace.__piCameraPanelRegistered) return !!workspace;
-            workspace.registerButtonCallback(callbackKey, function () {
-              window.requestAnimationFrame(function () {
-                window.setTimeout(togglePanel, 0);
-              });
+          function handleOpenRequest() {
+            window.requestAnimationFrame(function () {
+              window.setTimeout(togglePanel, 0);
             });
-            workspace.__piCameraPanelRegistered = true;
-            return true;
           }
 
           document.addEventListener('keydown', function (event) {
             if (event.key === 'Escape') panel.className = '';
           });
 
-          if (!tryRegister()) {
-            var registerTimer = window.setInterval(function () {
-              if (tryRegister()) window.clearInterval(registerTimer);
-            }, 1000);
-            window.setTimeout(function () {
-              window.clearInterval(registerTimer);
-              tryRegister();
-            }, 30000);
-          }
+          window.addEventListener('open-pi-camera-panel', handleOpenRequest);
         } catch (err) {
           if (window.console && console.warn) console.warn('Pi Kamera panel disabled:', err);
         }
