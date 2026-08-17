@@ -211,13 +211,27 @@ class Blocks extends React.Component {
         const procButtonCallback = () => {
             this.ScratchBlocks.ScratchProcedures.createProcedureDefCallback(this.workspace);
         };
-
-        toolboxWorkspace.registerButtonCallback('MAKE_A_VARIABLE', varListButtonCallback(''));
-        toolboxWorkspace.registerButtonCallback('MAKE_A_LIST', varListButtonCallback('list'));
-        toolboxWorkspace.registerButtonCallback('MAKE_A_PROCEDURE', procButtonCallback);
-        toolboxWorkspace.registerButtonCallback('OPEN_PI_CAMERA_PANEL', () => {
+        const openPiCameraPanelCallback = () => {
             window.dispatchEvent(new CustomEvent('open-pi-camera-panel'));
-        });
+        };
+        const registerButtonCallback = (workspace, key, callback) => {
+            if (workspace && typeof workspace.registerButtonCallback === 'function') {
+                workspace.registerButtonCallback(key, callback);
+            }
+        };
+
+        // Blockly flyout buttons resolve callbacks from the target/main workspace.
+        // Register on both workspaces to keep built-in and custom extension buttons
+        // working across this Scratch/Blockly packaging.
+        registerButtonCallback(this.workspace, 'MAKE_A_VARIABLE', varListButtonCallback(''));
+        registerButtonCallback(this.workspace, 'MAKE_A_LIST', varListButtonCallback('list'));
+        registerButtonCallback(this.workspace, 'MAKE_A_PROCEDURE', procButtonCallback);
+        registerButtonCallback(this.workspace, 'OPEN_PI_CAMERA_PANEL', openPiCameraPanelCallback);
+
+        registerButtonCallback(toolboxWorkspace, 'MAKE_A_VARIABLE', varListButtonCallback(''));
+        registerButtonCallback(toolboxWorkspace, 'MAKE_A_LIST', varListButtonCallback('list'));
+        registerButtonCallback(toolboxWorkspace, 'MAKE_A_PROCEDURE', procButtonCallback);
+        registerButtonCallback(toolboxWorkspace, 'OPEN_PI_CAMERA_PANEL', openPiCameraPanelCallback);
 
         // Store the xml of the toolbox that is actually rendered.
         // This is used in componentDidUpdate instead of prevProps, because
