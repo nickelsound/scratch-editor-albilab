@@ -25,7 +25,8 @@ const builtinExtensions = {
     boost: () => require('../extensions/scratch3_boost'),
     gdxfor: () => require('../extensions/scratch3_gdx_for'),
     faceSensing: () => require('../extensions/scratch3_face_sensing'),
-    albilab: () => require('../extensions/scratch3_albilab')
+    albilab: () => require('../extensions/scratch3_albilab'),
+    albilabcamera: () => require('../extensions/scratch3_albilab_camera')
 };
 
 /**
