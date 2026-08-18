@@ -18,7 +18,7 @@ const enTranslations = {
     'albilabflower.categoryName': 'Pi Flower',
     'albilabflower.captureAndAnalyze': 'capture and check flower',
     'albilabflower.flowerVisible': 'flower visible?',
-    'albilabflower.isGrowing': 'is growing?',
+    'albilabflower.isGrowing': 'growing without flower?',
     'albilabflower.flowerConfidence': 'evaluation percent',
     'albilabflower.lastLabel': 'recognition result',
     'albilabflower.lastUpdatedAt': 'last checked at'
@@ -88,8 +88,8 @@ class Scratch3AlbiLABFlowerBlocks {
                     blockType: BlockType.BOOLEAN,
                     text: formatMessage({
                         id: 'albilabflower.isGrowing',
-                        default: 'is growing?',
-                        description: 'Whether plant appears to be growing'
+                        default: 'growing without flower?',
+                        description: 'Whether the latest image shows a plant without a visible flower'
                     })
                 },
                 {
@@ -124,11 +124,14 @@ class Scratch3AlbiLABFlowerBlocks {
     }
 
     _baseUrl () {
-        const loc = (typeof window !== 'undefined' && window.location) ? window.location :
-            ((typeof self !== 'undefined' && self.location) ? self.location : {protocol: 'http:', hostname: 'localhost'});
-        const protocol = loc.protocol || 'http:';
-        const hostname = loc.hostname || 'localhost';
-        return `${protocol}//${hostname}:8088`;
+        if (typeof process !== 'undefined' && process.env && process.env.NODE_ENV === 'development') {
+            const loc = (typeof window !== 'undefined' && window.location) ? window.location :
+                ((typeof self !== 'undefined' && self.location) ? self.location : {protocol: 'http:', hostname: 'localhost'});
+            const protocol = loc.protocol || 'http:';
+            const hostname = loc.hostname || 'localhost';
+            return `${protocol}//${hostname}:3001/api/flower`;
+        }
+        return '/api/flower';
     }
 
     async _fetchJson (path, options) {
@@ -166,7 +169,7 @@ class Scratch3AlbiLABFlowerBlocks {
         if (!force && this._lastResultPromise) {
             return this._lastResultPromise;
         }
-        this._lastResultPromise = this._fetchJson('/api/last')
+        this._lastResultPromise = this._fetchJson('/last')
             .then(payload => this._storeResultPayload(payload))
             .catch(err => {
                 this._lastError = err.message || String(err);

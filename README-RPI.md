@@ -7,6 +7,7 @@ Kompletní návod pro nasazení Scratch Editoru na Raspberry Pi s dotykovým dis
 - Raspberry Pi 4 (doporučeno)
 - Raspberry Pi OS Lite
 - Dotykový displej (testováno s D-WAV WS170120)
+- CSI kamera kompatibilní s `rpicam-still`
 - Podman
 
 ## 🚀 Rychlý start
@@ -19,6 +20,12 @@ sudo apt update && sudo apt upgrade -y
 
 # Instaluj Podman
 sudo apt install -y podman podman-compose
+
+# Nainstaluj nástroj pro ověření CSI kamery; v kontejneru jej instaluje pi-camera-service
+sudo apt install -y rpicam-apps
+
+# Ověř CSI kameru ještě před spuštěním kontejnerů
+rpicam-hello --list-cameras
 
 # Instaluj X server a Chromium
 sudo apt install -y xserver-xorg xinit chromium-browser
@@ -139,8 +146,8 @@ podman images | grep scratch
 ### 3. Spuštění aplikace
 
 ```bash
-# Spusť aplikace
-podman-compose up -d
+# Sestav a spusť aplikace včetně interní služby CSI kamery
+podman-compose up -d --build
 
 # Zkontroluj běžící kontejnery
 podman ps
@@ -148,6 +155,29 @@ podman ps
 # Zkontroluj logy
 podman logs scratch-backend
 podman logs scratch-gui
+podman logs scratch-pi-camera
+```
+
+### Pi Kamera a rozpoznání květiny
+
+Služba `pi-camera-service` běží pouze uvnitř Podman Compose sítě. Přistupuje k CSI zařízení přes
+`rpicam-still`; port 8088 se nevystavuje na síť Raspberry Pi. Backend po vyfocení odešle JPEG na
+endpoint nastavený proměnnou `FLOWER_API_BASE_URL` a výsledek vrátí blokům Pi Květina i panelu Pi Kamera.
+
+Compose konfigurace je určená pro 64bitový Raspberry Pi OS (`linux/arm64`) a pro přístup k CSI zařízení
+služba potřebuje `privileged: true` a read-only mount `/run/udev`. Před nasazením proto ověřte kameru na
+konkrétním zařízení a po spuštění zkontrolujte:
+
+```bash
+podman ps --format '{{.Names}}'
+podman logs scratch-pi-camera
+curl http://localhost:8601/pi-kamera/health
+```
+
+Před spuštěním nastavte adresu Flower API mimo Git, například do lokálního souboru `.env`:
+
+```bash
+FLOWER_API_BASE_URL=<adresa Flower API>
 ```
 
 ### Showroom režim
@@ -180,14 +210,15 @@ Ve výstupu hledejte položku `backgroundProjectsDisabled`.
 
 ```bash
 # Zastavit kontejnery
-podman stop scratch-backend scratch-gui
+podman stop scratch-backend scratch-gui scratch-pi-camera
 
 # Restart kontejnerů
-podman restart scratch-backend scratch-gui
+podman restart scratch-backend scratch-gui scratch-pi-camera
 
 # Sledovat logy v reálném čase
 podman logs -f scratch-backend
 podman logs -f scratch-gui
+podman logs -f scratch-pi-camera
 
 # Test připojení
 curl http://localhost:3001

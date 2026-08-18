@@ -141,6 +141,10 @@ Odpověď obsahuje položku `backgroundProjectsDisabled`.
    - WebSocket server pro real-time komunikaci
    - Automatické spouštění uložených projektů
 
+3. **pi-camera-service** (pouze interně)
+   - Pořizuje JPEG snímky z CSI kamery na Raspberry Pi
+   - Nemá vystavený port hostitele; je dostupná jen v Compose síti
+
 ### Datové svazky (Volumes)
 
 - **./uploads**: Trvalé uložení projektů a konfigurace (bind mount)
@@ -160,6 +164,8 @@ Odpověď obsahuje položku `backgroundProjectsDisabled`.
 REACT_APP_BACKEND_URL: http://localhost:3001
 REACT_APP_DISABLE_BACKGROUND_PROJECTS: false
 PORT: 8601
+BACKEND_PROXY_BASE_URL: http://scratch-backend-app:3001
+PI_CAMERA_PROXY_BASE_URL: http://pi-camera-service:8088
 ```
 
 **scratch-backend-app:**
@@ -167,6 +173,8 @@ PORT: 8601
 DISABLE_BACKGROUND_PROJECTS: false
 PORT: 3001
 WEBSOCKET_PORT: 3002
+PI_CAMERA_SERVICE_URL: http://pi-camera-service:8088
+FLOWER_API_BASE_URL: povinné; načíst z .env
 ```
 
 ### Runtime konfigurace backend URL
@@ -183,7 +191,7 @@ services:
       - APP_MODE=frontend
       - PORT=8601
       # Runtime konfigurace backend URL (volitelné)
-      # Pokud není nastaveno, použije se default localhost:3001
+      # Pokud není nastaveno, API požadavky použijí same-origin proxy /api.
       - REACT_APP_API_BASE_URL=http://10.0.0.106:8080
       - REACT_APP_WS_BASE_URL=ws://10.0.0.106:8080
 ```
@@ -208,7 +216,7 @@ services:
    - REACT_APP_WS_BASE_URL=wss://example.com
    ```
 
-**Poznámka:** Frontend automaticky přidává prefix `/api` k endpointům, takže pokud váš backend očekává cesty jako `/api/status`, použijte base URL bez `/api`. Pokud vaše reverzní proxy už obsahuje `/api` v URL, přidejte ho do base URL.
+**Poznámka:** Frontend automaticky přidává prefix `/api` k endpointům, takže pokud váš backend očekává cesty jako `/api/status`, použijte base URL bez `/api`. Pokud vaše reverzní proxy už obsahuje `/api` v URL, přidejte ho do base URL. Pokud je `REACT_APP_API_BASE_URL` prázdné, frontend server proxyuje `/api` na `BACKEND_PROXY_BASE_URL` (výchozí je Compose služba `scratch-backend-app`) a `/pi-kamera` na `PI_CAMERA_PROXY_BASE_URL`.
 
 ### Porty
 

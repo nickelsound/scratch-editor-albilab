@@ -1,49 +1,64 @@
 @import "../../css/colors.css";
-@import "../../css/units.css";
 
 .modal-content {
-    width: min(96vw, 1100px);
-    height: min(94vh, 860px);
-    display: flex;
-    flex-direction: column;
+    width: min(96vw, 900px);
+    max-height: 94vh;
     padding: 0;
-}
-
-.header {
-    display: none;
-}
-
-.modal-content > div {
-    display: flex;
-    flex: 1;
-    flex-direction: column;
-    min-height: 0;
 }
 
 .body {
     background: $ui-white;
-    display: flex;
-    flex: 1;
-    flex-direction: column;
-    min-height: 0;
-    height: 100%;
 }
 
-.frame-wrap {
-    flex: 1;
-    display: flex;
-    min-height: 0;
-    padding: 0.5rem 0.75rem 0.75rem;
-    background: #eef1f8;
+.panel {
+    padding: 1.5rem;
 }
 
-.frame {
-    flex: 1;
-    width: 100%;
-    height: auto;
-    min-height: 0;
+.actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.primary-button,
+.secondary-button {
     border: 0;
-    border-radius: 1rem;
-    background: white;
-    box-shadow: 0 10px 30px rgba(48, 56, 86, 0.12);
+    border-radius: 0.5rem;
+    cursor: pointer;
+    font: inherit;
+    font-weight: 600;
+    padding: 0.75rem 1rem;
+}
+
+.primary-button {
+    background: #6b50e6;
+    color: $ui-white;
+}
+
+.secondary-button {
+    background: #eef1f8;
+    color: #4b3aa7;
+}
+
+.primary-button:disabled,
+.secondary-button:disabled {
+    cursor: wait;
+    opacity: 0.55;
+}
+
+.status {
+    min-height: 1.5rem;
+}
+
+.result {
+    font-weight: 600;
+}
+
+.image {
+    background: #eef1f8;
+    border-radius: 0.75rem;
+    display: block;
+    max-height: 62vh;
+    object-fit: contain;
+    width: 100%;
 }

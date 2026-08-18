@@ -142,6 +142,10 @@ The response includes `backgroundProjectsDisabled`.
    - WebSocket server for real-time communication
    - Automatic execution of saved projects
 
+3. **pi-camera-service** (internal only)
+   - Captures JPEG images from the CSI camera on Raspberry Pi
+   - Is not published on a host port; it is reached only through the Compose network
+
 ### Data Volumes
 
 - **./uploads**: Persistent storage for projects and configuration (bind mount)
@@ -161,6 +165,8 @@ The response includes `backgroundProjectsDisabled`.
 REACT_APP_BACKEND_URL: http://localhost:3001
 REACT_APP_DISABLE_BACKGROUND_PROJECTS: false
 PORT: 8601
+BACKEND_PROXY_BASE_URL: http://scratch-backend-app:3001
+PI_CAMERA_PROXY_BASE_URL: http://pi-camera-service:8088
 ```
 
 **scratch-backend-app:**
@@ -168,6 +174,8 @@ PORT: 8601
 DISABLE_BACKGROUND_PROJECTS: false
 PORT: 3001
 WEBSOCKET_PORT: 3002
+PI_CAMERA_SERVICE_URL: http://pi-camera-service:8088
+FLOWER_API_BASE_URL: required; load from .env
 ```
 
 ### Runtime Backend URL Configuration
@@ -184,7 +192,7 @@ services:
       - APP_MODE=frontend
       - PORT=8601
       # Runtime backend URL configuration (optional)
-      # If not set, defaults to localhost:3001
+      # If not set, API requests use the same-origin /api proxy.
       - REACT_APP_API_BASE_URL=http://10.0.0.106:8080
       - REACT_APP_WS_BASE_URL=ws://10.0.0.106:8080
 ```
@@ -209,7 +217,7 @@ services:
    - REACT_APP_WS_BASE_URL=wss://example.com
    ```
 
-**Note:** The frontend automatically adds `/api` prefix to endpoints, so if your backend expects paths like `/api/status`, use the base URL without `/api`. If your reverse proxy already includes `/api` in the URL, add it to the base URL.
+**Note:** The frontend automatically adds `/api` prefix to endpoints, so if your backend expects paths like `/api/status`, use the base URL without `/api`. If your reverse proxy already includes `/api` in the URL, add it to the base URL. When `REACT_APP_API_BASE_URL` is empty, the frontend server proxies `/api` to `BACKEND_PROXY_BASE_URL` (by default, the `scratch-backend-app` Compose service) and `/pi-kamera` to `PI_CAMERA_PROXY_BASE_URL`.
 
 ### Ports
 

@@ -58,6 +58,7 @@ export const cs = {
     // Error messages
     'gui.errors.loadingProjects': 'Chyba při načítání projektů',
     'gui.errors.loadingProjectsWithDetails': 'Chyba při načítání projektů: {details}',
+    'gui.errors.serverReturnedHtml': 'Server vrátil HTML místo dat (zkontrolujte připojení k API)',
     'gui.errors.loadingProject': 'Chyba při načítání projektu',
     'gui.errors.deployingProject': 'Chyba při nasazování projektu',
     'gui.errors.deployingCurrentProject': 'Chyba při nasazování aktuálního projektu',
@@ -156,6 +157,7 @@ export const en = {
     // Error messages
     'gui.errors.loadingProjects': 'Error loading projects',
     'gui.errors.loadingProjectsWithDetails': 'Error loading projects: {details}',
+    'gui.errors.serverReturnedHtml': 'Server returned HTML instead of data (check the API connection)',
     'gui.errors.loadingProject': 'Error loading project',
     'gui.errors.deployingProject': 'Error deploying project',
     'gui.errors.deployingCurrentProject': 'Error deploying current project',

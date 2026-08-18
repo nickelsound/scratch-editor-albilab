@@ -14,7 +14,7 @@ const https = require('https');
 const app = express();
 const PORT = process.env.PORT || 8601;
 const BUILD_DIR = path.join(__dirname, 'build');
-const PI_CAMERA_PROXY_BASE_URL = process.env.PI_CAMERA_PROXY_BASE_URL || 'http://host.containers.internal:8088';
+const PI_CAMERA_PROXY_BASE_URL = process.env.PI_CAMERA_PROXY_BASE_URL || 'http://pi-camera-service:8088';
 const BACKEND_PROXY_BASE_URL = process.env.BACKEND_PROXY_BASE_URL || 'http://host.containers.internal:3001';
 
 const isUsableRuntimeValue = value => {
@@ -71,8 +71,7 @@ const proxyRequest = (req, res, targetBaseUrl, stripPrefix = '') => {
         port: upstreamUrl.port || (upstreamUrl.protocol === 'https:' ? 443 : 80),
         path: upstreamUrl.pathname + upstreamUrl.search,
         method: req.method,
-        headers,
-        rejectUnauthorized: false
+        headers
     }, upstreamRes => {
         res.status(upstreamRes.statusCode || 502);
         Object.entries(upstreamRes.headers || {}).forEach(([key, value]) => {
@@ -80,17 +79,12 @@ const proxyRequest = (req, res, targetBaseUrl, stripPrefix = '') => {
                 res.setHeader(key, value);
             }
         });
-        if (req.originalUrl.startsWith('/pi-kamera/gallery-embed')) {
-            res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
-            res.setHeader('Pragma', 'no-cache');
-            res.setHeader('Expires', '0');
-        }
         upstreamRes.pipe(res);
     });
 
     upstreamReq.on('error', error => {
         if (!res.headersSent) {
-            res.status(502).send(`Pi Kamera proxy error: ${error.message}`);
+            res.status(502).send(`Proxy request failed: ${error.message}`);
         } else {
             res.end();
         }

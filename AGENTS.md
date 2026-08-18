@@ -73,9 +73,13 @@ packages/
 ├── scratch-render/         WebGL renderer for the stage
 ├── scratch-svg-renderer/   SVG asset processor
 ├── task-herder/            Async task scheduler with rate limiting
-└── scratch-media-lib-scripts/  Build scripts for media library assets
+├── scratch-media-lib-scripts/  Build scripts for media library assets
+└── pi-camera-service/      Podman-only CSI camera capture service for Raspberry Pi
 scripts/                    Monorepo-level utility scripts
 ```
+
+`pi-camera-service` is not an npm workspace. It is built from its own Dockerfile by `docker-compose.yml` for
+the ARM64 Raspberry Pi deployment.
 
 ## Packages at a glance
 

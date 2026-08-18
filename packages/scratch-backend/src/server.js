@@ -8,6 +8,7 @@ const https = require('https');
 const WebSocket = require('ws');
 const VirtualMachine = require('@scratch/scratch-vm');
 const { runStartupScript } = require('./startup');
+const { captureAndAnalyzeFlower } = require('./flower-service');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -15,6 +16,8 @@ const truthyConfigValues = new Set(['1', 'true', 'yes', 'on']);
 const isTruthyConfigValue = value => truthyConfigValues.has(String(value || '').trim().toLowerCase());
 const BACKGROUND_PROJECTS_DISABLED = isTruthyConfigValue(process.env.DISABLE_BACKGROUND_PROJECTS);
 const BACKGROUND_PROJECTS_DISABLED_ERROR = 'Background project execution is disabled by configuration';
+const PI_CAMERA_SERVICE_URL = process.env.PI_CAMERA_SERVICE_URL || 'http://pi-camera-service:8088';
+const FLOWER_API_BASE_URL = process.env.FLOWER_API_BASE_URL;
 
 function rejectBackgroundProjectsDisabled(res, action) {
     if (!BACKGROUND_PROJECTS_DISABLED) {
@@ -40,6 +43,8 @@ app.use(express.static('public'));
 // Global service state - support for multiple parallel services
 let runningServices = new Map(); // Map<projectName, serviceInfo>
 let serviceLogs = [];
+let lastFlowerResult = null;
+let lastFlowerImage = null;
 
 // Path to saved project - we save to uploads volume, which is persistent
 // In Docker/Podman container, process.cwd() is /app/packages/scratch-backend, but uploads is mapped to /app/uploads
@@ -892,6 +897,43 @@ app.post('/api/albilab/request', async (req, res) => {
             details: error.message
         });
     }
+});
+
+app.post('/api/flower/analyze', async (req, res) => {
+    const requestStartedAt = Date.now();
+    try {
+        const capture = await captureAndAnalyzeFlower({
+            cameraBaseUrl: PI_CAMERA_SERVICE_URL,
+            flowerApiBaseUrl: FLOWER_API_BASE_URL
+        });
+        lastFlowerResult = capture.result;
+        lastFlowerImage = capture.image;
+        log(`API: Flower analysis completed in ${Date.now() - requestStartedAt}ms`, 'info', {
+            confidence: lastFlowerResult.blocks.flower_confidence,
+            flowerPresence: lastFlowerResult.blocks.last_label
+        });
+        res.json({success: true, result: lastFlowerResult});
+    } catch (error) {
+        log(`API: Flower analysis failed: ${error.message}`, 'error', {
+            errorName: error.name,
+            errorStack: error.stack
+        });
+        res.status(502).json({success: false, error: error.message});
+    }
+});
+
+app.get('/api/flower/last', (req, res) => {
+    res.json({success: true, result: lastFlowerResult});
+});
+
+app.get('/api/flower/image', (req, res) => {
+    if (!lastFlowerImage) {
+        res.status(404).json({success: false, error: 'No flower image has been captured yet'});
+        return;
+    }
+    res.type('image/jpeg');
+    res.set('Cache-Control', 'no-store');
+    res.send(lastFlowerImage);
 });
 
 // Service status
