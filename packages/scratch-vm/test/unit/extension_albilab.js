@@ -66,7 +66,7 @@ test('AlbiLAB API client keeps GET requests CORS-simple', async t => {
     await client.postJson('/api/actuators/control', {index: 0, action: 'start'}, '10.0.0.20');
 
     t.equal(calls[0].options.method, 'GET');
-    t.same(calls[0].options.headers, {'Accept': 'application/json'});
+    t.same(calls[0].options.headers, {Accept: 'application/json'});
     t.notOk(calls[0].options.body);
     t.equal(calls[1].options.method, 'POST');
     t.equal(calls[1].options.headers['Content-Type'], 'application/json');

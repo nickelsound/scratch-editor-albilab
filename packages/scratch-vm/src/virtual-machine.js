@@ -36,7 +36,7 @@ const CORE_EXTENSIONS = [
     // 'operators',
     'albilab',
     'albilabflower',
-    'albilabcamera',
+    'albilabcamera'
     // 'variables',
     // 'myBlocks'
 ];

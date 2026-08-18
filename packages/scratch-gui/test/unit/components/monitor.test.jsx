@@ -3,8 +3,10 @@ import {render} from '@testing-library/react';
 import Monitor from '../../../src/components/monitor/monitor';
 import {DARK_MODE, DEFAULT_MODE} from '../../../src/lib/settings/color-mode';
 
-jest.mock('../../../src/lib/settings/color-mode/default');
-jest.mock('../../../src/lib/settings/color-mode/dark');
+jest.mock('../../../src/lib/settings/color-mode/default', () => require(
+    '../../../src/lib/settings/color-mode/default/__mocks__/default-color-mode'));
+jest.mock('../../../src/lib/settings/color-mode/dark', () => require(
+    '../../../src/lib/settings/color-mode/dark/__mocks__/dark-color-mode'));
 
 describe('Monitor Component', () => {
     const noop = jest.fn();

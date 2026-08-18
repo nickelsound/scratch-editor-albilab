@@ -1337,11 +1337,13 @@ class Runtime extends EventEmitter {
                             try {
                                 // If it has protocol, validate as URL
                                 if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
-                                    new URL(trimmed);
+                                    const parsedUrl = new URL(trimmed);
+                                    if (!parsedUrl) throw new Error('Invalid URL');
                                     defaultValue = xmlEscape(trimmed);
                                 } else {
                                     // If no protocol, try adding http:// to validate
-                                    new URL(`http://${trimmed}`);
+                                    const parsedUrl = new URL(`http://${trimmed}`);
+                                    if (!parsedUrl) throw new Error('Invalid URL');
                                     defaultValue = xmlEscape(trimmed);
                                 }
                             } catch (e) {

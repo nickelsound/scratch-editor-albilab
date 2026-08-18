@@ -52,7 +52,8 @@ const baseConfig = new ScratchWebpackConfigBuilder(
                 stream: require.resolve('stream-browserify')
             },
             alias: {
-                'intl-relativeformat/lib/main': path.resolve(__dirname, '../../node_modules/intl-relativeformat/lib/core.js'),
+                'intl-relativeformat/lib/main': path.resolve(
+                    __dirname, '../../node_modules/intl-relativeformat/lib/core.js'),
                 'intl-relativeformat': path.resolve(__dirname, '../../node_modules/intl-relativeformat'),
                 'hull.js': path.resolve(__dirname, '../../node_modules/hull.js')
             },

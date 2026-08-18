@@ -33,6 +33,11 @@ describe('MenuBar Component', () => {
             platform: {
                 platform: PLATFORM.WEB
             }
+        },
+        autoSave: {
+            isSaving: false,
+            lastSaveTime: null,
+            saveError: null
         }
     });
 
@@ -42,22 +47,22 @@ describe('MenuBar Component', () => {
 
     test('menu bar with no About handler has no About button', () => {
         const {container} = renderWithIntl(getComponent());
-        const button = container.querySelector('button');
-        expect(button).toBeFalsy();
+        const aboutIcon = container.querySelector('button img');
+        expect(aboutIcon).toBeFalsy();
     });
 
     test('menu bar with an About handler has an About button', () => {
         const onClickAbout = jest.fn();
         const {container} = renderWithIntl(getComponent({onClickAbout}));
-        const button = container.querySelector('button');
-        expect(button).toBeTruthy();
+        const aboutIcon = container.querySelector('button img');
+        expect(aboutIcon).toBeTruthy();
     });
 
     describe('triggering About button handler', () => {
         test('clicking on About button calls the handler', () => {
             const onClickAbout = jest.fn();
             const {container} = renderWithIntl(getComponent({onClickAbout}));
-            const button = container.querySelector('button');
+            const button = container.querySelector('button img').parentElement;
     
             fireEvent.click(button);
             expect(onClickAbout).toHaveBeenCalledTimes(1);

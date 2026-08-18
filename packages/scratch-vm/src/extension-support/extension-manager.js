@@ -162,7 +162,9 @@ class ExtensionManager {
             // Check if Worker is available (browser environment)
             // In Node.js environment, Worker is not available
             if (typeof Worker === 'undefined') {
-                const error = new Error(`Cannot load external extension "${extensionURL}" in Node.js environment. Worker is not available.`);
+                const error = new Error(
+                    `Cannot load external extension "${extensionURL}" in Node.js environment. ` +
+                    'Worker is not available.');
                 log.error(error.message);
                 reject(error);
                 return;

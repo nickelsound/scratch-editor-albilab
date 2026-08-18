@@ -5,23 +5,21 @@ const {
     findByText
 } = new SeleniumHelper();
 
-// Make the default timeout longer, Sauce tests take ~30s
-jasmine.DEFAULT_TIMEOUT_INTERVAL = 60 * 1000; // eslint-disable-line
+// Make the default timeout longer, Sauce tests take ~30s.
+jest.setTimeout(60 * 1000);
 
 const SUPPORTED_MESSAGE = 'Welcome to the Scratch 3.0 Beta';
 const UNSUPPORTED_MESSAGE = 'Scratch 3.0 does not support Internet Explorer';
 
 // Driver configs can be generated with the Sauce Platform Configurator
 // https://wiki.saucelabs.com/display/DOCS/Platform+Configurator
-describe('Smoke tests on older browsers', () => {
+const describeSmoke = SAUCE_USERNAME && SAUCE_ACCESS_KEY && SMOKE_URL ? describe : describe.skip;
+
+describeSmoke('Smoke tests on older browsers', () => {
     let driver;
 
     afterEach(async () => {
         if (driver) await driver.quit();
-    });
-
-    test('Credentials should be provided', () => {
-        expect(SAUCE_USERNAME && SAUCE_ACCESS_KEY && SMOKE_URL).toBeTruthy();
     });
 
     test('IE 11 should be unsupported', async () => {

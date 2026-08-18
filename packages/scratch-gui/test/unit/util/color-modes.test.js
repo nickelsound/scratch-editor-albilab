@@ -8,8 +8,10 @@ import {
 import {injectExtensionBlockIcons, injectExtensionCategoryMode} from '../../../src/lib/settings/color-mode/blockHelpers';
 import {detectColorMode, persistColorMode} from '../../../src/lib/settings/color-mode/persistence';
 
-jest.mock('../../../src/lib/settings/color-mode/default');
-jest.mock('../../../src/lib/settings/color-mode/dark');
+jest.mock('../../../src/lib/settings/color-mode/default', () => require(
+    '../../../src/lib/settings/color-mode/default/__mocks__/default-color-mode'));
+jest.mock('../../../src/lib/settings/color-mode/dark', () => require(
+    '../../../src/lib/settings/color-mode/dark/__mocks__/dark-color-mode'));
 
 describe('color modes', () => {
     let serializeToString;

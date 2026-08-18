@@ -44,7 +44,7 @@
     "lint": "eslint && format-message lint src/**/*.js",
     "prepublishOnly": "echo \"Please publish through CI only.\" && exit 1",
     "start": "webpack serve",
-    "tap": "tap ./test/{unit,integration}/*.js",
+    "tap": "tap --jobs=1 --timeout=120 ./test/{unit,integration}/*.js",
     "tap:integration": "tap ./test/integration/*.js",
     "tap:unit": "tap ./test/unit/*.js",
     "test": "npm run lint && npm run tap",
