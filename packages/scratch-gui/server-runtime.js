@@ -14,7 +14,10 @@ const https = require('https');
 const app = express();
 const PORT = process.env.PORT || 8601;
 const BUILD_DIR = path.join(__dirname, 'build');
-const PI_CAMERA_PROXY_BASE_URL = process.env.PI_CAMERA_PROXY_BASE_URL || 'http://pi-camera-service:8088';
+// The standalone Pi deployment does not share the compose DNS network with
+// pi-camera-service, so use the host-published camera port as the fallback.
+// Compose deployments can still override this with PI_CAMERA_PROXY_BASE_URL.
+const PI_CAMERA_PROXY_BASE_URL = process.env.PI_CAMERA_PROXY_BASE_URL || 'http://host.containers.internal:8088';
 const BACKEND_PROXY_BASE_URL = process.env.BACKEND_PROXY_BASE_URL || 'http://host.containers.internal:3001';
 
 const isUsableRuntimeValue = value => {
