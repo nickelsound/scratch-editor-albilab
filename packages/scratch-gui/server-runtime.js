@@ -8,22 +8,34 @@
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
+const http = require('http');
+const https = require('https');
 
 const app = express();
 const PORT = process.env.PORT || 8601;
 const BUILD_DIR = path.join(__dirname, 'build');
+const PI_CAMERA_PROXY_BASE_URL = process.env.PI_CAMERA_PROXY_BASE_URL || 'http://host.containers.internal:8088';
+const BACKEND_PROXY_BASE_URL = process.env.BACKEND_PROXY_BASE_URL || 'http://host.containers.internal:3001';
+
+const isUsableRuntimeValue = value => {
+    if (typeof value === 'undefined' || value === null) return false;
+    const trimmed = String(value).trim();
+    if (!trimmed) return false;
+    if (/^\$\{[^}]+\}$/.test(trimmed)) return false;
+    return true;
+};
 
 // Získání runtime konfigurace z environment proměnných
 const getRuntimeConfig = () => {
     const config = {};
     
     // API Base URL
-    if (process.env.REACT_APP_API_BASE_URL) {
+    if (isUsableRuntimeValue(process.env.REACT_APP_API_BASE_URL)) {
         config.REACT_APP_API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
     }
     
     // WebSocket Base URL
-    if (process.env.REACT_APP_WS_BASE_URL) {
+    if (isUsableRuntimeValue(process.env.REACT_APP_WS_BASE_URL)) {
         config.REACT_APP_WS_BASE_URL = process.env.REACT_APP_WS_BASE_URL;
     }
 
@@ -35,6 +47,60 @@ const getRuntimeConfig = () => {
     
     return config;
 };
+
+const proxyRequest = (req, res, targetBaseUrl, stripPrefix = '') => {
+    let targetBase;
+    try {
+        targetBase = new URL(targetBaseUrl);
+    } catch (error) {
+        res.status(500).send(`Invalid proxy target: ${targetBaseUrl}`);
+        return;
+    }
+
+    const upstreamPath = stripPrefix ? (req.originalUrl.replace(new RegExp(`^${stripPrefix}`), '') || '/') : req.originalUrl;
+    const upstreamUrl = new URL(upstreamPath, targetBase);
+    const transport = upstreamUrl.protocol === 'https:' ? https : http;
+
+    const headers = {...req.headers};
+    delete headers.host;
+    headers.connection = 'close';
+
+    const upstreamReq = transport.request({
+        protocol: upstreamUrl.protocol,
+        hostname: upstreamUrl.hostname,
+        port: upstreamUrl.port || (upstreamUrl.protocol === 'https:' ? 443 : 80),
+        path: upstreamUrl.pathname + upstreamUrl.search,
+        method: req.method,
+        headers,
+        rejectUnauthorized: false
+    }, upstreamRes => {
+        res.status(upstreamRes.statusCode || 502);
+        Object.entries(upstreamRes.headers || {}).forEach(([key, value]) => {
+            if (value !== undefined) {
+                res.setHeader(key, value);
+            }
+        });
+        if (req.originalUrl.startsWith('/pi-kamera/gallery-embed')) {
+            res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+            res.setHeader('Pragma', 'no-cache');
+            res.setHeader('Expires', '0');
+        }
+        upstreamRes.pipe(res);
+    });
+
+    upstreamReq.on('error', error => {
+        if (!res.headersSent) {
+            res.status(502).send(`Pi Kamera proxy error: ${error.message}`);
+        } else {
+            res.end();
+        }
+    });
+
+    req.pipe(upstreamReq);
+};
+
+const proxyPiCameraRequest = (req, res) => proxyRequest(req, res, PI_CAMERA_PROXY_BASE_URL, '/pi-kamera');
+const proxyBackendApiRequest = (req, res) => proxyRequest(req, res, BACKEND_PROXY_BASE_URL);
 
 // Middleware pro vložení runtime konfigurace do index.html
 app.use((req, res, next) => {
@@ -95,6 +161,8 @@ app.use((req, res, next) => {
 });
 
 // Servuj statické soubory z build adresáře
+app.use('/pi-kamera', proxyPiCameraRequest);
+app.use('/api', proxyBackendApiRequest);
 app.use(express.static(BUILD_DIR));
 
 // Fallback: pro SPA routování, servuj index.html pro všechny ostatní cesty

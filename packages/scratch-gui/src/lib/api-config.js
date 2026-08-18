@@ -42,6 +42,16 @@ const getRuntimeConfigValue = (key) => {
     return undefined;
 };
 
+const isUnresolvedPlaceholder = value => /^\$\{[^}]+\}$/.test(String(value || '').trim());
+
+const getUsableRuntimeConfigValue = key => {
+    const value = getRuntimeConfigValue(key);
+    if (typeof value === 'undefined' || value === null) return undefined;
+    const trimmed = String(value).trim();
+    if (!trimmed || isUnresolvedPlaceholder(trimmed)) return undefined;
+    return trimmed;
+};
+
 export const isBackgroundProjectsDisabled = () =>
     isTruthyConfigValue(getRuntimeConfigValue('REACT_APP_DISABLE_BACKGROUND_PROJECTS'));
 
@@ -50,8 +60,8 @@ export const isBackgroundProjectsDisabled = () =>
  */
 export const getApiBaseUrl = () => {
     // Check for runtime configuration first (injected by server-runtime.js)
-    if (typeof window !== 'undefined' && window.__RUNTIME_CONFIG__ && window.__RUNTIME_CONFIG__.REACT_APP_API_BASE_URL) {
-        const runtimeUrl = window.__RUNTIME_CONFIG__.REACT_APP_API_BASE_URL;
+    const runtimeUrl = getUsableRuntimeConfigValue('REACT_APP_API_BASE_URL');
+    if (runtimeUrl) {
         console.log('Runtime configuration - using API URL:', runtimeUrl);
         return runtimeUrl;
     }
@@ -62,10 +72,9 @@ export const getApiBaseUrl = () => {
         console.log('Development environment - using API URL:', devApiUrl);
         return devApiUrl;
     } else {
-        // Production environment on Raspberry Pi:
-        // Always use backend on port 3001 on the same host as the frontend.
-        const apiPort = '3001';
-        const apiUrl = `${window.location.protocol}//${window.location.hostname}:${apiPort}`;
+        // Production environment:
+        // Prefer same-origin API routing through scratch-gui runtime (/api -> backend proxy).
+        const apiUrl = window.location.origin;
         console.log('Production environment - using API URL:', apiUrl);
         return apiUrl;
     }
@@ -76,8 +85,8 @@ export const getApiBaseUrl = () => {
  */
 export const getWebSocketBaseUrl = () => {
     // Check for runtime configuration first (injected by server-runtime.js)
-    if (typeof window !== 'undefined' && window.__RUNTIME_CONFIG__ && window.__RUNTIME_CONFIG__.REACT_APP_WS_BASE_URL) {
-        const runtimeWsUrl = window.__RUNTIME_CONFIG__.REACT_APP_WS_BASE_URL;
+    const runtimeWsUrl = getUsableRuntimeConfigValue('REACT_APP_WS_BASE_URL');
+    if (runtimeWsUrl) {
         console.log('Runtime configuration - using WebSocket URL:', runtimeWsUrl);
         return runtimeWsUrl;
     }

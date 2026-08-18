@@ -11,6 +11,18 @@ import DragRecognizer from '../lib/drag-recognizer';
 import DragConstants from '../lib/drag-constants';
 import {updateAssetDrag} from '../reducers/asset-drag';
 
+const readJsonResponse = async response => {
+    const text = await response.text();
+    try {
+        return text ? JSON.parse(text) : {};
+    } catch (error) {
+        const snippet = String(text || '').replace(/\s+/g, ' ').trim().slice(0, 80);
+        const looksLikeHtml = snippet.startsWith('<') || snippet.toLowerCase().startsWith('<!doctype');
+        const message = looksLikeHtml ? 'server vrátil HTML místo dat (špatný token nebo API)' : (error.message || 'invalid JSON');
+        throw new Error(message);
+    }
+};
+
 class AutoSaveManager extends React.Component {
     constructor(props) {
         super(props);
@@ -81,7 +93,7 @@ class AutoSaveManager extends React.Component {
             const response = await fetch(apiUrl);
             
             if (response.ok) {
-                const data = await response.json();
+                const data = await readJsonResponse(response);
                 console.log('API response:', data);
                 if (data.success) {
                     console.log('Loaded projects:', data.projects.length);

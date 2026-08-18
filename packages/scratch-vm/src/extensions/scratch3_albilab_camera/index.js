@@ -6,14 +6,7 @@ const iconSvg = '<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" 
 const blockIconURI = `data:image/svg+xml;utf8,${encodeURIComponent(iconSvg)}`;
 
 const csTranslations = {
-    'albilabcamera.categoryName': 'Pi Kamera',
-    'albilabcamera.captureAndAnalyze': 'vyfoť a zkontroluj květinu',
-    'albilabcamera.cameraReady': 'kamera funguje?',
-    'albilabcamera.flowerVisible': 'kvete?',
-    'albilabcamera.isGrowing': 'roste?',
-    'albilabcamera.flowerConfidence': 'procento vyhodnocení',
-    'albilabcamera.lastLabel': 'výsledek rozpoznání',
-    'albilabcamera.lastUpdatedAt': 'naposledy vyhodnoceno',
+    'albilabcamera.categoryName': 'Pi Rozpoznávání',
     'albilabcamera.captureReference': 'vyfoť vzor [LABEL]',
     'albilabcamera.matchReferences': 'porovnej s uloženými vzory',
     'albilabcamera.referenceProbability': 'pravděpodobnost [LABEL] %',
@@ -22,14 +15,7 @@ const csTranslations = {
 };
 
 const enTranslations = {
-    'albilabcamera.categoryName': 'Pi Camera',
-    'albilabcamera.captureAndAnalyze': 'capture and check flower',
-    'albilabcamera.cameraReady': 'camera working?',
-    'albilabcamera.flowerVisible': 'flower visible?',
-    'albilabcamera.isGrowing': 'is growing?',
-    'albilabcamera.flowerConfidence': 'evaluation percent',
-    'albilabcamera.lastLabel': 'recognition result',
-    'albilabcamera.lastUpdatedAt': 'last checked at',
+    'albilabcamera.categoryName': 'Pi Recognition',
     'albilabcamera.captureReference': 'capture sample [LABEL]',
     'albilabcamera.matchReferences': 'compare with saved samples',
     'albilabcamera.referenceProbability': 'probability [LABEL] %',
@@ -41,7 +27,10 @@ const installTranslations = () => {
     const currentSetup = formatMessage.setup() || {};
     const translations = Object.assign({}, currentSetup.translations || {});
     translations.cs = Object.assign({}, translations.cs || {}, csTranslations);
+    translations['cs-cz'] = Object.assign({}, translations['cs-cz'] || {}, csTranslations);
     translations.en = Object.assign({}, translations.en || {}, enTranslations);
+    translations['en-us'] = Object.assign({}, translations['en-us'] || {}, enTranslations);
+    translations['en-gb'] = Object.assign({}, translations['en-gb'] || {}, enTranslations);
     formatMessage.setup(Object.assign({}, currentSetup, {
         locale: currentSetup.locale || 'en',
         translations
@@ -50,31 +39,25 @@ const installTranslations = () => {
 
 installTranslations();
 
+const isPanelButtonLabel = text => /Pi (Camera|Kamera) panel/i.test(String(text || '').trim());
+
 class Scratch3AlbiLABCameraBlocks {
     constructor (runtime) {
         this.runtime = runtime;
-        this._lastResult = null;
-        this._lastHealth = null;
         this._lastError = '';
-        this._lastFetchAt = 0;
-        this._lastHealthAt = 0;
-        this._cacheMs = 1200;
-        this._lastResultPromise = null;
-        this._lastHealthPromise = null;
         this._lastMatch = null;
         this._lastMatchAt = 0;
+        this._cacheMs = 1200;
         this._lastMatchPromise = null;
+        this._lastFlowerResult = null;
+        this._lastFlowerAt = 0;
+        this._lastFlowerPromise = null;
         this._panelButtonCallbackKey = 'OPEN_PI_CAMERA_PANEL';
-        this._panelRootId = 'albilabPiCameraPanel';
-        this._panelFrameId = 'albilabPiCameraPanelFrame';
-        this._panelStyleId = 'albilabPiCameraPanelStyle';
         this._buttonCallbackInstalled = false;
         this._buttonCallbackRetryTimer = null;
         this._buttonCallbackAttempts = 0;
         this._domButtonHookInstalled = false;
         this._boundFlyoutTargets = [];
-        this._refreshLastResult();
-        this._refreshHealth();
         this._refreshLastMatch();
         this._ensureButtonCallbackInstalled();
         this._ensurePanelButtonDomHook();
@@ -88,78 +71,14 @@ class Scratch3AlbiLABCameraBlocks {
             id: 'albilabcamera',
             name: formatMessage({
                 id: 'albilabcamera.categoryName',
-                default: 'Pi Camera',
-                description: 'Label for the Pi Camera extension category'
+                default: 'Pi Recognition',
+                description: 'Label for the Pi Recognition extension category'
             }),
             color1: '#7D5FFF',
             color2: '#6B50E6',
             color3: '#5A43C2',
             blockIconURI,
             blocks: [
-                {
-                    opcode: 'captureAndAnalyze',
-                    blockType: BlockType.COMMAND,
-                    text: formatMessage({
-                        id: 'albilabcamera.captureAndAnalyze',
-                        default: 'capture and analyze flower',
-                        description: 'Capture image and analyze flower'
-                    })
-                },
-                {
-                    opcode: 'cameraReady',
-                    blockType: BlockType.BOOLEAN,
-                    text: formatMessage({
-                        id: 'albilabcamera.cameraReady',
-                        default: 'camera is ready?',
-                        description: 'Whether Pi camera backend is healthy'
-                    })
-                },
-                {
-                    opcode: 'flowerVisible',
-                    blockType: BlockType.BOOLEAN,
-                    text: formatMessage({
-                        id: 'albilabcamera.flowerVisible',
-                        default: 'flower visible?',
-                        description: 'Whether flower is visible'
-                    })
-                },
-                {
-                    opcode: 'isGrowing',
-                    blockType: BlockType.BOOLEAN,
-                    text: formatMessage({
-                        id: 'albilabcamera.isGrowing',
-                        default: 'is growing?',
-                        description: 'Whether plant appears to be growing'
-                    })
-                },
-                {
-                    opcode: 'flowerConfidence',
-                    blockType: BlockType.REPORTER,
-                    text: formatMessage({
-                        id: 'albilabcamera.flowerConfidence',
-                        default: 'evaluation percent',
-                        description: 'How strongly the model thinks a flower is visible, in percent'
-                    })
-                },
-                {
-                    opcode: 'lastLabel',
-                    blockType: BlockType.REPORTER,
-                    text: formatMessage({
-                        id: 'albilabcamera.lastLabel',
-                        default: 'last label',
-                        description: 'Last flower classifier label'
-                    })
-                },
-                {
-                    opcode: 'lastUpdatedAt',
-                    blockType: BlockType.REPORTER,
-                    text: formatMessage({
-                        id: 'albilabcamera.lastUpdatedAt',
-                        default: 'last analyzed at',
-                        description: 'Timestamp of last analysis'
-                    })
-                },
-                '---',
                 {
                     opcode: 'captureReference',
                     blockType: BlockType.COMMAND,
@@ -207,6 +126,54 @@ class Scratch3AlbiLABCameraBlocks {
                         default: 'what did the camera recognize?',
                         description: 'Best matching saved reference label'
                     })
+                },
+                {
+                    opcode: 'cameraReady',
+                    blockType: BlockType.BOOLEAN,
+                    text: 'kamera funguje?',
+                    hideFromPalette: true
+                },
+                {
+                    opcode: 'captureAndAnalyze',
+                    blockType: BlockType.COMMAND,
+                    text: 'vyfoť a zkontroluj květinu',
+                    hideFromPalette: true
+                },
+                {
+                    opcode: 'flowerVisible',
+                    blockType: BlockType.BOOLEAN,
+                    text: 'kvete?',
+                    hideFromPalette: true
+                },
+                {
+                    opcode: 'isGrowing',
+                    blockType: BlockType.BOOLEAN,
+                    text: 'roste?',
+                    hideFromPalette: true
+                },
+                {
+                    opcode: 'flowerConfidence',
+                    blockType: BlockType.REPORTER,
+                    text: 'procento vyhodnocení',
+                    hideFromPalette: true
+                },
+                {
+                    opcode: 'lastLabel',
+                    blockType: BlockType.REPORTER,
+                    text: 'výsledek rozpoznání',
+                    hideFromPalette: true
+                },
+                {
+                    opcode: 'lastUpdatedAt',
+                    blockType: BlockType.REPORTER,
+                    text: 'naposledy vyhodnoceno',
+                    hideFromPalette: true
+                },
+                {
+                    opcode: 'lastError',
+                    blockType: BlockType.REPORTER,
+                    text: 'poslední chyba kamery',
+                    hideFromPalette: true
                 },
                 '---',
                 {
@@ -261,7 +228,7 @@ class Scratch3AlbiLABCameraBlocks {
                     (node.className && node.className.baseVal) || '';
                 if (className && className.indexOf('blocklyFlyoutButton') >= 0) {
                     const text = (node.textContent || '').trim();
-                    if (/Pi Camera panel/i.test(text)) {
+                    if (isPanelButtonLabel(text)) {
                         return true;
                     }
                 }
@@ -285,7 +252,7 @@ class Scratch3AlbiLABCameraBlocks {
             const buttons = Array.prototype.slice.call(document.querySelectorAll('g.blocklyFlyoutButton'));
             return buttons.some(node => {
                 const text = (node.textContent || '').trim();
-                if (!/Pi Camera panel/i.test(text)) return false;
+                if (!isPanelButtonLabel(text)) return false;
                 if (typeof node.getBoundingClientRect !== 'function') return false;
                 const rect = node.getBoundingClientRect();
                 return point.x >= rect.left && point.x <= rect.right &&
@@ -322,23 +289,14 @@ class Scratch3AlbiLABCameraBlocks {
         this._domButtonHookInstalled = true;
     }
 
-    _ensurePanelDom () {
-        return true;
-    }
-
     openPanel () {
-        if (typeof window === 'undefined') return false;
+        if (typeof window === 'undefined') return;
         this._ensureButtonCallbackInstalled();
         try {
             window.dispatchEvent(new CustomEvent('open-pi-camera-modal-request'));
         } catch (error) {
-            return false;
+            this._lastError = error.message || String(error);
         }
-        return true;
-    }
-
-    closePanel () {
-        return;
     }
 
     _baseUrl () {
@@ -367,59 +325,6 @@ class Scratch3AlbiLABCameraBlocks {
         return data;
     }
 
-    _storeResultPayload (payload) {
-        const result = payload && (payload.result || payload);
-        if (result) {
-            this._lastResult = result;
-            this._lastFetchAt = Date.now();
-            this._lastError = '';
-        }
-        return this._lastResult;
-    }
-
-    _refreshLastResult (force = false) {
-        if (!force && this._lastResult && (Date.now() - this._lastFetchAt) < this._cacheMs) {
-            return Promise.resolve(this._lastResult);
-        }
-        if (!force && this._lastResultPromise) {
-            return this._lastResultPromise;
-        }
-        this._lastResultPromise = this._fetchJson('/api/last')
-            .then(payload => this._storeResultPayload(payload))
-            .catch(err => {
-                this._lastError = err.message || String(err);
-                return this._lastResult;
-            })
-            .finally(() => {
-                this._lastResultPromise = null;
-            });
-        return this._lastResultPromise;
-    }
-
-    _refreshHealth (force = false) {
-        if (!force && this._lastHealth && (Date.now() - this._lastHealthAt) < this._cacheMs) {
-            return Promise.resolve(this._lastHealth);
-        }
-        if (!force && this._lastHealthPromise) {
-            return this._lastHealthPromise;
-        }
-        this._lastHealthPromise = this._fetchJson('/health')
-            .then(payload => {
-                this._lastHealth = payload;
-                this._lastHealthAt = Date.now();
-                this._lastError = '';
-                return payload;
-            })
-            .catch(err => {
-                this._lastError = err.message || String(err);
-                return this._lastHealth;
-            })
-            .finally(() => {
-                this._lastHealthPromise = null;
-            });
-        return this._lastHealthPromise;
-    }
-
     _refreshLastMatch (force = false) {
         if (!force && this._lastMatch && (Date.now() - this._lastMatchAt) < this._cacheMs) {
             return Promise.resolve(this._lastMatch);
@@ -440,19 +345,37 @@ class Scratch3AlbiLABCameraBlocks {
         return this._lastMatchPromise;
     }
 
-    _blocks () {
-        return (this._lastResult && this._lastResult.blocks) ? this._lastResult.blocks : {};
+    _storeFlowerPayload (payload) {
+        const result = payload && (payload.result || payload);
+        if (result) {
+            this._lastFlowerResult = result;
+            this._lastFlowerAt = Date.now();
+            this._lastError = '';
+        }
+        return this._lastFlowerResult;
     }
 
-    async captureAndAnalyze () {
-        try {
-            const payload = await this._fetchJson('/analyze', {method: 'POST'});
-            this._storeResultPayload(payload);
-            return true;
-        } catch (err) {
-            this._lastError = err.message || String(err);
-            return false;
+    _refreshLastFlowerResult (force = false) {
+        if (!force && this._lastFlowerResult && (Date.now() - this._lastFlowerAt) < this._cacheMs) {
+            return Promise.resolve(this._lastFlowerResult);
         }
+        if (!force && this._lastFlowerPromise) {
+            return this._lastFlowerPromise;
+        }
+        this._lastFlowerPromise = this._fetchJson('/api/last')
+            .then(payload => this._storeFlowerPayload(payload))
+            .catch(err => {
+                this._lastError = err.message || String(err);
+                return this._lastFlowerResult;
+            })
+            .finally(() => {
+                this._lastFlowerPromise = null;
+            });
+        return this._lastFlowerPromise;
+    }
+
+    _flowerBlocks () {
+        return (this._lastFlowerResult && this._lastFlowerResult.blocks) ? this._lastFlowerResult.blocks : {};
     }
 
     async captureReference (args) {
@@ -462,10 +385,8 @@ class Scratch3AlbiLABCameraBlocks {
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({label: String(args.LABEL || '').trim()})
             });
-            return true;
         } catch (err) {
             this._lastError = err.message || String(err);
-            return false;
         }
     }
 
@@ -478,6 +399,22 @@ class Scratch3AlbiLABCameraBlocks {
             });
             this._lastMatch = payload;
             this._lastMatchAt = Date.now();
+        } catch (err) {
+            this._lastError = err.message || String(err);
+        }
+    }
+
+    async cameraReady () {
+        try {
+            const response = await fetch(`${this._baseUrl()}/health`, {
+                credentials: 'omit',
+                cache: 'no-store'
+            });
+            if (!response.ok) {
+                this._lastError = `HTTP ${response.status}`;
+                return false;
+            }
+            this._lastError = '';
             return true;
         } catch (err) {
             this._lastError = err.message || String(err);
@@ -485,31 +422,35 @@ class Scratch3AlbiLABCameraBlocks {
         }
     }
 
-    cameraReady () {
-        this._refreshHealth();
-        return !!(this._lastHealth && this._lastHealth.ok);
+    async captureAndAnalyze () {
+        try {
+            const payload = await this._fetchJson('/analyze', {method: 'POST'});
+            this._storeFlowerPayload(payload);
+        } catch (err) {
+            this._lastError = err.message || String(err);
+        }
     }
 
     flowerVisible () {
-        this._refreshLastResult();
-        return !!Number(this._blocks().kvete || 0);
+        this._refreshLastFlowerResult();
+        return !!Number(this._flowerBlocks().kvete || 0);
     }
 
     isGrowing () {
-        this._refreshLastResult();
-        return !!Number(this._blocks().roste || 0);
+        this._refreshLastFlowerResult();
+        return !!Number(this._flowerBlocks().roste || 0);
     }
 
     flowerConfidence () {
-        this._refreshLastResult();
-        const value = Number(this._blocks().flower_confidence || 0);
+        this._refreshLastFlowerResult();
+        const value = Number(this._flowerBlocks().flower_confidence || 0);
         if (!Number.isFinite(value)) return 0;
         return Math.round(value);
     }
 
     lastLabel () {
-        this._refreshLastResult();
-        const raw = String(this._blocks().last_label || '');
+        this._refreshLastFlowerResult();
+        const raw = String(this._flowerBlocks().last_label || '');
         const locale = (typeof navigator !== 'undefined' && navigator.language) ? navigator.language.toLowerCase() : 'en';
         const cs = locale.startsWith('cs');
         if (raw === 'flower_visible') return cs ? 'květ' : 'flower';
@@ -519,8 +460,8 @@ class Scratch3AlbiLABCameraBlocks {
     }
 
     lastUpdatedAt () {
-        this._refreshLastResult();
-        const raw = this._blocks().updated_at;
+        this._refreshLastFlowerResult();
+        const raw = this._flowerBlocks().updated_at;
         const num = Number(raw || 0);
         if (!Number.isFinite(num) || num <= 0) return '';
         const ms = num > 1e12 ? num : num * 1000;
@@ -537,6 +478,10 @@ class Scratch3AlbiLABCameraBlocks {
         } catch (e) {
             return new Date(ms).toISOString();
         }
+    }
+
+    lastError () {
+        return this._lastError || '';
     }
 
     referenceProbability (args) {
